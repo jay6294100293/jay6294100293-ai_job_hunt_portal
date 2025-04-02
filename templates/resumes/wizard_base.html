@@ -1,0 +1,2842 @@
+{% extends 'resumes/base.html' %}
+{% load resume_extras %}
+{% load static %}
+{% load widget_tweaks %}
+{% block title %}Resume Builder - Step {{ step }} of {{ total_steps }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-10">
+    <!-- Progress indicator -->
+    <div class="mb-10">
+        <div class="flex justify-between items-center mb-2">
+            <h2 class="text-2xl font-bold text-gray-800">Create Your Professional Resume</h2>
+            <span class="text-sm text-white-500 dark:text-white-400">Step {{ step }} of {{ total_steps }}</span>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+            <div class="bg-blue-700 h-2.5 rounded-full transition-all duration-500 ease-in-out" style="width: {{ step|floatformat:0|mul:100|div:total_steps }}%"></div>
+        </div>
+
+        <!-- Step navigation -->
+        <div class="grid grid-cols-{{ total_steps }} gap-1 text-xs text-center">
+            {% for i in total_steps|get_range %}
+                <div class="flex flex-col items-center">
+                    {% if i < step %}
+                        <a href="{% url 'job_portal:resume_wizard' step=i %}" class="group text-center relative" title="Click to go back to step {{ i }}">
+                            <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center mb-1 group-hover:bg-blue-500 transition-colors duration-200">
+                                <span class="text-white">{{ i }}</span>
+                            </div>
+                            <span class="text-white-500 group-hover:text-blue-500 transition-colors duration-200 text-center w-full block">
+                                {% if i == 1 %}Personal
+                                {% elif i == 2 %}Summary
+                                {% elif i == 3 %}Skills
+                                {% elif i == 4 %}Experience
+                                {% elif i == 5 %}Education
+                                {% elif i == 6 %}Projects
+                                {% elif i == 7 %}Certifications
+                                {% elif i == 8 %}Languages
+                                {% elif i == 9 %}Additional
+                                {% endif %}
+                            </span>
+                            <div class="absolute opacity-0 group-hover:opacity-100 bg-blue-600 text-white text-xs rounded py-1 px-2 pointer-events-none transition-opacity duration-200 -translate-y-1 w-32 left-1/2 transform -translate-x-1/2 mt-1 z-10">
+                                Return to this step
+                            </div>
+                        </a>
+                    {% elif i == step %}
+                        <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center mb-1">
+                            <span class="text-white">{{ i }}</span>
+                        </div>
+                        <span class="text-white-800 font-medium text-center w-full block">
+                            {% if i == 1 %}Personal
+                            {% elif i == 2 %}Summary
+                            {% elif i == 3 %}Skills
+                            {% elif i == 4 %}Experience
+                            {% elif i == 5 %}Education
+                            {% elif i == 6 %}Projects
+                            {% elif i == 7 %}Certifications
+                            {% elif i == 8 %}Languages
+                            {% elif i == 9 %}Additional
+                            {% endif %}
+                        </span>
+                    {% else %}
+                        <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mb-1">
+                            <span class="text-white">{{ i }}</span>
+                        </div>
+                        <span class="text-white-500 dark:text-white-800 text-center w-full block">
+                            {% if i == 1 %}Personal
+                            {% elif i == 2 %}Summary
+                            {% elif i == 3 %}Skills
+                            {% elif i == 4 %}Experience
+                            {% elif i == 5 %}Education
+                            {% elif i == 6 %}Projects
+                            {% elif i == 7 %}Certifications
+                            {% elif i == 8 %}Languages
+                            {% elif i == 9 %}Additional
+                            {% endif %}
+                        </span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Current Step Content -->
+    <div class="card bg-base-100 shadow-xl rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div class="card-body p-8">
+            <h2 class="card-title text-xl md:text-2xl mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
+                {% block step_icon %}
+                    {% if step == 1 %}<i class="fa-solid fa-user-circle mr-3 text-primary opacity-80"></i>
+                    {% elif step == 2 %}<i class="fa-solid fa-briefcase mr-3 text-primary opacity-80"></i>
+                    {% elif step == 3 %}<i class="fa-solid fa-graduation-cap mr-3 text-primary opacity-80"></i>
+                    {% elif step == 4 %}<i class="fa-solid fa-code mr-3 text-primary opacity-80"></i>
+                    {% elif step == 5 %}<i class="fa-solid fa-diagram-project mr-3 text-primary opacity-80"></i>
+                    {% elif step == 6 %}<i class="fa-solid fa-certificate mr-3 text-primary opacity-80"></i>
+                    {% elif step == 7 %}<i class="fa-solid fa-language mr-3 text-primary opacity-80"></i>
+                    {% elif step == 8 %}<i class="fa-solid fa-puzzle-piece mr-3 text-primary opacity-80"></i>
+                    {% elif step == 9 %}<i class="fa-solid fa-file-circle-plus mr-3 text-primary opacity-80"></i>
+                    {% else %}<i class="fa-solid fa-clipboard-list mr-3 text-primary opacity-80"></i>
+                    {% endif %}
+                {% endblock %}
+                {% block step_title %}{% endblock %}
+            </h2>
+
+            <!-- Step Content -->
+            <div class="space-y-6">
+                {% block step_content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Button -->
+    <div class="mt-10 text-center">
+        <button id="open-preview-modal" type="button" class="btn btn-primary">
+            <i class="fa-solid fa-eye mr-2"></i> Preview Your Resume
+        </button>
+    </div>
+
+    <!-- Resume Preview Modal -->
+    <div id="resumePreviewModal" class="modal">
+        <div class="modal-box w-11/12 max-w-5xl p-0 overflow-hidden rounded-xl">
+            <div class="bg-primary p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold text-lg flex items-center">
+                    <i class="fa-solid fa-file-alt mr-2"></i>
+                    <span>Resume Preview</span>
+                </h3>
+                <button class="btn btn-sm btn-circle btn-ghost text-white" onclick="closeResumePreviewModal()">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <div id="resume-preview" class="h-[70vh] overflow-y-auto p-0 bg-white">
+                <!-- Preview content will be loaded here -->
+                <div class="flex flex-col justify-center items-center h-full text-gray-400">
+                    <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-file-lines text-2xl"></i>
+                    </div>
+                    <p class="text-center max-w-md p-4">Your resume preview will update as you complete each section. Continue filling out the form to see your resume take shape.</p>
+                    <button id="refresh-preview" class="btn btn-outline btn-primary btn-sm mt-4">
+                        <i class="fa-solid fa-sync-alt mr-2"></i> Refresh Preview
+                    </button>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end bg-base-100">
+                <button class="btn btn-outline" onclick="closeResumePreviewModal()">
+                    Close Preview
+                </button>
+            </div>
+        </div>
+        <div class="modal-backdrop bg-black/50" onclick="closeResumePreviewModal()"></div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="flex justify-between mt-8" >
+        {% if step > 1 %}
+        <a href="{% url 'job_portal:resume_wizard' step=step|add:'-1' %}" class="btn btn-primary" id="prev-step-btn">
+            <i class="fa-solid fa-chevron-left mr-2 "></i> Previous Step
+        </a>
+        {% else %}
+        <div></div> <!-- Empty div to maintain spacing -->
+        {% endif %}
+
+        {% if step < total_steps %}
+        <button type="submit" form="resume-form" class="btn btn-primary" id="next-step-btn">
+            Save & Continue <i class="fa-solid fa-chevron-right ml-2"></i>
+        </button>
+        {% else %}
+        <button type="submit" form="resume-form" class="btn btn-success" id="complete-resume-btn">
+            <i class="fa-solid fa-check mr-2"></i> Complete Resume
+        </button>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- HTMX for dynamic form handling -->
+<script src="https://unpkg.com/htmx.org@1.9.0"></script>
+
+<script>
+    // Function to toggle end date based on "is current" checkbox
+    function toggleEndDate(checkbox) {
+        const row = checkbox.closest('.form-row');
+        const endDateField = row.querySelector('[name$="end_date"]');
+        const endDateContainer = row.querySelector('.end-date-container');
+
+        if (checkbox.checked) {
+            endDateField.disabled = true;
+            endDateField.value = '';
+            if (endDateContainer) {
+                endDateContainer.classList.add('opacity-50');
+            }
+        } else {
+            endDateField.disabled = false;
+            if (endDateContainer) {
+                endDateContainer.classList.remove('opacity-50');
+            }
+        }
+    }
+
+    // Initialize "is current" checkboxes on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize checkboxes
+        document.querySelectorAll('input[type="checkbox"][name$="is_current"]').forEach(function(checkbox) {
+            toggleEndDate(checkbox);
+        });
+
+        // Add animation class after page load
+        setTimeout(() => {
+            const progressBar = document.querySelector('.progress-bar');
+            if (progressBar) {
+                progressBar.classList.add('animate-progress');
+            }
+        }, 300);
+
+        // Setup open modal button
+        const openModalBtn = document.getElementById('open-preview-modal');
+        if (openModalBtn) {
+            openModalBtn.addEventListener('click', openResumePreviewModal);
+        }
+
+        // Setup refresh button
+        const refreshBtn = document.getElementById('refresh-preview');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', refreshResumePreview);
+        }
+
+        // Ensure the Previous Step button causes a full page reload
+        const prevStepBtn = document.getElementById('prev-step-btn');
+        if (prevStepBtn) {
+            prevStepBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const href = this.getAttribute('href');
+                window.location.href = href;
+            });
+        }
+
+        // Ensure the resume form submission causes a full page reload
+        const resumeForm = document.getElementById('resume-form');
+        if (resumeForm) {
+            // We need to ensure HTMX doesn't interfere with form submission
+            resumeForm.setAttribute('hx-boost', 'false');
+
+            // For the next/save button, let's add a direct handler
+            const nextButton = document.getElementById('next-step-btn');
+            if (nextButton) {
+                nextButton.addEventListener('click', function(e) {
+                    // Prevent the default button behavior
+                    e.preventDefault();
+
+                    // Disable any HTMX features
+                    if (typeof htmx !== 'undefined') {
+                        htmx.config.globalViewTransitions = false;
+                        resumeForm.setAttribute('hx-boost', 'false');
+                        resumeForm.setAttribute('data-no-ajax', 'true');
+                    }
+
+                    // Ensure form is submitted with page reload
+                    resumeForm.setAttribute('onsubmit', '');
+
+                    // Submit the form to cause a full page reload
+                    resumeForm.submit();
+                });
+            }
+
+            // Handle the complete resume button similarly
+            const completeButton = document.getElementById('complete-resume-btn');
+            if (completeButton) {
+                completeButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    if (typeof htmx !== 'undefined') {
+                        htmx.config.globalViewTransitions = false;
+                        resumeForm.setAttribute('hx-boost', 'false');
+                        resumeForm.setAttribute('data-no-ajax', 'true');
+                    }
+
+                    resumeForm.setAttribute('onsubmit', '');
+                    resumeForm.submit();
+                });
+            }
+        }
+    });
+
+    // Function to open the preview modal
+    function openResumePreviewModal() {
+        const modal = document.getElementById('resumePreviewModal');
+        if (modal) {
+            modal.classList.add('modal-open');
+            document.body.style.overflow = 'hidden';
+            // Load preview content
+            refreshResumePreview();
+        }
+    }
+
+    // Function to close the preview modal
+    function closeResumePreviewModal() {
+        const modal = document.getElementById('resumePreviewModal');
+        if (modal) {
+            modal.classList.remove('modal-open');
+            document.body.style.overflow = 'auto';
+        }
+    }
+
+    // Function to refresh resume preview
+    function refreshResumePreview() {
+        const previewContainer = document.getElementById('resume-preview');
+        if (previewContainer) {
+            // Show loading spinner
+            previewContainer.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full">
+                    <span class="loading loading-spinner loading-lg text-primary mb-4"></span>
+                    <p>Generating preview...</p>
+                </div>
+            `;
+
+            // Get form data
+            const form = document.getElementById('resume-form');
+            let formData = new FormData();
+
+            if (form) {
+                formData = new FormData(form);
+            }
+
+            // Add all form fields to formData
+            const allInputs = document.querySelectorAll('input, select, textarea');
+            allInputs.forEach(input => {
+                if (input.name && !formData.has(input.name)) {
+                    if (input.type === 'checkbox') {
+                        formData.append(input.name, input.checked ? 'on' : '');
+                    } else if (input.type !== 'file' || input.files.length > 0) {
+                        formData.append(input.name, input.value);
+                    }
+                }
+            });
+
+            // Process dynamic form data like experiences, education, skills, etc.
+            try {
+                // Process skill fields
+                const skillRows = document.querySelectorAll('#skills-container .form-row');
+                if (skillRows.length > 0) {
+                    formData.append('skill_count', skillRows.length);
+                }
+
+                // Process experience fields
+                const expRows = document.querySelectorAll('#experience-container .form-row');
+                if (expRows.length > 0) {
+                    formData.append('experience_count', expRows.length);
+                    expRows.forEach((row, index) => {
+                        // Process bullet points for each experience
+                        const bulletRows = row.querySelectorAll('.bullet-point-row');
+                        if (bulletRows.length > 0) {
+                            formData.append(`bullet_count_${index}`, bulletRows.length);
+                        }
+                    });
+                }
+
+                // Process education fields
+                const eduRows = document.querySelectorAll('#education-container .form-row');
+                if (eduRows.length > 0) {
+                    formData.append('education_count', eduRows.length);
+                }
+
+                // Process project fields
+                const projRows = document.querySelectorAll('#projects-container .form-row');
+                if (projRows.length > 0) {
+                    formData.append('projects_count', projRows.length);
+                    projRows.forEach((row, index) => {
+                        // Process bullet points for each project
+                        const bulletRows = row.querySelectorAll('.bullet-point-row');
+                        if (bulletRows.length > 0) {
+                            formData.append(`project_${index}_bullet_count`, bulletRows.length);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error("Error preparing form data:", e);
+            }
+
+            // Fetch the preview from our endpoint
+            fetch("{% url 'job_portal:preview_current_resume' %}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(html => {
+                previewContainer.innerHTML = `<div class="p-4">${html}</div>`;
+            })
+            .catch(error => {
+                console.error("Preview error:", error);
+                previewContainer.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full p-8">
+                        <p class="text-red-500 mb-2">Failed to load preview: ${error.message}</p>
+                        <button class="btn btn-sm btn-outline btn-primary mt-4" onclick="refreshResumePreview()">
+                            <i class="fa-solid fa-sync-alt mr-2"></i> Try Again
+                        </button>
+                    </div>
+                `;
+            });
+        }
+    }
+
+    // Function to add a new form row
+    function addFormRow(formType, container, countField) {
+        const rows = document.querySelectorAll(`#${container} .form-row`);
+        const index = rows.length;
+
+        // Update the count field
+        document.getElementById(countField).value = index + 1;
+
+        // Show loading indicator
+        const addButton = document.querySelector(`button[onclick="addFormRow('${formType}', '${container}', '${countField}')"]`);
+        if (addButton) {
+            const originalHTML = addButton.innerHTML;
+            addButton.innerHTML = `<span class="loading loading-spinner loading-xs"></span> Adding...`;
+            addButton.disabled = true;
+
+            // Make HTMX request to add a new row
+            htmx.ajax('GET', `/resumes/htmx/add-form-row/?form_type=${formType}&index=${index}`, {
+                target: `#${container}`,
+                swap: 'beforeend',
+                complete: function() {
+                    // Restore button
+                    addButton.innerHTML = originalHTML;
+                    addButton.disabled = false;
+
+                    // Scroll to the new row with smooth animation
+                    const newRow = document.querySelector(`#${container} .form-row:last-child`);
+                    if (newRow) {
+                        newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        newRow.classList.add('highlight-new');
+                        setTimeout(() => {
+                            newRow.classList.remove('highlight-new');
+                        }, 1500);
+                    }
+                }
+            });
+        }
+    }
+
+    // Function to remove a form row
+    function removeFormRow(button, container, countField) {
+        const row = button.closest('.form-row');
+
+        // Add fade-out animation
+        row.classList.add('fade-out');
+
+        // Remove after animation completes
+        setTimeout(() => {
+            row.remove();
+
+            // Update indexes of remaining rows
+            const rows = document.querySelectorAll(`#${container} .form-row`);
+            document.getElementById(countField).value = rows.length;
+
+            // Update the indexes in the form fields
+            rows.forEach((row, index) => {
+                updateFormRowIndex(row, index);
+            });
+        }, 300);
+    }
+
+    // Function to update form field indexes
+    function updateFormRowIndex(row, newIndex) {
+        row.querySelectorAll('input, select, textarea').forEach(field => {
+            const name = field.getAttribute('name');
+            if (name) {
+                // Extract the field name pattern (e.g., skill_name_X)
+                const pattern = name.replace(/\_\d+($|\_)/, '_INDEX$1');
+                // Replace INDEX with the new index
+                const newName = pattern.replace('INDEX', newIndex);
+                field.setAttribute('name', newName);
+
+                // Also update id if present
+                const id = field.getAttribute('id');
+                if (id) {
+                    const idPattern = id.replace(/\_\d+($|\_)/, '_INDEX$1');
+                    const newId = idPattern.replace('INDEX', newIndex);
+                    field.setAttribute('id', newId);
+                }
+
+                // Update for labels
+                const labels = row.querySelectorAll(`label[for="${id}"]`);
+                labels.forEach(label => {
+                    label.setAttribute('for', newId);
+                });
+            }
+        });
+    }
+
+    // Function to add a bullet point to an experience or project
+    function addBulletPoint(button, parentType, parentIndex) {
+        const bulletContainer = button.closest('.bullet-points-container').querySelector('.bullet-points');
+        const bulletCount = bulletContainer.querySelectorAll('.bullet-point-row').length;
+
+        // Show loading indicator
+        const originalHTML = button.innerHTML;
+        button.innerHTML = `<span class="loading loading-spinner loading-xs"></span>`;
+        button.disabled = true;
+
+        htmx.ajax('GET', `/resumes/htmx/add-form-row/?form_type=bullet_point&parent_index=${parentIndex}&index=${bulletCount}`, {
+            target: bulletContainer,
+            swap: 'beforeend',
+            complete: function() {
+                // Restore button
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+
+                // Scroll to new bullet point
+                const newBullet = bulletContainer.querySelector('.bullet-point-row:last-child');
+                if (newBullet) {
+                    newBullet.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    newBullet.classList.add('highlight-new');
+                    setTimeout(() => {
+                        newBullet.classList.remove('highlight-new');
+                    }, 1500);
+                }
+            }
+        });
+
+        // Update hidden count field
+        const countField = button.closest('.form-row').querySelector(`input[name="${parentType}_${parentIndex}_bullet_count"]`);
+        countField.value = parseInt(countField.value) + 1;
+    }
+</script>
+
+<style>
+    /* Highlight animation for new elements */
+    .highlight-new {
+        animation: highlight-pulse 1.5s ease-in-out;
+    }
+
+    @keyframes highlight-pulse {
+        0% { background-color: rgba(59, 130, 246, 0.1); }
+        50% { background-color: rgba(59, 130, 246, 0.2); }
+        100% { background-color: transparent; }
+    }
+
+    /* Fade out animation for removed elements */
+    .fade-out {
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    /* Progress bar animation */
+    .animate-progress {
+        transition: width 1s ease-in-out;
+    }
+
+    /* Responsive grid for step indicators */
+    @media screen and (max-width: 1024px) {
+        .grid-cols-{{ total_steps }} {
+            grid-template-columns: repeat(5, 1fr);
+        }
+    }
+
+    @media screen and (max-width: 768px) {
+        .grid-cols-{{ total_steps }} {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @media screen and (max-width: 640px) {
+        .grid-cols-{{ total_steps }} {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    /* Hide scrollbar for clean UI */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
+{% endblock %}
+
+{#{% extends 'resumes/base.html' %}#}
+{#{% load resume_extras %}#}
+{#{% load static %}#}
+{#{% load widget_tweaks %}#}
+{#{% block title %}Resume Builder - Step {{ step }} of {{ total_steps }}{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#<div class="container mx-auto px-4 py-10">#}
+{#    <div class="mb-12">#}
+{#        <!-- Header with icon -->#}
+{#        <div class="flex flex-col items-center mb-8">#}
+{#            <div class="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mb-4">#}
+{#                <i class="fa-solid fa-file-pen text-primary text-2xl"></i>#}
+{#            </div>#}
+{#            <h1 class="text-2xl md:text-3xl font-bold text-center">Create Your Professional Resume</h1>#}
+{#            <p class="text-gray-600 mt-2 text-center max-w-2xl">#}
+{#                Step {{ step }} of {{ total_steps }}: <span class="step-title-text">{% block step_name %}{% endblock %}</span>#}
+{#            </p>#}
+{#        </div>#}
+{##}
+{#        <!-- Progress Bar -->#}
+{#        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-8 shadow-inner overflow-hidden">#}
+{#            <div class="bg-primary h-3 rounded-full transition-all duration-500 ease-in-out" style="width: {{ step|floatformat:0|mul:100|div:total_steps }}%"></div>#}
+{#        </div>#}
+{##}
+{#        <!-- Step Indicator -->#}
+{#        <div class="overflow-x-auto pb-4">#}
+{#            <ul class="steps steps-horizontal w-full min-w-max">#}
+{#                {% for i in total_steps|get_range %}#}
+{#                    <li class="step {% if i < step %}step-primary{% endif %} {% if i == step %}font-medium{% endif %}">#}
+{#                        {% if i < step %}#}
+{#                            <a href="{% url 'job_portal:resume_wizard' step=i %}" class="text-xs md:text-xs hover:text-primary transition-colors duration-200">#}
+{#                                {% if i == 1 %}Personal Details#}
+{#                                {% elif i == 2 %}Professional Summary#}
+{#                                {% elif i == 3 %}Skills#}
+{#                                {% elif i == 4 %}Work Experience#}
+{#                                {% elif i == 5 %}Education#}
+{#                                {% elif i == 6 %}Projects#}
+{#                                {% elif i == 7 %}Certifications#}
+{#                                {% elif i == 8 %}Languages#}
+{#                                {% elif i == 9 %}Additional Sections#}
+{#                                {% endif %}#}
+{#                            </a>#}
+{#                        {% else %}#}
+{#                            <span class="text-xs md:text-xs">#}
+{#                                {% if i == 1 %}Personal Details#}
+{#                                {% elif i == 2 %}Professional Summary#}
+{#                                {% elif i == 3 %}Skills#}
+{#                                {% elif i == 4 %}Work Experience#}
+{#                                {% elif i == 5 %}Education#}
+{#                                {% elif i == 6 %}Projects#}
+{#                                {% elif i == 7 %}Certifications#}
+{#                                {% elif i == 8 %}Languages#}
+{#                                {% elif i == 9 %}Additional Sections#}
+{#                                {% endif %}#}
+{#                            </span>#}
+{#                        {% endif %}#}
+{#                    </li>#}
+{#                {% endfor %}#}
+{#            </ul>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Current Step Content -->#}
+{#    <div class="card bg-base-100 shadow-xl rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">#}
+{#        <div class="card-body p-8">#}
+{#            <h2 class="card-title text-xl md:text-2xl mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">#}
+{#                {% block step_icon %}#}
+{#                    {% if step == 1 %}<i class="fa-solid fa-user-circle mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 2 %}<i class="fa-solid fa-briefcase mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 3 %}<i class="fa-solid fa-graduation-cap mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 4 %}<i class="fa-solid fa-code mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 5 %}<i class="fa-solid fa-diagram-project mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 6 %}<i class="fa-solid fa-diagram-project mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 7 %}<i class="fa-solid fa-diagram-project mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 8 %}<i class="fa-solid fa-diagram-project mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 9 %}<i class="fa-solid fa-diagram-project mr-3 text-primary opacity-80"></i>#}
+{#                    {% else %}<i class="fa-solid fa-clipboard-list mr-3 text-primary opacity-80"></i>#}
+{#                    {% endif %}#}
+{#                {% endblock %}#}
+{#                {% block step_title %}{% endblock %}#}
+{#            </h2>#}
+{##}
+{#            <!-- Step Content -->#}
+{#            <div class="space-y-6">#}
+{#                {% block step_content %}{% endblock %}#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Preview Button -->#}
+{#    <div class="mt-10 text-center">#}
+{#        <button id="open-preview-modal" type="button" class="btn btn-primary">#}
+{#            <i class="fa-solid fa-eye mr-2"></i> Preview Your Resume#}
+{#        </button>#}
+{#    </div>#}
+{##}
+{#    <!-- Resume Preview Modal -->#}
+{#    <div id="resumePreviewModal" class="modal">#}
+{#        <div class="modal-box w-11/12 max-w-5xl p-0 overflow-hidden rounded-xl">#}
+{#            <div class="bg-primary p-4 text-white flex justify-between items-center">#}
+{#                <h3 class="font-bold text-lg flex items-center">#}
+{#                    <i class="fa-solid fa-file-alt mr-2"></i>#}
+{#                    <span>Resume Preview</span>#}
+{#                </h3>#}
+{#                <button class="btn btn-sm btn-circle btn-ghost text-white" onclick="closeResumePreviewModal()">#}
+{#                    <i class="fa-solid fa-times"></i>#}
+{#                </button>#}
+{#            </div>#}
+{##}
+{#            <div id="resume-preview" class="h-[70vh] overflow-y-auto p-0 bg-white">#}
+{#                <!-- Preview content will be loaded here -->#}
+{#                <div class="flex flex-col justify-center items-center h-full text-gray-400">#}
+{#                    <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">#}
+{#                        <i class="fa-solid fa-file-lines text-2xl"></i>#}
+{#                    </div>#}
+{#                    <p class="text-center max-w-md p-4">Your resume preview will update as you complete each section. Continue filling out the form to see your resume take shape.</p>#}
+{#                    <button id="refresh-preview" class="btn btn-outline btn-primary btn-sm mt-4">#}
+{#                        <i class="fa-solid fa-sync-alt mr-2"></i> Refresh Preview#}
+{#                    </button>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <div class="border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end bg-base-100">#}
+{#                <button class="btn btn-outline" onclick="closeResumePreviewModal()">#}
+{#                    Close Preview#}
+{#                </button>#}
+{#            </div>#}
+{#        </div>#}
+{#        <div class="modal-backdrop bg-black/50" onclick="closeResumePreviewModal()"></div>#}
+{#    </div>#}
+{##}
+{#    <!-- Navigation Buttons -->#}
+{#    <div class="flex justify-between mt-8" >#}
+{#        {% if step > 1 %}#}
+{#        <a href="{% url 'job_portal:resume_wizard' step=step|add:'-1' %}" class="btn btn-primary" id="prev-step-btn">#}
+{#            <i class="fa-solid fa-chevron-left mr-2 "></i> Previous Step#}
+{#        </a>#}
+{#        {% else %}#}
+{#        <div></div> <!-- Empty div to maintain spacing -->#}
+{#        {% endif %}#}
+{##}
+{#        {% if step < total_steps %}#}
+{#        <button type="submit" form="resume-form" class="btn btn-primary" id="next-step-btn">#}
+{#            Save & Continue <i class="fa-solid fa-chevron-right ml-2"></i>#}
+{#        </button>#}
+{#        {% else %}#}
+{#        <button type="submit" form="resume-form" class="btn btn-success" id="complete-resume-btn">#}
+{#            <i class="fa-solid fa-check mr-2"></i> Complete Resume#}
+{#        </button>#}
+{#        {% endif %}#}
+{#    </div>#}
+{#</div>#}
+{#{% endblock %}#}
+{##}
+{#{% block extra_js %}#}
+{#<!-- HTMX for dynamic form handling -->#}
+{#<script src="https://unpkg.com/htmx.org@1.9.0"></script>#}
+{##}
+{#<script>#}
+{#    // Function to toggle end date based on "is current" checkbox#}
+{#    function toggleEndDate(checkbox) {#}
+{#        const row = checkbox.closest('.form-row');#}
+{#        const endDateField = row.querySelector('[name$="end_date"]');#}
+{#        const endDateContainer = row.querySelector('.end-date-container');#}
+{##}
+{#        if (checkbox.checked) {#}
+{#            endDateField.disabled = true;#}
+{#            endDateField.value = '';#}
+{#            if (endDateContainer) {#}
+{#                endDateContainer.classList.add('opacity-50');#}
+{#            }#}
+{#        } else {#}
+{#            endDateField.disabled = false;#}
+{#            if (endDateContainer) {#}
+{#                endDateContainer.classList.remove('opacity-50');#}
+{#            }#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Initialize "is current" checkboxes on page load#}
+{#    document.addEventListener('DOMContentLoaded', function() {#}
+{#        // Initialize checkboxes#}
+{#        document.querySelectorAll('input[type="checkbox"][name$="is_current"]').forEach(function(checkbox) {#}
+{#            toggleEndDate(checkbox);#}
+{#        });#}
+{##}
+{#        // Add animation class after page load#}
+{#        setTimeout(() => {#}
+{#            const progressBar = document.querySelector('.progress-bar');#}
+{#            if (progressBar) {#}
+{#                progressBar.classList.add('animate-progress');#}
+{#            }#}
+{#        }, 300);#}
+{##}
+{#        // Setup open modal button#}
+{#        const openModalBtn = document.getElementById('open-preview-modal');#}
+{#        if (openModalBtn) {#}
+{#            openModalBtn.addEventListener('click', openResumePreviewModal);#}
+{#        }#}
+{##}
+{#        // Setup refresh button#}
+{#        const refreshBtn = document.getElementById('refresh-preview');#}
+{#        if (refreshBtn) {#}
+{#            refreshBtn.addEventListener('click', refreshResumePreview);#}
+{#        }#}
+{##}
+{#        // Ensure the Previous Step button causes a full page reload#}
+{#        const prevStepBtn = document.getElementById('prev-step-btn');#}
+{#        if (prevStepBtn) {#}
+{#            prevStepBtn.addEventListener('click', function(e) {#}
+{#                e.preventDefault();#}
+{#                const href = this.getAttribute('href');#}
+{#                window.location.href = href;#}
+{#            });#}
+{#        }#}
+{##}
+{#        // Ensure the resume form submission causes a full page reload#}
+{#        const resumeForm = document.getElementById('resume-form');#}
+{#        if (resumeForm) {#}
+{#            // We need to ensure HTMX doesn't interfere with form submission#}
+{#            resumeForm.setAttribute('hx-boost', 'false');#}
+{##}
+{#            // For the next/save button, let's add a direct handler#}
+{#            const nextButton = document.getElementById('next-step-btn');#}
+{#            if (nextButton) {#}
+{#                nextButton.addEventListener('click', function(e) {#}
+{#                    // Prevent the default button behavior#}
+{#                    e.preventDefault();#}
+{##}
+{#                    // Disable any HTMX features#}
+{#                    if (typeof htmx !== 'undefined') {#}
+{#                        htmx.config.globalViewTransitions = false;#}
+{#                        resumeForm.setAttribute('hx-boost', 'false');#}
+{#                        resumeForm.setAttribute('data-no-ajax', 'true');#}
+{#                    }#}
+{##}
+{#                    // Ensure form is submitted with page reload#}
+{#                    resumeForm.setAttribute('onsubmit', '');#}
+{##}
+{#                    // Submit the form to cause a full page reload#}
+{#                    resumeForm.submit();#}
+{#                });#}
+{#            }#}
+{##}
+{#            // Handle the complete resume button similarly#}
+{#            const completeButton = document.getElementById('complete-resume-btn');#}
+{#            if (completeButton) {#}
+{#                completeButton.addEventListener('click', function(e) {#}
+{#                    e.preventDefault();#}
+{##}
+{#                    if (typeof htmx !== 'undefined') {#}
+{#                        htmx.config.globalViewTransitions = false;#}
+{#                        resumeForm.setAttribute('hx-boost', 'false');#}
+{#                        resumeForm.setAttribute('data-no-ajax', 'true');#}
+{#                    }#}
+{##}
+{#                    resumeForm.setAttribute('onsubmit', '');#}
+{#                    resumeForm.submit();#}
+{#                });#}
+{#            }#}
+{#        }#}
+{#    });#}
+{##}
+{#    // Function to open the preview modal#}
+{#    function openResumePreviewModal() {#}
+{#        const modal = document.getElementById('resumePreviewModal');#}
+{#        if (modal) {#}
+{#            modal.classList.add('modal-open');#}
+{#            document.body.style.overflow = 'hidden';#}
+{#            // Load preview content#}
+{#            refreshResumePreview();#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to close the preview modal#}
+{#    function closeResumePreviewModal() {#}
+{#        const modal = document.getElementById('resumePreviewModal');#}
+{#        if (modal) {#}
+{#            modal.classList.remove('modal-open');#}
+{#            document.body.style.overflow = 'auto';#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to refresh resume preview#}
+{#    function refreshResumePreview() {#}
+{#        const previewContainer = document.getElementById('resume-preview');#}
+{#        if (previewContainer) {#}
+{#            // Show loading spinner#}
+{#            previewContainer.innerHTML = `#}
+{#                <div class="flex flex-col items-center justify-center h-full">#}
+{#                    <span class="loading loading-spinner loading-lg text-primary mb-4"></span>#}
+{#                    <p>Generating preview...</p>#}
+{#                </div>#}
+{#            `;#}
+{##}
+{#            // Get form data#}
+{#            const form = document.getElementById('resume-form');#}
+{#            let formData = new FormData();#}
+{##}
+{#            if (form) {#}
+{#                formData = new FormData(form);#}
+{#            }#}
+{##}
+{#            // Add all form fields to formData#}
+{#            const allInputs = document.querySelectorAll('input, select, textarea');#}
+{#            allInputs.forEach(input => {#}
+{#                if (input.name && !formData.has(input.name)) {#}
+{#                    if (input.type === 'checkbox') {#}
+{#                        formData.append(input.name, input.checked ? 'on' : '');#}
+{#                    } else if (input.type !== 'file' || input.files.length > 0) {#}
+{#                        formData.append(input.name, input.value);#}
+{#                    }#}
+{#                }#}
+{#            });#}
+{##}
+{#            // Process dynamic form data like experiences, education, skills, etc.#}
+{#            try {#}
+{#                // Process skill fields#}
+{#                const skillRows = document.querySelectorAll('#skills-container .form-row');#}
+{#                if (skillRows.length > 0) {#}
+{#                    formData.append('skill_count', skillRows.length);#}
+{#                }#}
+{##}
+{#                // Process experience fields#}
+{#                const expRows = document.querySelectorAll('#experience-container .form-row');#}
+{#                if (expRows.length > 0) {#}
+{#                    formData.append('experience_count', expRows.length);#}
+{#                    expRows.forEach((row, index) => {#}
+{#                        // Process bullet points for each experience#}
+{#                        const bulletRows = row.querySelectorAll('.bullet-point-row');#}
+{#                        if (bulletRows.length > 0) {#}
+{#                            formData.append(`bullet_count_${index}`, bulletRows.length);#}
+{#                        }#}
+{#                    });#}
+{#                }#}
+{##}
+{#                // Process education fields#}
+{#                const eduRows = document.querySelectorAll('#education-container .form-row');#}
+{#                if (eduRows.length > 0) {#}
+{#                    formData.append('education_count', eduRows.length);#}
+{#                }#}
+{##}
+{#                // Process project fields#}
+{#                const projRows = document.querySelectorAll('#projects-container .form-row');#}
+{#                if (projRows.length > 0) {#}
+{#                    formData.append('projects_count', projRows.length);#}
+{#                    projRows.forEach((row, index) => {#}
+{#                        // Process bullet points for each project#}
+{#                        const bulletRows = row.querySelectorAll('.bullet-point-row');#}
+{#                        if (bulletRows.length > 0) {#}
+{#                            formData.append(`project_${index}_bullet_count`, bulletRows.length);#}
+{#                        }#}
+{#                    });#}
+{#                }#}
+{#            } catch (e) {#}
+{#                console.error("Error preparing form data:", e);#}
+{#            }#}
+{##}
+{#            // Fetch the preview from our endpoint#}
+{#            fetch("{% url 'job_portal:preview_current_resume' %}", {#}
+{#                method: 'POST',#}
+{#                body: formData,#}
+{#                headers: {#}
+{#                    'X-Requested-With': 'XMLHttpRequest',#}
+{#                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''#}
+{#                }#}
+{#            })#}
+{#            .then(response => {#}
+{#                if (!response.ok) {#}
+{#                    throw new Error(`HTTP error! Status: ${response.status}`);#}
+{#                }#}
+{#                return response.text();#}
+{#            })#}
+{#            .then(html => {#}
+{#                previewContainer.innerHTML = `<div class="p-4">${html}</div>`;#}
+{#            })#}
+{#            .catch(error => {#}
+{#                console.error("Preview error:", error);#}
+{#                previewContainer.innerHTML = `#}
+{#                    <div class="flex flex-col items-center justify-center h-full p-8">#}
+{#                        <p class="text-red-500 mb-2">Failed to load preview: ${error.message}</p>#}
+{#                        <button class="btn btn-sm btn-outline btn-primary mt-4" onclick="refreshResumePreview()">#}
+{#                            <i class="fa-solid fa-sync-alt mr-2"></i> Try Again#}
+{#                        </button>#}
+{#                    </div>#}
+{#                `;#}
+{#            });#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to add a new form row#}
+{#    function addFormRow(formType, container, countField) {#}
+{#        const rows = document.querySelectorAll(`#${container} .form-row`);#}
+{#        const index = rows.length;#}
+{##}
+{#        // Update the count field#}
+{#        document.getElementById(countField).value = index + 1;#}
+{##}
+{#        // Show loading indicator#}
+{#        const addButton = document.querySelector(`button[onclick="addFormRow('${formType}', '${container}', '${countField}')"]`);#}
+{#        if (addButton) {#}
+{#            const originalHTML = addButton.innerHTML;#}
+{#            addButton.innerHTML = `<span class="loading loading-spinner loading-xs"></span> Adding...`;#}
+{#            addButton.disabled = true;#}
+{##}
+{#            // Make HTMX request to add a new row#}
+{#            htmx.ajax('GET', `/resumes/htmx/add-form-row/?form_type=${formType}&index=${index}`, {#}
+{#                target: `#${container}`,#}
+{#                swap: 'beforeend',#}
+{#                complete: function() {#}
+{#                    // Restore button#}
+{#                    addButton.innerHTML = originalHTML;#}
+{#                    addButton.disabled = false;#}
+{##}
+{#                    // Scroll to the new row with smooth animation#}
+{#                    const newRow = document.querySelector(`#${container} .form-row:last-child`);#}
+{#                    if (newRow) {#}
+{#                        newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#                        newRow.classList.add('highlight-new');#}
+{#                        setTimeout(() => {#}
+{#                            newRow.classList.remove('highlight-new');#}
+{#                        }, 1500);#}
+{#                    }#}
+{#                }#}
+{#            });#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to remove a form row#}
+{#    function removeFormRow(button, container, countField) {#}
+{#        const row = button.closest('.form-row');#}
+{##}
+{#        // Add fade-out animation#}
+{#        row.classList.add('fade-out');#}
+{##}
+{#        // Remove after animation completes#}
+{#        setTimeout(() => {#}
+{#            row.remove();#}
+{##}
+{#            // Update indexes of remaining rows#}
+{#            const rows = document.querySelectorAll(`#${container} .form-row`);#}
+{#            document.getElementById(countField).value = rows.length;#}
+{##}
+{#            // Update the indexes in the form fields#}
+{#            rows.forEach((row, index) => {#}
+{#                updateFormRowIndex(row, index);#}
+{#            });#}
+{#        }, 300);#}
+{#    }#}
+{##}
+{#    // Function to update form field indexes#}
+{#    function updateFormRowIndex(row, newIndex) {#}
+{#        row.querySelectorAll('input, select, textarea').forEach(field => {#}
+{#            const name = field.getAttribute('name');#}
+{#            if (name) {#}
+{#                // Extract the field name pattern (e.g., skill_name_X)#}
+{#                const pattern = name.replace(/\_\d+($|\_)/, '_INDEX$1');#}
+{#                // Replace INDEX with the new index#}
+{#                const newName = pattern.replace('INDEX', newIndex);#}
+{#                field.setAttribute('name', newName);#}
+{##}
+{#                // Also update id if present#}
+{#                const id = field.getAttribute('id');#}
+{#                if (id) {#}
+{#                    const idPattern = id.replace(/\_\d+($|\_)/, '_INDEX$1');#}
+{#                    const newId = idPattern.replace('INDEX', newIndex);#}
+{#                    field.setAttribute('id', newId);#}
+{#                }#}
+{##}
+{#                // Update for labels#}
+{#                const labels = row.querySelectorAll(`label[for="${id}"]`);#}
+{#                labels.forEach(label => {#}
+{#                    label.setAttribute('for', newId);#}
+{#                });#}
+{#            }#}
+{#        });#}
+{#    }#}
+{##}
+{#    // Function to add a bullet point to an experience or project#}
+{#    function addBulletPoint(button, parentType, parentIndex) {#}
+{#        const bulletContainer = button.closest('.bullet-points-container').querySelector('.bullet-points');#}
+{#        const bulletCount = bulletContainer.querySelectorAll('.bullet-point-row').length;#}
+{##}
+{#        // Show loading indicator#}
+{#        const originalHTML = button.innerHTML;#}
+{#        button.innerHTML = `<span class="loading loading-spinner loading-xs"></span>`;#}
+{#        button.disabled = true;#}
+{##}
+{#        htmx.ajax('GET', `/resumes/htmx/add-form-row/?form_type=bullet_point&parent_index=${parentIndex}&index=${bulletCount}`, {#}
+{#            target: bulletContainer,#}
+{#            swap: 'beforeend',#}
+{#            complete: function() {#}
+{#                // Restore button#}
+{#                button.innerHTML = originalHTML;#}
+{#                button.disabled = false;#}
+{##}
+{#                // Scroll to new bullet point#}
+{#                const newBullet = bulletContainer.querySelector('.bullet-point-row:last-child');#}
+{#                if (newBullet) {#}
+{#                    newBullet.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#                    newBullet.classList.add('highlight-new');#}
+{#                    setTimeout(() => {#}
+{#                        newBullet.classList.remove('highlight-new');#}
+{#                    }, 1500);#}
+{#                }#}
+{#            }#}
+{#        });#}
+{##}
+{#        // Update hidden count field#}
+{#        const countField = button.closest('.form-row').querySelector(`input[name="${parentType}_${parentIndex}_bullet_count"]`);#}
+{#        countField.value = parseInt(countField.value) + 1;#}
+{#    }#}
+{#</script>#}
+{##}
+{#<style>#}
+{#    /* Highlight animation for new elements */#}
+{#    .highlight-new {#}
+{#        animation: highlight-pulse 1.5s ease-in-out;#}
+{#    }#}
+{##}
+{#    @keyframes highlight-pulse {#}
+{#        0% { background-color: rgba(79, 70, 229, 0.1); }#}
+{#        50% { background-color: rgba(79, 70, 229, 0.2); }#}
+{#        100% { background-color: transparent; }#}
+{#    }#}
+{##}
+{#    /* Fade out animation for removed elements */#}
+{#    .fade-out {#}
+{#        opacity: 0;#}
+{#        transform: translateY(-10px);#}
+{#        transition: opacity 0.3s ease, transform 0.3s ease;#}
+{#    }#}
+{##}
+{#    /* Progress bar animation */#}
+{#    .animate-progress {#}
+{#        transition: width 1s ease-in-out;#}
+{#    }#}
+{##}
+{#    /* For scrollable step indicators */#}
+{#    .steps {#}
+{#        scrollbar-width: none; /* Firefox */#}
+{#    }#}
+{##}
+{#    .steps::-webkit-scrollbar {#}
+{#        display: none; /* Chrome, Safari, Edge */#}
+{#    }#}
+{#</style>#}
+{#{% endblock %}#}
+{##}
+{#{% extends 'resumes/base.html' %}#}
+{#{% load resume_extras %}#}
+{#{% load static %}#}
+{#{% load widget_tweaks %}#}
+{#{% block title %}Resume Builder - Step {{ step }} of {{ total_steps }}{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#<div class="container mx-auto px-4 py-10">#}
+{#    <div class="mb-12">#}
+{#        <!-- Header with icon -->#}
+{#        <div class="flex flex-col items-center mb-8">#}
+{#            <div class="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mb-4">#}
+{#                <i class="fa-solid fa-file-pen text-primary text-2xl"></i>#}
+{#            </div>#}
+{#            <h1 class="text-2xl md:text-3xl font-bold text-center">Create Your Professional Resume</h1>#}
+{#            <p class="text-gray-600 mt-2 text-center max-w-2xl">#}
+{#                Step {{ step }} of {{ total_steps }}: <span class="step-title-text">{% block step_name %}{% endblock %}</span>#}
+{#            </p>#}
+{#        </div>#}
+{##}
+{#        <!-- Progress Bar -->#}
+{#        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-8 shadow-inner overflow-hidden">#}
+{#            <div class="bg-primary h-3 rounded-full transition-all duration-500 ease-in-out" style="width: {{ step|floatformat:0|mul:100|div:total_steps }}%"></div>#}
+{#        </div>#}
+{##}
+{#        <!-- Step Indicator -->#}
+{#        <div class="overflow-x-auto pb-4">#}
+{#            <ul class="steps steps-horizontal w-full min-w-max">#}
+{#                {% for i in total_steps|get_range %}#}
+{#                    <li class="step {% if i < step %}step-primary{% endif %} {% if i == step %}font-medium{% endif %}">#}
+{#                        {% if i < step %}#}
+{#                            <a href="{% url 'job_portal:resume_wizard' step=i %}" class="text-xs md:text-xs hover:text-primary transition-colors duration-200">#}
+{#                                {% if i == 1 %}Personal Details#}
+{#                                {% elif i == 2 %}Professional Summary#}
+{#                                {% elif i == 3 %}Skills#}
+{#                                {% elif i == 4 %}Work Experience#}
+{#                                {% elif i == 5 %}Education#}
+{#                                {% elif i == 6 %}Projects#}
+{#                                {% elif i == 7 %}Certifications#}
+{#                                {% elif i == 8 %}Languages#}
+{#                                {% elif i == 9 %}Additional Sections#}
+{#                                {% endif %}#}
+{#                            </a>#}
+{#                        {% else %}#}
+{#                            <span class="text-xs md:text-xs">#}
+{#                                {% if i == 1 %}Personal Details#}
+{#                                {% elif i == 2 %}Professional Summary#}
+{#                                {% elif i == 3 %}Skills#}
+{#                                {% elif i == 4 %}Work Experience#}
+{#                                {% elif i == 5 %}Education#}
+{#                                {% elif i == 6 %}Projects#}
+{#                                {% elif i == 7 %}Certifications#}
+{#                                {% elif i == 8 %}Languages#}
+{#                                {% elif i == 9 %}Additional Sections#}
+{#                                {% endif %}#}
+{#                            </span>#}
+{#                        {% endif %}#}
+{#                    </li>#}
+{#                {% endfor %}#}
+{#            </ul>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Current Step Content -->#}
+{#    <div class="card bg-base-100 shadow-xl rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">#}
+{#        <div class="card-body p-8">#}
+{#            <h2 class="card-title text-xl md:text-2xl mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">#}
+{#                {% block step_icon %}#}
+{#                    {% if step == 1 %}<i class="fa-solid fa-user-circle mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 2 %}<i class="fa-solid fa-briefcase mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 3 %}<i class="fa-solid fa-graduation-cap mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 4 %}<i class="fa-solid fa-code mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 5 %}<i class="fa-solid fa-diagram-project mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 6 %}<i class="fa-solid fa-diagram-project mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 7 %}<i class="fa-solid fa-diagram-project mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 8 %}<i class="fa-solid fa-diagram-project mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 9 %}<i class="fa-solid fa-diagram-project mr-3 text-primary opacity-80"></i>#}
+{#                    {% else %}<i class="fa-solid fa-clipboard-list mr-3 text-primary opacity-80"></i>#}
+{#                    {% endif %}#}
+{#                {% endblock %}#}
+{#                {% block step_title %}{% endblock %}#}
+{#            </h2>#}
+{##}
+{#            <!-- Step Content -->#}
+{#            <div class="space-y-6">#}
+{#                {% block step_content %}{% endblock %}#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Preview Button -->#}
+{#    <div class="mt-10 text-center">#}
+{#        <button id="open-preview-modal" type="button" class="btn btn-primary">#}
+{#            <i class="fa-solid fa-eye mr-2"></i> Preview Your Resume#}
+{#        </button>#}
+{#    </div>#}
+{##}
+{#    <!-- Resume Preview Modal -->#}
+{#    <div id="resumePreviewModal" class="modal">#}
+{#        <div class="modal-box w-11/12 max-w-5xl p-0 overflow-hidden rounded-xl">#}
+{#            <div class="bg-primary p-4 text-white flex justify-between items-center">#}
+{#                <h3 class="font-bold text-lg flex items-center">#}
+{#                    <i class="fa-solid fa-file-alt mr-2"></i>#}
+{#                    <span>Resume Preview</span>#}
+{#                </h3>#}
+{#                <button class="btn btn-sm btn-circle btn-ghost text-white" onclick="closeResumePreviewModal()">#}
+{#                    <i class="fa-solid fa-times"></i>#}
+{#                </button>#}
+{#            </div>#}
+{##}
+{#            <div id="resume-preview" class="h-[70vh] overflow-y-auto p-0 bg-white">#}
+{#                <!-- Preview content will be loaded here -->#}
+{#                <div class="flex flex-col justify-center items-center h-full text-gray-400">#}
+{#                    <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">#}
+{#                        <i class="fa-solid fa-file-lines text-2xl"></i>#}
+{#                    </div>#}
+{#                    <p class="text-center max-w-md p-4">Your resume preview will update as you complete each section. Continue filling out the form to see your resume take shape.</p>#}
+{#                    <button id="refresh-preview" class="btn btn-outline btn-primary btn-sm mt-4">#}
+{#                        <i class="fa-solid fa-sync-alt mr-2"></i> Refresh Preview#}
+{#                    </button>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <div class="border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end bg-base-100">#}
+{#                <button class="btn btn-outline" onclick="closeResumePreviewModal()">#}
+{#                    Close Preview#}
+{#                </button>#}
+{#            </div>#}
+{#        </div>#}
+{#        <div class="modal-backdrop bg-black/50" onclick="closeResumePreviewModal()"></div>#}
+{#    </div>#}
+{##}
+{#    <!-- Navigation Buttons -->#}
+{#    <div class="flex justify-between mt-8" >#}
+{#        {% if step > 1 %}#}
+{#        <a href="{% url 'job_portal:resume_wizard' step=step|add:'-1' %}" class="btn btn-primary">#}
+{#            <i class="fa-solid fa-chevron-left mr-2 "></i> Previous Step#}
+{#        </a>#}
+{#        {% else %}#}
+{#        <div></div> <!-- Empty div to maintain spacing -->#}
+{#        {% endif %}#}
+{##}
+{#        {% if step < total_steps %}#}
+{#        <button type="submit" form="resume-form" class="btn btn-primary">#}
+{#            Save & Continue <i class="fa-solid fa-chevron-right ml-2"></i>#}
+{#        </button>#}
+{#        {% else %}#}
+{#        <button type="submit" form="resume-form" class="btn btn-success">#}
+{#            <i class="fa-solid fa-check mr-2"></i> Complete Resume#}
+{#        </button>#}
+{#        {% endif %}#}
+{#    </div>#}
+{#</div>#}
+{#{% endblock %}#}
+{##}
+{#{% block extra_js %}#}
+{#<!-- HTMX for dynamic form handling -->#}
+{#<script src="https://unpkg.com/htmx.org@1.9.0"></script>#}
+{##}
+{#<script>#}
+{#    // Function to toggle end date based on "is current" checkbox#}
+{#    function toggleEndDate(checkbox) {#}
+{#        const row = checkbox.closest('.form-row');#}
+{#        const endDateField = row.querySelector('[name$="end_date"]');#}
+{#        const endDateContainer = row.querySelector('.end-date-container');#}
+{##}
+{#        if (checkbox.checked) {#}
+{#            endDateField.disabled = true;#}
+{#            endDateField.value = '';#}
+{#            if (endDateContainer) {#}
+{#                endDateContainer.classList.add('opacity-50');#}
+{#            }#}
+{#        } else {#}
+{#            endDateField.disabled = false;#}
+{#            if (endDateContainer) {#}
+{#                endDateContainer.classList.remove('opacity-50');#}
+{#            }#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Initialize "is current" checkboxes on page load#}
+{#    document.addEventListener('DOMContentLoaded', function() {#}
+{#        // Initialize checkboxes#}
+{#        document.querySelectorAll('input[type="checkbox"][name$="is_current"]').forEach(function(checkbox) {#}
+{#            toggleEndDate(checkbox);#}
+{#        });#}
+{##}
+{#        // Add animation class after page load#}
+{#        setTimeout(() => {#}
+{#            const progressBar = document.querySelector('.progress-bar');#}
+{#            if (progressBar) {#}
+{#                progressBar.classList.add('animate-progress');#}
+{#            }#}
+{#        }, 300);#}
+{##}
+{#        // Setup open modal button#}
+{#        const openModalBtn = document.getElementById('open-preview-modal');#}
+{#        if (openModalBtn) {#}
+{#            openModalBtn.addEventListener('click', openResumePreviewModal);#}
+{#        }#}
+{##}
+{#        // Setup refresh button#}
+{#        const refreshBtn = document.getElementById('refresh-preview');#}
+{#        if (refreshBtn) {#}
+{#            refreshBtn.addEventListener('click', refreshResumePreview);#}
+{#        }#}
+{#    });#}
+{##}
+{#    // Function to open the preview modal#}
+{#    function openResumePreviewModal() {#}
+{#        const modal = document.getElementById('resumePreviewModal');#}
+{#        if (modal) {#}
+{#            modal.classList.add('modal-open');#}
+{#            document.body.style.overflow = 'hidden';#}
+{#            // Load preview content#}
+{#            refreshResumePreview();#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to close the preview modal#}
+{#    function closeResumePreviewModal() {#}
+{#        const modal = document.getElementById('resumePreviewModal');#}
+{#        if (modal) {#}
+{#            modal.classList.remove('modal-open');#}
+{#            document.body.style.overflow = 'auto';#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to refresh resume preview#}
+{#    function refreshResumePreview() {#}
+{#        const previewContainer = document.getElementById('resume-preview');#}
+{#        if (previewContainer) {#}
+{#            // Show loading spinner#}
+{#            previewContainer.innerHTML = `#}
+{#                <div class="flex flex-col items-center justify-center h-full">#}
+{#                    <span class="loading loading-spinner loading-lg text-primary mb-4"></span>#}
+{#                    <p>Generating preview...</p>#}
+{#                </div>#}
+{#            `;#}
+{##}
+{#            // Get form data#}
+{#            const form = document.getElementById('resume-form');#}
+{#            let formData = new FormData();#}
+{##}
+{#            if (form) {#}
+{#                formData = new FormData(form);#}
+{#            }#}
+{##}
+{#            // Add all form fields to formData#}
+{#            const allInputs = document.querySelectorAll('input, select, textarea');#}
+{#            allInputs.forEach(input => {#}
+{#                if (input.name && !formData.has(input.name)) {#}
+{#                    if (input.type === 'checkbox') {#}
+{#                        formData.append(input.name, input.checked ? 'on' : '');#}
+{#                    } else if (input.type !== 'file' || input.files.length > 0) {#}
+{#                        formData.append(input.name, input.value);#}
+{#                    }#}
+{#                }#}
+{#            });#}
+{##}
+{#            // Process dynamic form data like experiences, education, skills, etc.#}
+{#            try {#}
+{#                // Process skill fields#}
+{#                const skillRows = document.querySelectorAll('#skills-container .form-row');#}
+{#                if (skillRows.length > 0) {#}
+{#                    formData.append('skill_count', skillRows.length);#}
+{#                }#}
+{##}
+{#                // Process experience fields#}
+{#                const expRows = document.querySelectorAll('#experience-container .form-row');#}
+{#                if (expRows.length > 0) {#}
+{#                    formData.append('experience_count', expRows.length);#}
+{#                    expRows.forEach((row, index) => {#}
+{#                        // Process bullet points for each experience#}
+{#                        const bulletRows = row.querySelectorAll('.bullet-point-row');#}
+{#                        if (bulletRows.length > 0) {#}
+{#                            formData.append(`bullet_count_${index}`, bulletRows.length);#}
+{#                        }#}
+{#                    });#}
+{#                }#}
+{##}
+{#                // Process education fields#}
+{#                const eduRows = document.querySelectorAll('#education-container .form-row');#}
+{#                if (eduRows.length > 0) {#}
+{#                    formData.append('education_count', eduRows.length);#}
+{#                }#}
+{##}
+{#                // Process project fields#}
+{#                const projRows = document.querySelectorAll('#projects-container .form-row');#}
+{#                if (projRows.length > 0) {#}
+{#                    formData.append('projects_count', projRows.length);#}
+{#                    projRows.forEach((row, index) => {#}
+{#                        // Process bullet points for each project#}
+{#                        const bulletRows = row.querySelectorAll('.bullet-point-row');#}
+{#                        if (bulletRows.length > 0) {#}
+{#                            formData.append(`project_${index}_bullet_count`, bulletRows.length);#}
+{#                        }#}
+{#                    });#}
+{#                }#}
+{#            } catch (e) {#}
+{#                console.error("Error preparing form data:", e);#}
+{#            }#}
+{##}
+{#            // Fetch the preview from our endpoint#}
+{#            fetch("{% url 'job_portal:preview_current_resume' %}", {#}
+{#                method: 'POST',#}
+{#                body: formData,#}
+{#                headers: {#}
+{#                    'X-Requested-With': 'XMLHttpRequest',#}
+{#                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''#}
+{#                }#}
+{#            })#}
+{#            .then(response => {#}
+{#                if (!response.ok) {#}
+{#                    throw new Error(`HTTP error! Status: ${response.status}`);#}
+{#                }#}
+{#                return response.text();#}
+{#            })#}
+{#            .then(html => {#}
+{#                previewContainer.innerHTML = `<div class="p-4">${html}</div>`;#}
+{#            })#}
+{#            .catch(error => {#}
+{#                console.error("Preview error:", error);#}
+{#                previewContainer.innerHTML = `#}
+{#                    <div class="flex flex-col items-center justify-center h-full p-8">#}
+{#                        <p class="text-red-500 mb-2">Failed to load preview: ${error.message}</p>#}
+{#                        <button class="btn btn-sm btn-outline btn-primary mt-4" onclick="refreshResumePreview()">#}
+{#                            <i class="fa-solid fa-sync-alt mr-2"></i> Try Again#}
+{#                        </button>#}
+{#                    </div>#}
+{#                `;#}
+{#            });#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to add a new form row#}
+{#    function addFormRow(formType, container, countField) {#}
+{#        const rows = document.querySelectorAll(`#${container} .form-row`);#}
+{#        const index = rows.length;#}
+{##}
+{#        // Update the count field#}
+{#        document.getElementById(countField).value = index + 1;#}
+{##}
+{#        // Show loading indicator#}
+{#        const addButton = document.querySelector(`button[onclick="addFormRow('${formType}', '${container}', '${countField}')"]`);#}
+{#        if (addButton) {#}
+{#            const originalHTML = addButton.innerHTML;#}
+{#            addButton.innerHTML = `<span class="loading loading-spinner loading-xs"></span> Adding...`;#}
+{#            addButton.disabled = true;#}
+{##}
+{#            // Make HTMX request to add a new row#}
+{#            htmx.ajax('GET', `/resumes/htmx/add-form-row/?form_type=${formType}&index=${index}`, {#}
+{#                target: `#${container}`,#}
+{#                swap: 'beforeend',#}
+{#                complete: function() {#}
+{#                    // Restore button#}
+{#                    addButton.innerHTML = originalHTML;#}
+{#                    addButton.disabled = false;#}
+{##}
+{#                    // Scroll to the new row with smooth animation#}
+{#                    const newRow = document.querySelector(`#${container} .form-row:last-child`);#}
+{#                    if (newRow) {#}
+{#                        newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#                        newRow.classList.add('highlight-new');#}
+{#                        setTimeout(() => {#}
+{#                            newRow.classList.remove('highlight-new');#}
+{#                        }, 1500);#}
+{#                    }#}
+{#                }#}
+{#            });#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to remove a form row#}
+{#    function removeFormRow(button, container, countField) {#}
+{#        const row = button.closest('.form-row');#}
+{##}
+{#        // Add fade-out animation#}
+{#        row.classList.add('fade-out');#}
+{##}
+{#        // Remove after animation completes#}
+{#        setTimeout(() => {#}
+{#            row.remove();#}
+{##}
+{#            // Update indexes of remaining rows#}
+{#            const rows = document.querySelectorAll(`#${container} .form-row`);#}
+{#            document.getElementById(countField).value = rows.length;#}
+{##}
+{#            // Update the indexes in the form fields#}
+{#            rows.forEach((row, index) => {#}
+{#                updateFormRowIndex(row, index);#}
+{#            });#}
+{#        }, 300);#}
+{#    }#}
+{##}
+{#    // Function to update form field indexes#}
+{#    function updateFormRowIndex(row, newIndex) {#}
+{#        row.querySelectorAll('input, select, textarea').forEach(field => {#}
+{#            const name = field.getAttribute('name');#}
+{#            if (name) {#}
+{#                // Extract the field name pattern (e.g., skill_name_X)#}
+{#                const pattern = name.replace(/\_\d+($|\_)/, '_INDEX$1');#}
+{#                // Replace INDEX with the new index#}
+{#                const newName = pattern.replace('INDEX', newIndex);#}
+{#                field.setAttribute('name', newName);#}
+{##}
+{#                // Also update id if present#}
+{#                const id = field.getAttribute('id');#}
+{#                if (id) {#}
+{#                    const idPattern = id.replace(/\_\d+($|\_)/, '_INDEX$1');#}
+{#                    const newId = idPattern.replace('INDEX', newIndex);#}
+{#                    field.setAttribute('id', newId);#}
+{#                }#}
+{##}
+{#                // Update for labels#}
+{#                const labels = row.querySelectorAll(`label[for="${id}"]`);#}
+{#                labels.forEach(label => {#}
+{#                    label.setAttribute('for', newId);#}
+{#                });#}
+{#            }#}
+{#        });#}
+{#    }#}
+{##}
+{#    // Function to add a bullet point to an experience or project#}
+{#    function addBulletPoint(button, parentType, parentIndex) {#}
+{#        const bulletContainer = button.closest('.bullet-points-container').querySelector('.bullet-points');#}
+{#        const bulletCount = bulletContainer.querySelectorAll('.bullet-point-row').length;#}
+{##}
+{#        // Show loading indicator#}
+{#        const originalHTML = button.innerHTML;#}
+{#        button.innerHTML = `<span class="loading loading-spinner loading-xs"></span>`;#}
+{#        button.disabled = true;#}
+{##}
+{#        htmx.ajax('GET', `/resumes/htmx/add-form-row/?form_type=bullet_point&parent_index=${parentIndex}&index=${bulletCount}`, {#}
+{#            target: bulletContainer,#}
+{#            swap: 'beforeend',#}
+{#            complete: function() {#}
+{#                // Restore button#}
+{#                button.innerHTML = originalHTML;#}
+{#                button.disabled = false;#}
+{##}
+{#                // Scroll to new bullet point#}
+{#                const newBullet = bulletContainer.querySelector('.bullet-point-row:last-child');#}
+{#                if (newBullet) {#}
+{#                    newBullet.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#                    newBullet.classList.add('highlight-new');#}
+{#                    setTimeout(() => {#}
+{#                        newBullet.classList.remove('highlight-new');#}
+{#                    }, 1500);#}
+{#                }#}
+{#            }#}
+{#        });#}
+{##}
+{#        // Update hidden count field#}
+{#        const countField = button.closest('.form-row').querySelector(`input[name="${parentType}_${parentIndex}_bullet_count"]`);#}
+{#        countField.value = parseInt(countField.value) + 1;#}
+{#    }#}
+{#</script>#}
+{##}
+{#<style>#}
+{#    /* Highlight animation for new elements */#}
+{#    .highlight-new {#}
+{#        animation: highlight-pulse 1.5s ease-in-out;#}
+{#    }#}
+{##}
+{#    @keyframes highlight-pulse {#}
+{#        0% { background-color: rgba(79, 70, 229, 0.1); }#}
+{#        50% { background-color: rgba(79, 70, 229, 0.2); }#}
+{#        100% { background-color: transparent; }#}
+{#    }#}
+{##}
+{#    /* Fade out animation for removed elements */#}
+{#    .fade-out {#}
+{#        opacity: 0;#}
+{#        transform: translateY(-10px);#}
+{#        transition: opacity 0.3s ease, transform 0.3s ease;#}
+{#    }#}
+{##}
+{#    /* Progress bar animation */#}
+{#    .animate-progress {#}
+{#        transition: width 1s ease-in-out;#}
+{#    }#}
+{##}
+{#    /* For scrollable step indicators */#}
+{#    .steps {#}
+{#        scrollbar-width: none; /* Firefox */#}
+{#    }#}
+{##}
+{#    .steps::-webkit-scrollbar {#}
+{#        display: none; /* Chrome, Safari, Edge */#}
+{#    }#}
+{#</style>#}
+{#{% endblock %}#}
+{##}
+{#{% extends 'resumes/base.html' %}#}
+{#{% load resume_extras %}#}
+{#{% load static %}#}
+{#{% load widget_tweaks %}#}
+{#{% block title %}Resume Builder - Step {{ step }} of {{ total_steps }}{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#<div class="container mx-auto px-4 py-10">#}
+{#    <div class="mb-12">#}
+{#        <!-- Header with icon -->#}
+{#        <div class="flex flex-col items-center mb-8">#}
+{#            <div class="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mb-4">#}
+{#                <i class="fa-solid fa-file-pen text-primary text-2xl"></i>#}
+{#            </div>#}
+{#            <h1 class="text-2xl md:text-3xl font-bold text-center">Create Your Professional Resume</h1>#}
+{#            <p class="text-gray-600 mt-2 text-center max-w-2xl">#}
+{#                Step {{ step }} of {{ total_steps }}: <span class="step-title-text">{% block step_name %}{% endblock %}</span>#}
+{#            </p>#}
+{#        </div>#}
+{##}
+{#        <!-- Progress Bar -->#}
+{#        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-8 shadow-inner overflow-hidden">#}
+{#            <div class="bg-primary h-3 rounded-full transition-all duration-500 ease-in-out" style="width: {{ step|floatformat:0|mul:100|div:total_steps }}%"></div>#}
+{#        </div>#}
+{##}
+{#        <!-- Step Indicator -->#}
+{#        <div class="overflow-x-auto pb-4">#}
+{#            <ul class="steps steps-horizontal w-full min-w-max">#}
+{#                {% for i in total_steps|get_range %}#}
+{#                    <li class="step {% if i < step %}step-primary{% endif %} {% if i == step %}font-medium{% endif %}">#}
+{#                        {% if i < step %}#}
+{#                            <a href="{% url 'job_portal:resume_wizard' step=i %}" class="text-xs md:text-xs hover:text-primary transition-colors duration-200">#}
+{#                                {% if i == 1 %}Personal Details#}
+{#                                {% elif i == 2 %}Professional Summary#}
+{#                                {% elif i == 3 %}Skills#}
+{#                                {% elif i == 4 %}Work Experience#}
+{#                                {% elif i == 5 %}Education#}
+{#                                {% elif i == 6 %}Projects#}
+{#                                {% elif i == 7 %}Certifications#}
+{#                                {% elif i == 8 %}Languages#}
+{#                                {% elif i == 9 %}Additional Sections#}
+{#                                {% endif %}#}
+{#                            </a>#}
+{#                        {% else %}#}
+{#                            <span class="text-xs md:text-xs">#}
+{#                                {% if i == 1 %}Personal Details#}
+{#                                {% elif i == 2 %}Professional Summary#}
+{#                                {% elif i == 3 %}Skills#}
+{#                                {% elif i == 4 %}Work Experience#}
+{#                                {% elif i == 5 %}Education#}
+{#                                {% elif i == 6 %}Projects#}
+{#                                {% elif i == 7 %}Certifications#}
+{#                                {% elif i == 8 %}Languages#}
+{#                                {% elif i == 9 %}Additional Sections#}
+{#                                {% endif %}#}
+{#                            </span>#}
+{#                        {% endif %}#}
+{#                    </li>#}
+{#                {% endfor %}#}
+{#            </ul>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Current Step Content -->#}
+{#    <div class="card bg-base-100 shadow-xl rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">#}
+{#        <div class="card-body p-8">#}
+{#            <h2 class="card-title text-xl md:text-2xl mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">#}
+{#                {% block step_icon %}#}
+{#                    {% if step == 1 %}<i class="fa-solid fa-user-circle mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 2 %}<i class="fa-solid fa-briefcase mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 3 %}<i class="fa-solid fa-graduation-cap mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 4 %}<i class="fa-solid fa-code mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 5 %}<i class="fa-solid fa-diagram-project mr-3 text-primary opacity-80"></i>#}
+{#                    {% else %}<i class="fa-solid fa-clipboard-list mr-3 text-primary opacity-80"></i>#}
+{#                    {% endif %}#}
+{#                {% endblock %}#}
+{#                {% block step_title %}{% endblock %}#}
+{#            </h2>#}
+{##}
+{#            <!-- Step Content -->#}
+{#            <div class="space-y-6">#}
+{#                {% block step_content %}{% endblock %}#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Preview Button -->#}
+{#    <div class="mt-10 text-center">#}
+{#        <button id="open-preview-modal" type="button" class="btn btn-primary">#}
+{#            <i class="fa-solid fa-eye mr-2"></i> Preview Your Resume#}
+{#        </button>#}
+{#    </div>#}
+{##}
+{#    <!-- Resume Preview Modal -->#}
+{#    <div id="resumePreviewModal" class="modal">#}
+{#        <div class="modal-box w-11/12 max-w-5xl p-0 overflow-hidden rounded-xl">#}
+{#            <div class="bg-primary p-4 text-white flex justify-between items-center">#}
+{#                <h3 class="font-bold text-lg flex items-center">#}
+{#                    <i class="fa-solid fa-file-alt mr-2"></i>#}
+{#                    <span>Resume Preview</span>#}
+{#                </h3>#}
+{#                <button class="btn btn-sm btn-circle btn-ghost text-white" onclick="closeResumePreviewModal()">#}
+{#                    <i class="fa-solid fa-times"></i>#}
+{#                </button>#}
+{#            </div>#}
+{##}
+{#            <div id="resume-preview" class="h-[70vh] overflow-y-auto p-0 bg-white">#}
+{#                <!-- Preview content will be loaded here -->#}
+{#                <div class="flex flex-col justify-center items-center h-full text-gray-400">#}
+{#                    <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">#}
+{#                        <i class="fa-solid fa-file-lines text-2xl"></i>#}
+{#                    </div>#}
+{#                    <p class="text-center max-w-md p-4">Your resume preview will update as you complete each section. Continue filling out the form to see your resume take shape.</p>#}
+{#                    <button id="refresh-preview" class="btn btn-outline btn-primary btn-sm mt-4">#}
+{#                        <i class="fa-solid fa-sync-alt mr-2"></i> Refresh Preview#}
+{#                    </button>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <div class="border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end bg-base-100">#}
+{#                <button class="btn btn-outline" onclick="closeResumePreviewModal()">#}
+{#                    Close Preview#}
+{#                </button>#}
+{#            </div>#}
+{#        </div>#}
+{#        <div class="modal-backdrop bg-black/50" onclick="closeResumePreviewModal()"></div>#}
+{#    </div>#}
+{##}
+{#    <!-- Navigation Buttons -->#}
+{#    <div class="flex justify-between mt-8" >#}
+{#        {% if step > 1 %}#}
+{#        <a href="{% url 'job_portal:resume_wizard' step=step|add:'-1' %}" class="btn btn-primary">#}
+{#            <i class="fa-solid fa-chevron-left mr-2 "></i> Previous Step#}
+{#        </a>#}
+{#        {% else %}#}
+{#        <div></div> <!-- Empty div to maintain spacing -->#}
+{#        {% endif %}#}
+{##}
+{#        {% if step < total_steps %}#}
+{#        <button type="submit" form="resume-form" class="btn btn-primary">#}
+{#            Save & Continue <i class="fa-solid fa-chevron-right ml-2"></i>#}
+{#        </button>#}
+{#        {% else %}#}
+{#        <button type="submit" form="resume-form" class="btn btn-success">#}
+{#            <i class="fa-solid fa-check mr-2"></i> Complete Resume#}
+{#        </button>#}
+{#        {% endif %}#}
+{#    </div>#}
+{#</div>#}
+{#{% endblock %}#}
+{##}
+{#{% block extra_js %}#}
+{#<!-- HTMX for dynamic form handling -->#}
+{#<script src="https://unpkg.com/htmx.org@1.9.0"></script>#}
+{##}
+{#<script>#}
+{#    // Function to toggle end date based on "is current" checkbox#}
+{#    function toggleEndDate(checkbox) {#}
+{#        const row = checkbox.closest('.form-row');#}
+{#        const endDateField = row.querySelector('[name$="end_date"]');#}
+{#        const endDateContainer = row.querySelector('.end-date-container');#}
+{##}
+{#        if (checkbox.checked) {#}
+{#            endDateField.disabled = true;#}
+{#            endDateField.value = '';#}
+{#            if (endDateContainer) {#}
+{#                endDateContainer.classList.add('opacity-50');#}
+{#            }#}
+{#        } else {#}
+{#            endDateField.disabled = false;#}
+{#            if (endDateContainer) {#}
+{#                endDateContainer.classList.remove('opacity-50');#}
+{#            }#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Initialize "is current" checkboxes on page load#}
+{#    document.addEventListener('DOMContentLoaded', function() {#}
+{#        // Initialize checkboxes#}
+{#        document.querySelectorAll('input[type="checkbox"][name$="is_current"]').forEach(function(checkbox) {#}
+{#            toggleEndDate(checkbox);#}
+{#        });#}
+{##}
+{#        // Add animation class after page load#}
+{#        setTimeout(() => {#}
+{#            const progressBar = document.querySelector('.progress-bar');#}
+{#            if (progressBar) {#}
+{#                progressBar.classList.add('animate-progress');#}
+{#            }#}
+{#        }, 300);#}
+{##}
+{#        // Setup open modal button#}
+{#        const openModalBtn = document.getElementById('open-preview-modal');#}
+{#        if (openModalBtn) {#}
+{#            openModalBtn.addEventListener('click', openResumePreviewModal);#}
+{#        }#}
+{##}
+{#        // Setup refresh button#}
+{#        const refreshBtn = document.getElementById('refresh-preview');#}
+{#        if (refreshBtn) {#}
+{#            refreshBtn.addEventListener('click', refreshResumePreview);#}
+{#        }#}
+{#    });#}
+{##}
+{#    // Function to open the preview modal#}
+{#    function openResumePreviewModal() {#}
+{#        const modal = document.getElementById('resumePreviewModal');#}
+{#        if (modal) {#}
+{#            modal.classList.add('modal-open');#}
+{#            document.body.style.overflow = 'hidden';#}
+{#            // Load preview content#}
+{#            refreshResumePreview();#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to close the preview modal#}
+{#    function closeResumePreviewModal() {#}
+{#        const modal = document.getElementById('resumePreviewModal');#}
+{#        if (modal) {#}
+{#            modal.classList.remove('modal-open');#}
+{#            document.body.style.overflow = 'auto';#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to refresh resume preview#}
+{#    function refreshResumePreview() {#}
+{#        const previewContainer = document.getElementById('resume-preview');#}
+{#        if (previewContainer) {#}
+{#            // Show loading spinner#}
+{#            previewContainer.innerHTML = `#}
+{#                <div class="flex flex-col items-center justify-center h-full">#}
+{#                    <span class="loading loading-spinner loading-lg text-primary mb-4"></span>#}
+{#                    <p>Generating preview...</p>#}
+{#                </div>#}
+{#            `;#}
+{##}
+{#            // Get form data#}
+{#            const form = document.getElementById('resume-form');#}
+{#            let formData = new FormData();#}
+{##}
+{#            if (form) {#}
+{#                formData = new FormData(form);#}
+{#            }#}
+{##}
+{#            // Add all form fields to formData#}
+{#            const allInputs = document.querySelectorAll('input, select, textarea');#}
+{#            allInputs.forEach(input => {#}
+{#                if (input.name && !formData.has(input.name)) {#}
+{#                    if (input.type === 'checkbox') {#}
+{#                        formData.append(input.name, input.checked ? 'on' : '');#}
+{#                    } else if (input.type !== 'file' || input.files.length > 0) {#}
+{#                        formData.append(input.name, input.value);#}
+{#                    }#}
+{#                }#}
+{#            });#}
+{##}
+{#            // Process dynamic form data like experiences, education, skills, etc.#}
+{#            try {#}
+{#                // Process skill fields#}
+{#                const skillRows = document.querySelectorAll('#skills-container .form-row');#}
+{#                if (skillRows.length > 0) {#}
+{#                    formData.append('skills_count', skillRows.length);#}
+{#                }#}
+{##}
+{#                // Process experience fields#}
+{#                const expRows = document.querySelectorAll('#experience-container .form-row');#}
+{#                if (expRows.length > 0) {#}
+{#                    formData.append('experience_count', expRows.length);#}
+{#                    expRows.forEach((row, index) => {#}
+{#                        // Process bullet points for each experience#}
+{#                        const bulletRows = row.querySelectorAll('.bullet-point-row');#}
+{#                        if (bulletRows.length > 0) {#}
+{#                            formData.append(`experience_${index}_bullet_count`, bulletRows.length);#}
+{#                        }#}
+{#                    });#}
+{#                }#}
+{##}
+{#                // Process education fields#}
+{#                const eduRows = document.querySelectorAll('#education-container .form-row');#}
+{#                if (eduRows.length > 0) {#}
+{#                    formData.append('education_count', eduRows.length);#}
+{#                }#}
+{##}
+{#                // Process project fields#}
+{#                const projRows = document.querySelectorAll('#projects-container .form-row');#}
+{#                if (projRows.length > 0) {#}
+{#                    formData.append('projects_count', projRows.length);#}
+{#                    projRows.forEach((row, index) => {#}
+{#                        // Process bullet points for each project#}
+{#                        const bulletRows = row.querySelectorAll('.bullet-point-row');#}
+{#                        if (bulletRows.length > 0) {#}
+{#                            formData.append(`project_${index}_bullet_count`, bulletRows.length);#}
+{#                        }#}
+{#                    });#}
+{#                }#}
+{#            } catch (e) {#}
+{#                console.error("Error preparing form data:", e);#}
+{#            }#}
+{##}
+{#            // Fetch the preview from our endpoint#}
+{#            fetch("{% url 'job_portal:preview_current_resume' %}", {#}
+{#                method: 'POST',#}
+{#                body: formData,#}
+{#                headers: {#}
+{#                    'X-Requested-With': 'XMLHttpRequest',#}
+{#                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''#}
+{#                }#}
+{#            })#}
+{#            .then(response => {#}
+{#                if (!response.ok) {#}
+{#                    throw new Error(`HTTP error! Status: ${response.status}`);#}
+{#                }#}
+{#                return response.text();#}
+{#            })#}
+{#            .then(html => {#}
+{#                previewContainer.innerHTML = `<div class="p-4">${html}</div>`;#}
+{#            })#}
+{#            .catch(error => {#}
+{#                console.error("Preview error:", error);#}
+{#                previewContainer.innerHTML = `#}
+{#                    <div class="flex flex-col items-center justify-center h-full p-8">#}
+{#                        <p class="text-red-500 mb-2">Failed to load preview: ${error.message}</p>#}
+{#                        <button class="btn btn-sm btn-outline btn-primary mt-4" onclick="refreshResumePreview()">#}
+{#                            <i class="fa-solid fa-sync-alt mr-2"></i> Try Again#}
+{#                        </button>#}
+{#                    </div>#}
+{#                `;#}
+{#            });#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to add a new form row#}
+{#    function addFormRow(formType, container, countField) {#}
+{#        const rows = document.querySelectorAll(`#${container} .form-row`);#}
+{#        const index = rows.length;#}
+{##}
+{#        // Update the count field#}
+{#        document.getElementById(countField).value = index + 1;#}
+{##}
+{#        // Show loading indicator#}
+{#        const addButton = document.querySelector(`button[onclick="addFormRow('${formType}', '${container}', '${countField}')"]`);#}
+{#        if (addButton) {#}
+{#            const originalHTML = addButton.innerHTML;#}
+{#            addButton.innerHTML = `<span class="loading loading-spinner loading-xs"></span> Adding...`;#}
+{#            addButton.disabled = true;#}
+{##}
+{#            // Make HTMX request to add a new row#}
+{#            htmx.ajax('GET', `/resumes/htmx/add-form-row/?form_type=${formType}&index=${index}`, {#}
+{#                target: `#${container}`,#}
+{#                swap: 'beforeend',#}
+{#                complete: function() {#}
+{#                    // Restore button#}
+{#                    addButton.innerHTML = originalHTML;#}
+{#                    addButton.disabled = false;#}
+{##}
+{#                    // Scroll to the new row with smooth animation#}
+{#                    const newRow = document.querySelector(`#${container} .form-row:last-child`);#}
+{#                    if (newRow) {#}
+{#                        newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#                        newRow.classList.add('highlight-new');#}
+{#                        setTimeout(() => {#}
+{#                            newRow.classList.remove('highlight-new');#}
+{#                        }, 1500);#}
+{#                    }#}
+{#                }#}
+{#            });#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to remove a form row#}
+{#    function removeFormRow(button, container, countField) {#}
+{#        const row = button.closest('.form-row');#}
+{##}
+{#        // Add fade-out animation#}
+{#        row.classList.add('fade-out');#}
+{##}
+{#        // Remove after animation completes#}
+{#        setTimeout(() => {#}
+{#            row.remove();#}
+{##}
+{#            // Update indexes of remaining rows#}
+{#            const rows = document.querySelectorAll(`#${container} .form-row`);#}
+{#            document.getElementById(countField).value = rows.length;#}
+{##}
+{#            // Update the indexes in the form fields#}
+{#            rows.forEach((row, index) => {#}
+{#                updateFormRowIndex(row, index);#}
+{#            });#}
+{#        }, 300);#}
+{#    }#}
+{##}
+{#    // Function to update form field indexes#}
+{#    function updateFormRowIndex(row, newIndex) {#}
+{#        row.querySelectorAll('input, select, textarea').forEach(field => {#}
+{#            const name = field.getAttribute('name');#}
+{#            if (name) {#}
+{#                // Extract the field name pattern (e.g., skill_name_X)#}
+{#                const pattern = name.replace(/\_\d+($|\_)/, '_INDEX$1');#}
+{#                // Replace INDEX with the new index#}
+{#                const newName = pattern.replace('INDEX', newIndex);#}
+{#                field.setAttribute('name', newName);#}
+{##}
+{#                // Also update id if present#}
+{#                const id = field.getAttribute('id');#}
+{#                if (id) {#}
+{#                    const idPattern = id.replace(/\_\d+($|\_)/, '_INDEX$1');#}
+{#                    const newId = idPattern.replace('INDEX', newIndex);#}
+{#                    field.setAttribute('id', newId);#}
+{#                }#}
+{##}
+{#                // Update for labels#}
+{#                const labels = row.querySelectorAll(`label[for="${id}"]`);#}
+{#                labels.forEach(label => {#}
+{#                    label.setAttribute('for', newId);#}
+{#                });#}
+{#            }#}
+{#        });#}
+{#    }#}
+{##}
+{#    // Function to add a bullet point to an experience or project#}
+{#    function addBulletPoint(button, parentType, parentIndex) {#}
+{#        const bulletContainer = button.closest('.bullet-points-container').querySelector('.bullet-points');#}
+{#        const bulletCount = bulletContainer.querySelectorAll('.bullet-point-row').length;#}
+{##}
+{#        // Show loading indicator#}
+{#        const originalHTML = button.innerHTML;#}
+{#        button.innerHTML = `<span class="loading loading-spinner loading-xs"></span>`;#}
+{#        button.disabled = true;#}
+{##}
+{#        htmx.ajax('GET', `/resumes/htmx/add-form-row/?form_type=bullet_point&parent_index=${parentIndex}&index=${bulletCount}`, {#}
+{#            target: bulletContainer,#}
+{#            swap: 'beforeend',#}
+{#            complete: function() {#}
+{#                // Restore button#}
+{#                button.innerHTML = originalHTML;#}
+{#                button.disabled = false;#}
+{##}
+{#                // Scroll to new bullet point#}
+{#                const newBullet = bulletContainer.querySelector('.bullet-point-row:last-child');#}
+{#                if (newBullet) {#}
+{#                    newBullet.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#                    newBullet.classList.add('highlight-new');#}
+{#                    setTimeout(() => {#}
+{#                        newBullet.classList.remove('highlight-new');#}
+{#                    }, 1500);#}
+{#                }#}
+{#            }#}
+{#        });#}
+{##}
+{#        // Update hidden count field#}
+{#        const countField = button.closest('.form-row').querySelector(`input[name="${parentType}_${parentIndex}_bullet_count"]`);#}
+{#        countField.value = parseInt(countField.value) + 1;#}
+{#    }#}
+{#</script>#}
+{##}
+{#<style>#}
+{#    /* Highlight animation for new elements */#}
+{#    .highlight-new {#}
+{#        animation: highlight-pulse 1.5s ease-in-out;#}
+{#    }#}
+{##}
+{#    @keyframes highlight-pulse {#}
+{#        0% { background-color: rgba(79, 70, 229, 0.1); }#}
+{#        50% { background-color: rgba(79, 70, 229, 0.2); }#}
+{#        100% { background-color: transparent; }#}
+{#    }#}
+{##}
+{#    /* Fade out animation for removed elements */#}
+{#    .fade-out {#}
+{#        opacity: 0;#}
+{#        transform: translateY(-10px);#}
+{#        transition: opacity 0.3s ease, transform 0.3s ease;#}
+{#    }#}
+{##}
+{#    /* Progress bar animation */#}
+{#    .animate-progress {#}
+{#        transition: width 1s ease-in-out;#}
+{#    }#}
+{##}
+{#    /* For scrollable step indicators */#}
+{#    .steps {#}
+{#        scrollbar-width: none; /* Firefox */#}
+{#    }#}
+{##}
+{#    .steps::-webkit-scrollbar {#}
+{#        display: none; /* Chrome, Safari, Edge */#}
+{#    }#}
+{#</style>#}
+{#{% endblock %}#}
+{##}
+{#{% extends 'resumes/base.html' %}#}
+{#{% load resume_extras %}#}
+{#{% load static %}#}
+{#{% load widget_tweaks %}#}
+{#{% block title %}Resume Builder - Step {{ step }} of {{ total_steps }}{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#<div class="container mx-auto px-4 py-10">#}
+{#    <div class="mb-12">#}
+{#        <!-- Header with icon -->#}
+{#        <div class="flex flex-col items-center mb-8">#}
+{#            <div class="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mb-4">#}
+{#                <i class="fa-solid fa-file-pen text-primary text-2xl"></i>#}
+{#            </div>#}
+{#            <h1 class="text-2xl md:text-3xl font-bold text-center">Create Your Professional Resume</h1>#}
+{#            <p class="text-gray-600 mt-2 text-center max-w-2xl">#}
+{#                Step {{ step }} of {{ total_steps }}: <span class="step-title-text">{% block step_name %}{% endblock %}</span>#}
+{#            </p>#}
+{#        </div>#}
+{##}
+{#        <!-- Progress Bar -->#}
+{#        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-8 shadow-inner overflow-hidden">#}
+{#            <div class="bg-primary h-3 rounded-full transition-all duration-500 ease-in-out" style="width: {{ step|floatformat:0|mul:100|div:total_steps }}%"></div>#}
+{#        </div>#}
+{##}
+{#        <!-- Step Indicator -->#}
+{#        <div class="overflow-x-auto pb-4">#}
+{#            <ul class="steps steps-horizontal w-full min-w-max">#}
+{#                {% for i in total_steps|get_range %}#}
+{#                    <li class="step {% if i < step %}step-primary{% endif %} {% if i == step %}font-medium{% endif %}">#}
+{#                        {% if i < step %}#}
+{#                            <a href="{% url 'job_portal:resume_wizard' step=i %}" class="text-xs md:text-sm hover:text-primary transition-colors duration-200">#}
+{#                                {% if i == 1 %}Personal Details#}
+{#                                {% elif i == 2 %}Work Experience#}
+{#                                {% elif i == 3 %}Education#}
+{#                                {% elif i == 4 %}Skills#}
+{#                                {% elif i == 5 %}Projects#}
+{#                                {% else %}Step {{ i }}#}
+{#                                {% endif %}#}
+{#                            </a>#}
+{#                        {% else %}#}
+{#                            <span class="text-xs md:text-sm">#}
+{#                                {% if i == 1 %}Personal Details#}
+{#                                {% elif i == 2 %}Work Experience#}
+{#                                {% elif i == 3 %}Education#}
+{#                                {% elif i == 4 %}Skills#}
+{#                                {% elif i == 5 %}Projects#}
+{#                                {% else %}Step {{ i }}#}
+{#                                {% endif %}#}
+{#                            </span>#}
+{#                        {% endif %}#}
+{#                    </li>#}
+{#                {% endfor %}#}
+{#            </ul>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Current Step Content -->#}
+{#    <div class="card bg-base-100 shadow-xl rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">#}
+{#        <div class="card-body p-8">#}
+{#            <h2 class="card-title text-xl md:text-2xl mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">#}
+{#                {% block step_icon %}#}
+{#                    {% if step == 1 %}<i class="fa-solid fa-user-circle mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 2 %}<i class="fa-solid fa-briefcase mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 3 %}<i class="fa-solid fa-graduation-cap mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 4 %}<i class="fa-solid fa-code mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 5 %}<i class="fa-solid fa-diagram-project mr-3 text-primary opacity-80"></i>#}
+{#                    {% else %}<i class="fa-solid fa-clipboard-list mr-3 text-primary opacity-80"></i>#}
+{#                    {% endif %}#}
+{#                {% endblock %}#}
+{#                {% block step_title %}{% endblock %}#}
+{#            </h2>#}
+{##}
+{#            <!-- Step Content -->#}
+{#            <div class="space-y-6">#}
+{#                {% block step_content %}{% endblock %}#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Template Preview -->#}
+{#    <div class="mt-10">#}
+{#        <div class="collapse collapse-plus bg-base-200 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden">#}
+{#            <input type="checkbox" id="preview-collapse" />#}
+{#            <div class="collapse-title text-lg font-medium flex items-center">#}
+{#                <i class="fa-solid fa-eye mr-3 text-primary"></i>#}
+{#                Preview Your Resume#}
+{#            </div>#}
+{#            <div class="collapse-content">#}
+{#                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-inner h-96 overflow-y-auto mt-2 border border-gray-100 dark:border-gray-700">#}
+{#                    <div id="resume-preview" class="flex flex-col justify-center items-center h-full text-gray-400">#}
+{#                        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">#}
+{#                            <i class="fa-solid fa-file-lines text-2xl"></i>#}
+{#                        </div>#}
+{#                        <p class="text-center max-w-md">Your resume preview will update as you complete each section. Continue filling out the form to see your resume take shape.</p>#}
+{#                        <button id="refresh-preview" class="btn btn-outline btn-primary btn-sm mt-6">#}
+{#                            <i class="fa-solid fa-sync-alt mr-2"></i> Refresh Preview#}
+{#                        </button>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Navigation Buttons -->#}
+{#    <div class="flex justify-between mt-8">#}
+{#        {% if step > 1 %}#}
+{#        <a href="{% url 'job_portal:resume_wizard' step=step|add:'-1' %}" class="btn btn-outline btn-primary">#}
+{#            <i class="fa-solid fa-chevron-left mr-2"></i> Previous Step#}
+{#        </a>#}
+{#        {% else %}#}
+{#        <div></div> <!-- Empty div to maintain spacing -->#}
+{#        {% endif %}#}
+{##}
+{#        {% if step < total_steps %}#}
+{#        <button type="submit" form="resume-form" class="btn btn-primary">#}
+{#            Save & Continue <i class="fa-solid fa-chevron-right ml-2"></i>#}
+{#        </button>#}
+{#        {% else %}#}
+{#        <button type="submit" form="resume-form" class="btn btn-success">#}
+{#            <i class="fa-solid fa-check mr-2"></i> Complete Resume#}
+{#        </button>#}
+{#        {% endif %}#}
+{#    </div>#}
+{#</div>#}
+{#{% endblock %}#}
+{##}
+{#{% block extra_js %}#}
+{#<!-- HTMX for dynamic form handling -->#}
+{#<script src="https://unpkg.com/htmx.org@1.9.0"></script>#}
+{##}
+{#<script>#}
+{#    // Function to toggle end date based on "is current" checkbox#}
+{#    function toggleEndDate(checkbox) {#}
+{#        const row = checkbox.closest('.form-row');#}
+{#        const endDateField = row.querySelector('[name$="end_date"]');#}
+{#        const endDateContainer = row.querySelector('.end-date-container');#}
+{##}
+{#        if (checkbox.checked) {#}
+{#            endDateField.disabled = true;#}
+{#            endDateField.value = '';#}
+{#            if (endDateContainer) {#}
+{#                endDateContainer.classList.add('opacity-50');#}
+{#            }#}
+{#        } else {#}
+{#            endDateField.disabled = false;#}
+{#            if (endDateContainer) {#}
+{#                endDateContainer.classList.remove('opacity-50');#}
+{#            }#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Initialize "is current" checkboxes on page load#}
+{#    document.addEventListener('DOMContentLoaded', function() {#}
+{#        // Initialize checkboxes#}
+{#        document.querySelectorAll('input[type="checkbox"][name$="is_current"]').forEach(function(checkbox) {#}
+{#            toggleEndDate(checkbox);#}
+{#        });#}
+{##}
+{#        // Add animation class after page load#}
+{#        setTimeout(() => {#}
+{#            const progressBar = document.querySelector('.progress-bar');#}
+{#            if (progressBar) {#}
+{#                progressBar.classList.add('animate-progress');#}
+{#            }#}
+{#        }, 300);#}
+{##}
+{#        // Setup refresh preview button#}
+{#        const refreshBtn = document.getElementById('refresh-preview');#}
+{#        if (refreshBtn) {#}
+{#            refreshBtn.addEventListener('click', function() {#}
+{#                refreshResumePreview();#}
+{#            });#}
+{#        }#}
+{#    });#}
+{##}
+{#    // Function to refresh resume preview#}
+{#    function refreshResumePreview() {#}
+{#        const previewContainer = document.getElementById('resume-preview');#}
+{#        if (previewContainer) {#}
+{#            // Show loading spinner#}
+{#            previewContainer.innerHTML = `#}
+{#                <div class="flex flex-col items-center">#}
+{#                    <span class="loading loading-spinner loading-lg text-primary mb-4"></span>#}
+{#                    <p>Generating preview...</p>#}
+{#                </div>#}
+{#            `;#}
+{##}
+{#            // In a real implementation, you would fetch the preview from the server#}
+{#            // For now, we'll simulate a loading delay#}
+{#            setTimeout(() => {#}
+{#                // This would be replaced with actual preview content from the server#}
+{#                htmx.ajax('GET', '/resumes/preview/', {#}
+{#                    target: '#resume-preview',#}
+{#                    swap: 'innerHTML'#}
+{#                });#}
+{#            }, 1000);#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to add a new form row#}
+{#    function addFormRow(formType, container, countField) {#}
+{#        const rows = document.querySelectorAll(`#${container} .form-row`);#}
+{#        const index = rows.length;#}
+{##}
+{#        // Update the count field#}
+{#        document.getElementById(countField).value = index + 1;#}
+{##}
+{#        // Show loading indicator#}
+{#        const addButton = document.querySelector(`button[onclick="addFormRow('${formType}', '${container}', '${countField}')"]`);#}
+{#        if (addButton) {#}
+{#            const originalHTML = addButton.innerHTML;#}
+{#            addButton.innerHTML = `<span class="loading loading-spinner loading-xs"></span> Adding...`;#}
+{#            addButton.disabled = true;#}
+{##}
+{#            // Make HTMX request to add a new row#}
+{#            htmx.ajax('GET', `/resumes/htmx/add-form-row/?form_type=${formType}&index=${index}`, {#}
+{#                target: `#${container}`,#}
+{#                swap: 'beforeend',#}
+{#                complete: function() {#}
+{#                    // Restore button#}
+{#                    addButton.innerHTML = originalHTML;#}
+{#                    addButton.disabled = false;#}
+{##}
+{#                    // Scroll to the new row with smooth animation#}
+{#                    const newRow = document.querySelector(`#${container} .form-row:last-child`);#}
+{#                    if (newRow) {#}
+{#                        newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#                        newRow.classList.add('highlight-new');#}
+{#                        setTimeout(() => {#}
+{#                            newRow.classList.remove('highlight-new');#}
+{#                        }, 1500);#}
+{#                    }#}
+{#                }#}
+{#            });#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to remove a form row#}
+{#    function removeFormRow(button, container, countField) {#}
+{#        const row = button.closest('.form-row');#}
+{##}
+{#        // Add fade-out animation#}
+{#        row.classList.add('fade-out');#}
+{##}
+{#        // Remove after animation completes#}
+{#        setTimeout(() => {#}
+{#            row.remove();#}
+{##}
+{#            // Update indexes of remaining rows#}
+{#            const rows = document.querySelectorAll(`#${container} .form-row`);#}
+{#            document.getElementById(countField).value = rows.length;#}
+{##}
+{#            // Update the indexes in the form fields#}
+{#            rows.forEach((row, index) => {#}
+{#                updateFormRowIndex(row, index);#}
+{#            });#}
+{#        }, 300);#}
+{#    }#}
+{##}
+{#    // Function to update form field indexes#}
+{#    function updateFormRowIndex(row, newIndex) {#}
+{#        row.querySelectorAll('input, select, textarea').forEach(field => {#}
+{#            const name = field.getAttribute('name');#}
+{#            if (name) {#}
+{#                // Extract the field name pattern (e.g., skill_name_X)#}
+{#                const pattern = name.replace(/\_\d+($|\_)/, '_INDEX$1');#}
+{#                // Replace INDEX with the new index#}
+{#                const newName = pattern.replace('INDEX', newIndex);#}
+{#                field.setAttribute('name', newName);#}
+{##}
+{#                // Also update id if present#}
+{#                const id = field.getAttribute('id');#}
+{#                if (id) {#}
+{#                    const idPattern = id.replace(/\_\d+($|\_)/, '_INDEX$1');#}
+{#                    const newId = idPattern.replace('INDEX', newIndex);#}
+{#                    field.setAttribute('id', newId);#}
+{#                }#}
+{##}
+{#                // Update for labels#}
+{#                const labels = row.querySelectorAll(`label[for="${id}"]`);#}
+{#                labels.forEach(label => {#}
+{#                    label.setAttribute('for', newId);#}
+{#                });#}
+{#            }#}
+{#        });#}
+{#    }#}
+{##}
+{#    // Function to add a bullet point to an experience or project#}
+{#    function addBulletPoint(button, parentType, parentIndex) {#}
+{#        const bulletContainer = button.closest('.bullet-points-container').querySelector('.bullet-points');#}
+{#        const bulletCount = bulletContainer.querySelectorAll('.bullet-point-row').length;#}
+{##}
+{#        // Show loading indicator#}
+{#        const originalHTML = button.innerHTML;#}
+{#        button.innerHTML = `<span class="loading loading-spinner loading-xs"></span>`;#}
+{#        button.disabled = true;#}
+{##}
+{#        htmx.ajax('GET', `/resumes/htmx/add-form-row/?form_type=bullet_point&parent_index=${parentIndex}&index=${bulletCount}`, {#}
+{#            target: bulletContainer,#}
+{#            swap: 'beforeend',#}
+{#            complete: function() {#}
+{#                // Restore button#}
+{#                button.innerHTML = originalHTML;#}
+{#                button.disabled = false;#}
+{##}
+{#                // Scroll to new bullet point#}
+{#                const newBullet = bulletContainer.querySelector('.bullet-point-row:last-child');#}
+{#                if (newBullet) {#}
+{#                    newBullet.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#                    newBullet.classList.add('highlight-new');#}
+{#                    setTimeout(() => {#}
+{#                        newBullet.classList.remove('highlight-new');#}
+{#                    }, 1500);#}
+{#                }#}
+{#            }#}
+{#        });#}
+{##}
+{#        // Update hidden count field#}
+{#        const countField = button.closest('.form-row').querySelector(`input[name="${parentType}_${parentIndex}_bullet_count"]`);#}
+{#        countField.value = parseInt(countField.value) + 1;#}
+{#    }#}
+{#</script>#}
+{##}
+{#<style>#}
+{#    /* Highlight animation for new elements */#}
+{#    .highlight-new {#}
+{#        animation: highlight-pulse 1.5s ease-in-out;#}
+{#    }#}
+{##}
+{#    @keyframes highlight-pulse {#}
+{#        0% { background-color: rgba(79, 70, 229, 0.1); }#}
+{#        50% { background-color: rgba(79, 70, 229, 0.2); }#}
+{#        100% { background-color: transparent; }#}
+{#    }#}
+{##}
+{#    /* Fade out animation for removed elements */#}
+{#    .fade-out {#}
+{#        opacity: 0;#}
+{#        transform: translateY(-10px);#}
+{#        transition: opacity 0.3s ease, transform 0.3s ease;#}
+{#    }#}
+{##}
+{#    /* Progress bar animation */#}
+{#    .animate-progress {#}
+{#        transition: width 1s ease-in-out;#}
+{#    }#}
+{##}
+{#    /* For scrollable step indicators */#}
+{#    .steps {#}
+{#        scrollbar-width: none; /* Firefox */#}
+{#    }#}
+{##}
+{#    .steps::-webkit-scrollbar {#}
+{#        display: none; /* Chrome, Safari, Edge */#}
+{#    }#}
+{#</style>#}
+{#{% endblock %}#}
+{##}
+{##}
+{#{% extends 'resumes/base.html' %}#}
+{#{% load resume_extras %}#}
+{#{% load static %}#}
+{##}
+{#{% block title %}Resume Builder - Step {{ step }} of {{ total_steps }}{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#<div class="container mx-auto px-4 py-10">#}
+{#    <div class="mb-12">#}
+{#        <!-- Header with icon -->#}
+{#        <div class="flex flex-col items-center mb-8">#}
+{#            <div class="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mb-4">#}
+{#                <i class="fa-solid fa-file-pen text-primary text-2xl"></i>#}
+{#            </div>#}
+{#            <h1 class="text-2xl md:text-3xl font-bold text-center">Create Your Professional Resume</h1>#}
+{#            <p class="text-gray-600 mt-2 text-center max-w-2xl">#}
+{#                Step {{ step }} of {{ total_steps }}: {% block step_title %}{% endblock %}#}
+{#            </p>#}
+{#        </div>#}
+{##}
+{#        <!-- Progress Bar -->#}
+{#        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-8 shadow-inner overflow-hidden">#}
+{#            <div class="bg-primary h-3 rounded-full transition-all duration-500 ease-in-out" style="width: {{ step|floatformat:0|mul:100|div:total_steps }}%"></div>#}
+{#        </div>#}
+{##}
+{#        <!-- Step Indicator -->#}
+{#        <div class="overflow-x-auto pb-4">#}
+{#            <ul class="steps steps-horizontal w-full min-w-max">#}
+{#                {% for i in total_steps|get_range %}#}
+{#                    <li class="step {% if i < step %}step-primary{% endif %} {% if i == step %}font-medium{% endif %}">#}
+{#                        {% if i < step %}#}
+{#                            <a href="{% url 'job_portal:resume_wizard' step=i %}" class="text-xs md:text-sm hover:text-primary transition-colors duration-200">#}
+{#                                {% if i == 1 %}Personal Details#}
+{#                                {% elif i == 2 %}Work Experience#}
+{#                                {% elif i == 3 %}Education#}
+{#                                {% elif i == 4 %}Skills#}
+{#                                {% elif i == 5 %}Projects#}
+{#                                {% else %}Step {{ i }}#}
+{#                                {% endif %}#}
+{#                            </a>#}
+{#                        {% else %}#}
+{#                            <span class="text-xs md:text-sm">#}
+{#                                {% if i == 1 %}Personal Details#}
+{#                                {% elif i == 2 %}Work Experience#}
+{#                                {% elif i == 3 %}Education#}
+{#                                {% elif i == 4 %}Skills#}
+{#                                {% elif i == 5 %}Projects#}
+{#                                {% else %}Step {{ i }}#}
+{#                                {% endif %}#}
+{#                            </span>#}
+{#                        {% endif %}#}
+{#                    </li>#}
+{#                {% endfor %}#}
+{#            </ul>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Current Step Content -->#}
+{#    <div class="card bg-base-100 shadow-xl rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">#}
+{#        <div class="card-body p-8">#}
+{#            <h2 class="card-title text-xl md:text-2xl mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">#}
+{#                {% block step_icon %}#}
+{#                    {% if step == 1 %}<i class="fa-solid fa-user-circle mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 2 %}<i class="fa-solid fa-briefcase mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 3 %}<i class="fa-solid fa-graduation-cap mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 4 %}<i class="fa-solid fa-code mr-3 text-primary opacity-80"></i>#}
+{#                    {% elif step == 5 %}<i class="fa-solid fa-diagram-project mr-3 text-primary opacity-80"></i>#}
+{#                    {% else %}<i class="fa-solid fa-clipboard-list mr-3 text-primary opacity-80"></i>#}
+{#                    {% endif %}#}
+{#                {% endblock %}#}
+{#                {% block step_title %}{% endblock %}#}
+{#            </h2>#}
+{##}
+{#            <!-- Step Content -->#}
+{#            <div class="space-y-6">#}
+{#                {% block step_content %}{% endblock %}#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Template Preview -->#}
+{#    <div class="mt-10">#}
+{#        <div class="collapse collapse-plus bg-base-200 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden">#}
+{#            <input type="checkbox" id="preview-collapse" />#}
+{#            <div class="collapse-title text-lg font-medium flex items-center">#}
+{#                <i class="fa-solid fa-eye mr-3 text-primary"></i>#}
+{#                Preview Your Resume#}
+{#            </div>#}
+{#            <div class="collapse-content">#}
+{#                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-inner h-96 overflow-y-auto mt-2 border border-gray-100 dark:border-gray-700">#}
+{#                    <div id="resume-preview" class="flex flex-col justify-center items-center h-full text-gray-400">#}
+{#                        <div class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">#}
+{#                            <i class="fa-solid fa-file-lines text-2xl"></i>#}
+{#                        </div>#}
+{#                        <p class="text-center max-w-md">Your resume preview will update as you complete each section. Continue filling out the form to see your resume take shape.</p>#}
+{#                        <button id="refresh-preview" class="btn btn-outline btn-primary btn-sm mt-6">#}
+{#                            <i class="fa-solid fa-sync-alt mr-2"></i> Refresh Preview#}
+{#                        </button>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Navigation Buttons -->#}
+{#    <div class="flex justify-between mt-8">#}
+{#        {% if step > 1 %}#}
+{#        <a href="{% url 'job_portal:resume_wizard' step=step|add:'-1' %}" class="btn btn-outline btn-primary">#}
+{#            <i class="fa-solid fa-chevron-left mr-2"></i> Previous Step#}
+{#        </a>#}
+{#        {% else %}#}
+{#        <div></div> <!-- Empty div to maintain spacing -->#}
+{#        {% endif %}#}
+{##}
+{#        {% if step < total_steps %}#}
+{#        <button type="submit" form="resume-form" class="btn btn-primary">#}
+{#            Save & Continue <i class="fa-solid fa-chevron-right ml-2"></i>#}
+{#        </button>#}
+{#        {% else %}#}
+{#        <button type="submit" form="resume-form" class="btn btn-success">#}
+{#            <i class="fa-solid fa-check mr-2"></i> Complete Resume#}
+{#        </button>#}
+{#        {% endif %}#}
+{#    </div>#}
+{#</div>#}
+{#{% endblock %}#}
+{##}
+{#{% block extra_js %}#}
+{#<!-- HTMX for dynamic form handling -->#}
+{#<script src="https://unpkg.com/htmx.org@1.9.0"></script>#}
+{##}
+{#<script>#}
+{#    // Function to toggle end date based on "is current" checkbox#}
+{#    function toggleEndDate(checkbox) {#}
+{#        const row = checkbox.closest('.form-row');#}
+{#        const endDateField = row.querySelector('[name$="end_date"]');#}
+{#        const endDateContainer = row.querySelector('.end-date-container');#}
+{##}
+{#        if (checkbox.checked) {#}
+{#            endDateField.disabled = true;#}
+{#            endDateField.value = '';#}
+{#            if (endDateContainer) {#}
+{#                endDateContainer.classList.add('opacity-50');#}
+{#            }#}
+{#        } else {#}
+{#            endDateField.disabled = false;#}
+{#            if (endDateContainer) {#}
+{#                endDateContainer.classList.remove('opacity-50');#}
+{#            }#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Initialize "is current" checkboxes on page load#}
+{#    document.addEventListener('DOMContentLoaded', function() {#}
+{#        // Initialize checkboxes#}
+{#        document.querySelectorAll('input[type="checkbox"][name$="is_current"]').forEach(function(checkbox) {#}
+{#            toggleEndDate(checkbox);#}
+{#        });#}
+{##}
+{#        // Add animation class after page load#}
+{#        setTimeout(() => {#}
+{#            const progressBar = document.querySelector('.progress-bar');#}
+{#            if (progressBar) {#}
+{#                progressBar.classList.add('animate-progress');#}
+{#            }#}
+{#        }, 300);#}
+{##}
+{#        // Setup refresh preview button#}
+{#        const refreshBtn = document.getElementById('refresh-preview');#}
+{#        if (refreshBtn) {#}
+{#            refreshBtn.addEventListener('click', function() {#}
+{#                refreshResumePreview();#}
+{#            });#}
+{#        }#}
+{#    });#}
+{##}
+{#    // Function to refresh resume preview#}
+{#    function refreshResumePreview() {#}
+{#        const previewContainer = document.getElementById('resume-preview');#}
+{#        if (previewContainer) {#}
+{#            // Show loading spinner#}
+{#            previewContainer.innerHTML = `#}
+{#                <div class="flex flex-col items-center">#}
+{#                    <span class="loading loading-spinner loading-lg text-primary mb-4"></span>#}
+{#                    <p>Generating preview...</p>#}
+{#                </div>#}
+{#            `;#}
+{##}
+{#            // In a real implementation, you would fetch the preview from the server#}
+{#            // For now, we'll simulate a loading delay#}
+{#            setTimeout(() => {#}
+{#                // This would be replaced with actual preview content from the server#}
+{#                htmx.ajax('GET', '/resumes/preview/', {#}
+{#                    target: '#resume-preview',#}
+{#                    swap: 'innerHTML'#}
+{#                });#}
+{#            }, 1000);#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to add a new form row#}
+{#    function addFormRow(formType, container, countField) {#}
+{#        const rows = document.querySelectorAll(`#${container} .form-row`);#}
+{#        const index = rows.length;#}
+{##}
+{#        // Update the count field#}
+{#        document.getElementById(countField).value = index + 1;#}
+{##}
+{#        // Show loading indicator#}
+{#        const addButton = document.querySelector(`button[onclick="addFormRow('${formType}', '${container}', '${countField}')"]`);#}
+{#        if (addButton) {#}
+{#            const originalHTML = addButton.innerHTML;#}
+{#            addButton.innerHTML = `<span class="loading loading-spinner loading-xs"></span> Adding...`;#}
+{#            addButton.disabled = true;#}
+{##}
+{#            // Make HTMX request to add a new row#}
+{#            htmx.ajax('GET', `/resumes/htmx/add-form-row/?form_type=${formType}&index=${index}`, {#}
+{#                target: `#${container}`,#}
+{#                swap: 'beforeend',#}
+{#                complete: function() {#}
+{#                    // Restore button#}
+{#                    addButton.innerHTML = originalHTML;#}
+{#                    addButton.disabled = false;#}
+{##}
+{#                    // Scroll to the new row with smooth animation#}
+{#                    const newRow = document.querySelector(`#${container} .form-row:last-child`);#}
+{#                    if (newRow) {#}
+{#                        newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#                        newRow.classList.add('highlight-new');#}
+{#                        setTimeout(() => {#}
+{#                            newRow.classList.remove('highlight-new');#}
+{#                        }, 1500);#}
+{#                    }#}
+{#                }#}
+{#            });#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to remove a form row#}
+{#    function removeFormRow(button, container, countField) {#}
+{#        const row = button.closest('.form-row');#}
+{##}
+{#        // Add fade-out animation#}
+{#        row.classList.add('fade-out');#}
+{##}
+{#        // Remove after animation completes#}
+{#        setTimeout(() => {#}
+{#            row.remove();#}
+{##}
+{#            // Update indexes of remaining rows#}
+{#            const rows = document.querySelectorAll(`#${container} .form-row`);#}
+{#            document.getElementById(countField).value = rows.length;#}
+{##}
+{#            // Update the indexes in the form fields#}
+{#            rows.forEach((row, index) => {#}
+{#                updateFormRowIndex(row, index);#}
+{#            });#}
+{#        }, 300);#}
+{#    }#}
+{##}
+{#    // Function to update form field indexes#}
+{#    function updateFormRowIndex(row, newIndex) {#}
+{#        row.querySelectorAll('input, select, textarea').forEach(field => {#}
+{#            const name = field.getAttribute('name');#}
+{#            if (name) {#}
+{#                // Extract the field name pattern (e.g., skill_name_X)#}
+{#                const pattern = name.replace(/\_\d+($|\_)/, '_INDEX$1');#}
+{#                // Replace INDEX with the new index#}
+{#                const newName = pattern.replace('INDEX', newIndex);#}
+{#                field.setAttribute('name', newName);#}
+{##}
+{#                // Also update id if present#}
+{#                const id = field.getAttribute('id');#}
+{#                if (id) {#}
+{#                    const idPattern = id.replace(/\_\d+($|\_)/, '_INDEX$1');#}
+{#                    const newId = idPattern.replace('INDEX', newIndex);#}
+{#                    field.setAttribute('id', newId);#}
+{#                }#}
+{##}
+{#                // Update for labels#}
+{#                const labels = row.querySelectorAll(`label[for="${id}"]`);#}
+{#                labels.forEach(label => {#}
+{#                    label.setAttribute('for', newId);#}
+{#                });#}
+{#            }#}
+{#        });#}
+{#    }#}
+{##}
+{#    // Function to add a bullet point to an experience or project#}
+{#    function addBulletPoint(button, parentType, parentIndex) {#}
+{#        const bulletContainer = button.closest('.bullet-points-container').querySelector('.bullet-points');#}
+{#        const bulletCount = bulletContainer.querySelectorAll('.bullet-point-row').length;#}
+{##}
+{#        // Show loading indicator#}
+{#        const originalHTML = button.innerHTML;#}
+{#        button.innerHTML = `<span class="loading loading-spinner loading-xs"></span>`;#}
+{#        button.disabled = true;#}
+{##}
+{#        htmx.ajax('GET', `/resumes/htmx/add-form-row/?form_type=bullet_point&parent_index=${parentIndex}&index=${bulletCount}`, {#}
+{#            target: bulletContainer,#}
+{#            swap: 'beforeend',#}
+{#            complete: function() {#}
+{#                // Restore button#}
+{#                button.innerHTML = originalHTML;#}
+{#                button.disabled = false;#}
+{##}
+{#                // Scroll to new bullet point#}
+{#                const newBullet = bulletContainer.querySelector('.bullet-point-row:last-child');#}
+{#                if (newBullet) {#}
+{#                    newBullet.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#                    newBullet.classList.add('highlight-new');#}
+{#                    setTimeout(() => {#}
+{#                        newBullet.classList.remove('highlight-new');#}
+{#                    }, 1500);#}
+{#                }#}
+{#            }#}
+{#        });#}
+{##}
+{#        // Update hidden count field#}
+{#        const countField = button.closest('.form-row').querySelector(`input[name="${parentType}_${parentIndex}_bullet_count"]`);#}
+{#        countField.value = parseInt(countField.value) + 1;#}
+{#    }#}
+{#</script>#}
+{##}
+{#<style>#}
+{#    /* Highlight animation for new elements */#}
+{#    .highlight-new {#}
+{#        animation: highlight-pulse 1.5s ease-in-out;#}
+{#    }#}
+{##}
+{#    @keyframes highlight-pulse {#}
+{#        0% { background-color: rgba(79, 70, 229, 0.1); }#}
+{#        50% { background-color: rgba(79, 70, 229, 0.2); }#}
+{#        100% { background-color: transparent; }#}
+{#    }#}
+{##}
+{#    /* Fade out animation for removed elements */#}
+{#    .fade-out {#}
+{#        opacity: 0;#}
+{#        transform: translateY(-10px);#}
+{#        transition: opacity 0.3s ease, transform 0.3s ease;#}
+{#    }#}
+{##}
+{#    /* Progress bar animation */#}
+{#    .animate-progress {#}
+{#        transition: width 1s ease-in-out;#}
+{#    }#}
+{##}
+{#    /* For scrollable step indicators */#}
+{#    .steps {#}
+{#        scrollbar-width: none; /* Firefox */#}
+{#    }#}
+{##}
+{#    .steps::-webkit-scrollbar {#}
+{#        display: none; /* Chrome, Safari, Edge */#}
+{#    }#}
+{#</style>#}
+{#{% endblock %}#}

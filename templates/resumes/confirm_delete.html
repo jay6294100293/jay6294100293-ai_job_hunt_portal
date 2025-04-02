@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Confirm Delete Resume{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="card max-w-md mx-auto bg-base-100 shadow-xl">
+        <div class="card-body p-8">
+            <h2 class="card-title text-2xl mb-6 text-error flex items-center">
+                <span class="w-10 h-10 rounded-lg bg-error/10 flex items-center justify-center mr-3">
+                    <i class="fa-solid fa-triangle-exclamation text-error"></i>
+                </span>
+                Delete Resume
+            </h2>
+
+            <p class="mb-8 text-lg">
+                Are you sure you want to delete the resume "<span class="font-bold">{{ resume.full_name }}</span>"?
+                <br class="hidden md:block">
+                <span class="text-red-500 font-medium">This action cannot be undone.</span>
+            </p>
+
+            <form method="post" action="{% url 'job_portal:delete_resume' resume_id=resume.id %}">
+                {% csrf_token %}
+                <div class="border-t border-gray-200 pt-6 mt-2">
+                    <div class="flex flex-col-reverse md:flex-row justify-end gap-4">
+                        <a href="{% url 'job_portal:resume_list' %}" class="btn btn-ghost btn-md">
+                            <i class="fa-solid fa-arrow-left mr-2"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-error btn-md">
+                            <i class="fa-solid fa-trash-can mr-2"></i> Delete Resume
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,514 @@
+{% extends 'resumes/wizard_base.html' %}
+{% load resume_extras %}
+{% load static %}
+
+{% block step_title %}Professional Summary{% endblock %}
+
+{% block step_icon %}<i class="fa-solid fa-file-lines mr-3 text-primary opacity-80"></i>{% endblock %}
+
+{% block step_content %}
+<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">
+    {% csrf_token %}
+
+    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">
+        <div class="flex items-start">
+            <div class="text-primary text-xl mr-4 mt-1">
+                <i class="fa-solid fa-lightbulb"></i>
+            </div>
+            <div>
+                <p class="text-base">
+                    Your professional summary is a brief overview of your skills, experience, and career goals.
+                    Write a concise paragraph that highlights your strengths and what makes you a great candidate.
+                </p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    <strong>Pro tip:</strong> Tailor your summary to match the job descriptions you're targeting. Use relevant keywords to help your resume pass through Applicant Tracking Systems (ATS).
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 mb-8">
+        <!-- Professional Summary Field -->
+        <div class="form-control">
+            <label class="label" for="{{ form.summary.id_for_label }}">
+                <span class="label-text text-lg font-medium flex items-center">
+                    <i class="fa-solid fa-quote-left text-primary mr-2"></i>
+                    Professional Summary
+                </span>
+                <span class="label-text-alt text-error">*</span>
+            </label>
+            <div class="relative">
+                {{ form.summary|add_class:"textarea textarea-bordered w-full min-h-40" }}
+            </div>
+            {% if form.summary.errors %}
+                <div class="text-error text-sm mt-1 flex items-center">
+                    <i class="fa-solid fa-circle-exclamation mr-1"></i>
+                    {{ form.summary.errors.0 }}
+                </div>
+            {% endif %}
+            <div class="flex justify-between items-center mt-2">
+                <span class="label-text-alt">Minimum 100 characters required</span>
+                <span class="label-text-alt font-medium" id="char-count-display">
+                    <span id="char-count" class="{% if form.summary.value|length < 100 %}text-error{% else %}text-success{% endif %}">{{ form.summary.value|default:0|length }}</span>/100 characters
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed Two-Column Layout Section -->
+    <div class="consistent-layout-container">
+        <!-- Tips Column -->
+        <div class="consistent-layout-column">
+            <div class="card bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 h-full">
+                <h3 class="text-lg font-medium flex items-center mb-4">
+                    <i class="fa-solid fa-star text-amber-500 mr-2"></i>
+                    Tips for a Great Summary
+                </h3>
+                <ul class="space-y-3">
+                    <li class="flex items-start gap-3">
+                        <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-primary font-medium">1</span>
+                        </div>
+                        <div>
+                            <p class="font-medium">Keep it concise but impactful</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Aim for 3-5 sentences that capture your professional essence.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-primary font-medium">2</span>
+                        </div>
+                        <div>
+                            <p class="font-medium">Include your experience level</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Mention your years of experience and key areas of expertise.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-primary font-medium">3</span>
+                        </div>
+                        <div>
+                            <p class="font-medium">Highlight achievements</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Mention 1-2 of your biggest career accomplishments with measurable results.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-primary font-medium">4</span>
+                        </div>
+                        <div>
+                            <p class="font-medium">Use relevant keywords</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Include terms from job descriptions in your target field.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-primary font-medium">5</span>
+                        </div>
+                        <div>
+                            <p class="font-medium">Avoid generic statements</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Be specific about your skills and what makes you unique.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Examples Column -->
+        <div class="consistent-layout-column">
+            <div class="card bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 h-full">
+                <h3 class="text-lg font-medium flex items-center mb-4">
+                    <i class="fa-solid fa-file-alt text-primary mr-2"></i>
+                    Example Summaries by Field
+                </h3>
+
+                <div class="tabs tabs-boxed bg-transparent p-0 mb-3">
+                    <a class="tab tab-sm tab-lifted tab-active" id="tech-tab">Tech</a>
+                    <a class="tab tab-sm tab-lifted" id="business-tab">Business</a>
+                    <a class="tab tab-sm tab-lifted" id="creative-tab">Creative</a>
+                </div>
+
+                <div class="example-tabs-container">
+                    <!-- Tech Summary Example -->
+                    <div id="tech-example" class="example-tab p-4 rounded-lg border border-gray-100 dark:border-gray-700">
+                        <p class="text-sm italic">
+                            "Detail-oriented software developer with 4+ years of experience building responsive web applications.
+                            Proficient in Python, Django, JavaScript, and React. Successfully reduced page load times by 40%
+                            and implemented CI/CD pipelines that increased deployment frequency by 30%. Passionate about clean
+                            code and user-centered design."
+                        </p>
+                    </div>
+
+                    <!-- Business Summary Example -->
+                    <div id="business-example" class="example-tab hidden p-4 rounded-lg border border-gray-100 dark:border-gray-700">
+                        <p class="text-sm italic">
+                            "Strategic marketing professional with 7+ years in digital marketing and brand management.
+                            Experienced in developing comprehensive marketing campaigns that increased customer engagement by 45%.
+                            Skilled in SEO, content marketing, and social media strategy. Successfully managed marketing budgets
+                            exceeding $500K while consistently achieving ROI targets."
+                        </p>
+                    </div>
+
+                    <!-- Creative Summary Example -->
+                    <div id="creative-example" class="example-tab hidden p-4 rounded-lg border border-gray-100 dark:border-gray-700">
+                        <p class="text-sm italic">
+                            "Versatile graphic designer with 5+ years of experience creating compelling visual content for print and digital media.
+                            Expert in Adobe Creative Suite with a strong portfolio spanning brand identity, packaging, and UI/UX design.
+                            Awarded for designing a rebrand that increased client's social media engagement by 65%.
+                            Passionate about combining aesthetics with strategic business objectives."
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Assistant (Optional Section) -->
+    <div class="mt-8">
+        <div class="collapse collapse-plus bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md">
+            <input type="checkbox" id="ai-assistant-toggle" />
+            <div class="collapse-title text-lg font-medium flex items-center">
+                <i class="fa-solid fa-robot text-primary mr-2"></i>
+                AI Summary Assistant
+            </div>
+            <div class="collapse-content">
+                <div class="p-2">
+                    <p class="text-gray-600 dark:text-gray-400 mb-4">
+                        Let our AI help craft your professional summary. Fill in some basic information about your experience, and we'll generate a starting point that you can refine.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-medium">Job Title</span>
+                            </label>
+                            <input type="text" id="ai-job-title" class="input input-bordered" placeholder="e.g., Software Engineer">
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-medium">Years of Experience</span>
+                            </label>
+                            <input type="number" id="ai-years" class="input input-bordered" placeholder="e.g., 5" min="0" max="50">
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-medium">Key Skills (comma separated)</span>
+                            </label>
+                            <input type="text" id="ai-skills" class="input input-bordered" placeholder="e.g., Python, Project Management, Design">
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-medium">Industry</span>
+                            </label>
+                            <input type="text" id="ai-industry" class="input input-bordered" placeholder="e.g., Technology, Healthcare, Finance">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="button" id="generate-summary-btn" class="btn btn-primary">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Generate Summary
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<style>
+    /* Consistent layout container */
+    .consistent-layout-container {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    /* Media query for desktop layout */
+    @media (min-width: 768px) {
+        .consistent-layout-container {
+            flex-direction: row;
+            flex-wrap: nowrap;
+        }
+
+        .consistent-layout-column {
+            width: 50%;
+            flex: 1;
+        }
+    }
+
+    /* Ensure consistent card heights */
+    .consistent-layout-column .card {
+        height: 100%;
+    }
+
+    /* Fix tab behavior */
+    .tabs .tab {
+        cursor: pointer;
+        user-select: none;
+        transition: background-color 0.15s ease;
+    }
+
+    /* Ensure example tabs have consistent height */
+    .example-tab {
+        min-height: 140px;
+    }
+
+    /* Prevent FOUC (Flash of Unstyled Content) */
+    .consistent-layout-container {
+        opacity: 1;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* Force border consistency */
+    .border {
+        border-width: 1px !important;
+    }
+
+    /* Ensure padding consistency */
+    .card.p-6 {
+        padding: 1.5rem !important;
+    }
+
+    /* Ensure gap consistency */
+    .gap-3 {
+        gap: 0.75rem !important;
+    }
+
+    /* Fix textarea focus styles */
+    .textarea:focus {
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+        border-color: rgba(99, 102, 241, 0.5) !important;
+    }
+
+    /* Fix animation for textarea highlight */
+    .border-primary {
+        transition: all 0.3s ease-in-out;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the page with consistent layout
+        initializePage();
+    });
+
+    // Initialize the page with all necessary setup
+    function initializePage() {
+        // Get DOM elements
+        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');
+        const charCount = document.getElementById('char-count');
+        const generateBtn = document.getElementById('generate-summary-btn');
+
+        // Set up tab event listeners
+        document.getElementById('tech-tab').addEventListener('click', function() {
+            switchTab('tech');
+        });
+
+        document.getElementById('business-tab').addEventListener('click', function() {
+            switchTab('business');
+        });
+
+        document.getElementById('creative-tab').addEventListener('click', function() {
+            switchTab('creative');
+        });
+
+        // Add generate summary event listener
+        if (generateBtn) {
+            generateBtn.addEventListener('click', generateAISummary);
+        }
+
+        // Initialize character count
+        if (summaryField && charCount) {
+            // Update character count on load
+            updateCharCount();
+
+            // Update character count on input with debounce
+            summaryField.addEventListener('input', debounce(updateCharCount, 100));
+
+            // Restore saved content if it exists
+            restoreSavedContent();
+
+            // Set up form state saving
+            window.addEventListener('beforeunload', saveFormState);
+        }
+
+        // Force layout consistency after a brief delay
+        setTimeout(ensureConsistentLayout, 50);
+    }
+
+    // Switch between example tabs
+    function switchTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.example-tab').forEach(tab => {
+            tab.classList.add('hidden');
+        });
+
+        // Show selected tab
+        document.getElementById(tabName + '-example').classList.remove('hidden');
+
+        // Update tab styling
+        document.querySelectorAll('.tabs .tab').forEach(tab => {
+            tab.classList.remove('tab-active');
+        });
+
+        document.getElementById(tabName + '-tab').classList.add('tab-active');
+    }
+
+    // Update character count
+    function updateCharCount() {
+        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');
+        const charCount = document.getElementById('char-count');
+
+        if (!summaryField || !charCount) return;
+
+        const count = summaryField.value.length;
+        charCount.textContent = count;
+
+        // Visual feedback based on count
+        if (count < 100) {
+            charCount.classList.add('text-error');
+            charCount.classList.remove('text-success');
+        } else {
+            charCount.classList.add('text-success');
+            charCount.classList.remove('text-error');
+        }
+    }
+
+    // Generate AI summary
+    function generateAISummary() {
+        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');
+        const jobTitle = document.getElementById('ai-job-title').value;
+        const years = document.getElementById('ai-years').value;
+        const skills = document.getElementById('ai-skills').value;
+        const industry = document.getElementById('ai-industry').value;
+
+        // Validate required fields
+        if (!jobTitle || !years || !skills) {
+            alert('Please fill in Job Title, Years of Experience, and Key Skills fields.');
+            return;
+        }
+
+        // Show loading state
+        const generateBtn = document.getElementById('generate-summary-btn');
+        const originalBtnText = generateBtn.innerHTML;
+        generateBtn.innerHTML = '<span class="loading loading-spinner loading-xs"></span> Generating...';
+        generateBtn.disabled = true;
+
+        // Simulate API call (replace with actual API in production)
+        setTimeout(() => {
+            try {
+                const skillsArray = skills.split(',').map(s => s.trim()).filter(Boolean);
+                const mainSkills = skillsArray.slice(0, 3).join(', ');
+
+                let generatedSummary = `Experienced ${jobTitle} with ${years}+ years specializing in ${mainSkills}`;
+
+                if (industry) {
+                    generatedSummary += ` within the ${industry} industry`;
+                }
+
+                generatedSummary += `. Proven track record of delivering high-quality solutions and driving continuous improvement. `;
+
+                if (skillsArray.length > 3) {
+                    generatedSummary += `Additional expertise in ${skillsArray.slice(3).join(', ')}. `;
+                }
+
+                generatedSummary += `Passionate about solving complex problems with efficient, scalable, and maintainable approaches.`;
+
+                // Update the summary field
+                summaryField.value = generatedSummary;
+                updateCharCount();
+
+                // Visual feedback
+                summaryField.classList.add('border-primary');
+                setTimeout(() => {
+                    summaryField.classList.remove('border-primary');
+                }, 1500);
+
+                // Scroll to the textarea
+                summaryField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                summaryField.focus();
+
+                // Save to session storage
+                saveFormState();
+            } catch (error) {
+                console.error('Error generating summary:', error);
+            } finally {
+                // Restore button state
+                generateBtn.innerHTML = originalBtnText;
+                generateBtn.disabled = false;
+            }
+        }, 1000);
+    }
+
+    // Save form state to session storage
+    function saveFormState() {
+        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');
+        if (summaryField) {
+            sessionStorage.setItem('professional_summary_content', summaryField.value);
+        }
+    }
+
+    // Restore saved content if it exists
+    function restoreSavedContent() {
+        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');
+        if (!summaryField) return;
+
+        const savedContent = sessionStorage.getItem('professional_summary_content');
+        if (savedContent && (!summaryField.value || summaryField.value.trim() === '')) {
+            summaryField.value = savedContent;
+            updateCharCount();
+        }
+    }
+
+    // Ensure consistent layout
+    function ensureConsistentLayout() {
+        // Force equal heights for cards
+        const cards = document.querySelectorAll('.consistent-layout-column .card');
+
+        // Reset heights first
+        cards.forEach(card => {
+            card.style.height = 'auto';
+        });
+
+        // Get maximum height
+        let maxHeight = 0;
+        cards.forEach(card => {
+            const height = card.getBoundingClientRect().height;
+            if (height > maxHeight) {
+                maxHeight = height;
+            }
+        });
+
+        // Apply max height to all cards
+        if (maxHeight > 0 && window.innerWidth >= 768) {
+            cards.forEach(card => {
+                card.style.height = maxHeight + 'px';
+            });
+        }
+    }
+
+    // Debounce function to limit frequent calls
+    function debounce(func, wait) {
+        let timeout;
+        return function() {
+            const context = this;
+            const args = arguments;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                func.apply(context, args);
+            }, wait);
+        };
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', debounce(ensureConsistentLayout, 250));
+</script>
+{% endblock %}

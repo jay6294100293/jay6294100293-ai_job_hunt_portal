@@ -1,0 +1,183 @@
+{% extends 'resumes/wizard_base.html' %}
+{% load static %}
+
+{% block step_title %}Certifications & Credentials{% endblock %}
+
+{% block step_icon %}<i class="fa-solid fa-certificate mr-3 text-primary opacity-80"></i>{% endblock %}
+
+{% block step_content %}
+<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">
+    {% csrf_token %}
+
+    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">
+        <div class="flex items-start">
+            <div class="text-primary text-xl mr-4 mt-1">
+                <i class="fa-solid fa-lightbulb"></i>
+            </div>
+            <div>
+                <p class="text-base">
+                    Add professional certifications, licenses, or training programs you've completed.
+                    These help demonstrate your specialized knowledge and commitment to professional development.
+                </p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    <strong>Pro tip:</strong> Include expiration dates for time-limited certifications and credential links when available to allow verification.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden field to track number of certification entries -->
+    <input type="hidden" id="certification_count" name="certification_count" value="{{ certifications|length }}">
+
+    <!-- Certifications container -->
+    <div id="certifications_container" class="space-y-8">
+        {% for certification in certifications %}
+        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">
+                <h3 class="text-lg font-medium flex items-center">
+                    <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                        <i class="fa-solid fa-award text-primary text-sm"></i>
+                    </span>
+                    Certification #{{ forloop.counter }}
+                </h3>
+
+                <!-- Remove Certification Button - Moved to header -->
+                <button type="button" class="btn btn-ghost btn-sm text-error"
+                        onclick="removeFormRow(this, 'certifications_container', 'certification_count')">
+                    <i class="fa-solid fa-trash-can mr-1"></i> Remove
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- Certification Name -->
+                <div class="form-control">
+                    <label class="label" for="name_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">Certification Name</span>
+                        <span class="label-text-alt text-error">*</span>
+                    </label>
+                    <input type="text" id="name_{{ forloop.counter0 }}" name="name_{{ forloop.counter0 }}"
+                        class="input input-bordered w-full" value="{{ certification.name }}" required
+                        placeholder="e.g., AWS Certified Solutions Architect">
+                </div>
+
+                <!-- Issuing Institute -->
+                <div class="form-control">
+                    <label class="label" for="institute_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">Issuing Organization</span>
+                        <span class="label-text-alt text-gray-500">(Optional)</span>
+                    </label>
+                    <input type="text" id="institute_{{ forloop.counter0 }}" name="institute_{{ forloop.counter0 }}"
+                        class="input input-bordered w-full" value="{{ certification.institute }}"
+                        placeholder="e.g., Amazon Web Services">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+                <!-- Completion Date -->
+                <div class="form-control">
+                    <label class="label" for="completion_date_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">Date Earned</span>
+                        <span class="label-text-alt text-gray-500">(Optional)</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-calendar-alt text-gray-400"></i>
+                        </div>
+                        <input type="date" id="completion_date_{{ forloop.counter0 }}" name="completion_date_{{ forloop.counter0 }}"
+                            class="input input-bordered w-full pl-10" value="{{ certification.completion_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+
+                <!-- Expiration Date -->
+                <div class="form-control">
+                    <label class="label" for="expiration_date_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">Expiration Date</span>
+                        <span class="label-text-alt text-gray-500">(Optional)</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-hourglass-end text-gray-400"></i>
+                        </div>
+                        <input type="date" id="expiration_date_{{ forloop.counter0 }}" name="expiration_date_{{ forloop.counter0 }}"
+                            class="input input-bordered w-full pl-10" value="{{ certification.expiration_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+                <!-- Score/Grade -->
+                <div class="form-control">
+                    <label class="label" for="score_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">Score/Grade</span>
+                        <span class="label-text-alt text-gray-500">(Optional)</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-star text-gray-400"></i>
+                        </div>
+                        <input type="text" id="score_{{ forloop.counter0 }}" name="score_{{ forloop.counter0 }}"
+                            class="input input-bordered w-full pl-10" value="{{ certification.score }}"
+                            placeholder="e.g., 95%, A+, 750/900">
+                    </div>
+                </div>
+
+                <!-- Credential Link -->
+                <div class="form-control">
+                    <label class="label" for="link_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">Credential URL</span>
+                        <span class="label-text-alt text-gray-500">(Optional)</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-link text-gray-400"></i>
+                        </div>
+                        <input type="url" id="link_{{ forloop.counter0 }}" name="link_{{ forloop.counter0 }}"
+                            class="input input-bordered w-full pl-10" value="{{ certification.link }}"
+                            placeholder="https://credential.example.com/verify/12345">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="form-control mt-5">
+                <label class="label" for="description_{{ forloop.counter0 }}">
+                    <span class="label-text font-medium">Description</span>
+                    <span class="label-text-alt text-gray-500">(Optional)</span>
+                </label>
+                <div class="relative">
+                    <textarea id="description_{{ forloop.counter0 }}" name="description_{{ forloop.counter0 }}"
+                        class="textarea textarea-bordered w-full min-h-24"
+                        placeholder="Describe what the certification covered and how it relates to your skills or career goals.">{{ certification.description }}</textarea>
+                </div>
+                <span class="text-xs text-gray-500 mt-1">Briefly describe skills acquired or topics covered in this certification.</span>
+            </div>
+        </div>
+        {% empty %}
+        <!-- Empty state when no certifications are added yet -->
+        <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center">
+            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-award text-primary text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-medium mb-2">No Certifications Added Yet</h3>
+            <p class="text-gray-500 max-w-md mx-auto mb-6">
+                Highlight your professional certifications and credentials to demonstrate your expertise and commitment to continuous learning.
+            </p>
+            <button type="button" class="btn btn-primary"
+                    onclick="addFormRow('certification', 'certifications_container', 'certification_count')">
+                <i class="fa-solid fa-plus mr-2"></i> Add Your First Certification
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Add Certification Button - Only shown if at least one certification exists -->
+    {% if certifications %}
+    <div class="flex justify-center mt-8">
+        <button type="button" class="btn btn-outline btn-primary"
+                onclick="addFormRow('certification', 'certifications_container', 'certification_count')">
+            <i class="fa-solid fa-plus mr-2"></i> Add Another Certification
+        </button>
+    </div>
+    {% endif %}
+</form>
+{% endblock %}

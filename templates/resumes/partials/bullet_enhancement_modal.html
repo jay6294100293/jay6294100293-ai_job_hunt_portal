@@ -1,0 +1,202 @@
+{% comment %}
+This is a partial template for the bullet enhancement modal form
+Save as 'resumes/partials/bullet_enhancement_modal.html'
+{% endcomment %}
+
+<div id="bullet-enhancement-modal" class="modal">
+  <div class="modal-box max-w-2xl">
+    <h3 class="font-bold text-lg flex items-center">
+      <i class="fa-solid fa-wand-magic-sparkles text-primary mr-2"></i>
+      Enhance Bullet Point
+    </h3>
+    <p class="py-2 text-sm text-gray-600">
+      Make your bullet point more impactful with AI enhancement
+    </p>
+
+    <form id="bullet-enhancement-form" hx-get="{% url 'job_portal:enhance_bullet' %}"
+          hx-target="#enhanced_bullet_result"
+          hx-swap="innerHTML"
+          hx-indicator="#enhancement_in_progress">
+
+      <input type="hidden" name="parent_index" value="{{ parent_index }}" id="parent_index_modal">
+      <input type="hidden" name="bullet_index" value="{{ index }}" id="bullet_index_modal">
+
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text font-medium">Original Bullet Point</span>
+        </label>
+        <textarea id="original_bullet_modal" name="bullet_text" class="textarea textarea-bordered w-full min-h-24" readonly></textarea>
+      </div>
+
+      <div class="form-control mt-4">
+        <label class="label">
+          <span class="label-text font-medium">Enhancement Type</span>
+        </label>
+        <div class="flex gap-4">
+          <label class="cursor-pointer flex items-center gap-2">
+            <input type="radio" name="enhancement_type" value="general" class="radio radio-primary" checked>
+            <span class="label-text">General Enhancement</span>
+          </label>
+          <label class="cursor-pointer flex items-center gap-2">
+            <input type="radio" name="enhancement_type" value="ats" class="radio radio-primary">
+            <span class="label-text">ATS Optimization</span>
+          </label>
+        </div>
+      </div>
+
+      <div id="ats_job_container" class="form-control mt-4 hidden">
+        <label class="label">
+          <span class="label-text font-medium">Target Job Description (for ATS optimization)</span>
+        </label>
+        <textarea name="job_description" class="textarea textarea-bordered w-full min-h-20"
+                  placeholder="Paste the job description here for better ATS keyword matching"></textarea>
+      </div>
+
+      <div class="form-control mt-4">
+        <label class="label">
+          <span class="label-text font-medium">AI Model</span>
+        </label>
+        <div class="flex gap-4">
+          <label class="cursor-pointer flex items-center gap-2">
+            <input type="radio" name="ai_engine" value="chatgpt" class="radio radio-primary" checked>
+            <span class="label-text">ChatGPT</span>
+          </label>
+          <label class="cursor-pointer flex items-center gap-2">
+            <input type="radio" name="ai_engine" value="gemini" class="radio radio-primary">
+            <span class="label-text">Gemini</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-control mt-4">
+        <label class="label flex justify-between">
+          <span class="label-text font-medium">Enhanced Result</span>
+          <span id="enhancement_in_progress" class="htmx-indicator text-xs text-gray-600">
+            <span class="loading loading-spinner loading-sm text-primary"></span> Enhancing...
+          </span>
+        </label>
+        <div id="enhanced_bullet_result" class="p-4 min-h-24 border border-gray-200 rounded-md bg-gray-50">
+          <p class="text-gray-400 italic">Enhanced bullet point will appear here</p>
+        </div>
+      </div>
+
+      <div class="modal-action mt-6">
+        <button type="button" onclick="closeModal('bullet-enhancement-modal')" class="btn btn-outline">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Enhance
+        </button>
+        <button type="button" id="apply_enhancement_btn" class="btn btn-success" onclick="applyEnhancement()" disabled>
+          <i class="fa-solid fa-check mr-2"></i> Apply Enhancement
+        </button>
+      </div>
+    </form>
+  </div>
+  <label class="modal-backdrop" for="bullet-enhancement-modal" onclick="closeModal('bullet-enhancement-modal')"></label>
+</div>
+
+{#{% comment %}#}
+{#This is a partial template for the bullet enhancement modal form#}
+{#Save as 'resumes/partials/bullet_enhancement_modal.html'#}
+{#{% endcomment %}#}
+{##}
+{#<div id="bullet-enhancement-modal" class="modal">#}
+{#  <div class="modal-box">#}
+{#    <h3 class="font-bold text-lg flex items-center">#}
+{#      <i class="fa-solid fa-wand-magic-sparkles text-info mr-2"></i>#}
+{#      Enhance Bullet Point#}
+{#    </h3>#}
+{#    <p class="py-2 text-sm text-gray-600">#}
+{#      Improve your bullet point's impact and ATS compatibility#}
+{#    </p>#}
+{##}
+{#    <form id="bullet-enhancement-form" hx-get="{% url 'job_portal:enhance_bullet' %}"#}
+{#          hx-target="#enhanced_bullet_result"#}
+{#          hx-swap="innerHTML"#}
+{#          hx-indicator="#enhance_modal_indicator">#}
+{##}
+{#      <input type="hidden" id="parent_index_modal" name="parent_index" value="">#}
+{#      <input type="hidden" id="bullet_index_modal" name="bullet_index" value="">#}
+{##}
+{#      <!-- Original Bullet Point -->#}
+{#      <div class="form-control mt-2">#}
+{#        <label class="label">#}
+{#          <span class="label-text font-medium">Original Bullet Point</span>#}
+{#        </label>#}
+{#        <textarea id="original_bullet_modal" name="bullet_text" class="textarea textarea-bordered min-h-20" required readonly></textarea>#}
+{#      </div>#}
+{##}
+{#      <!-- Enhancement Type -->#}
+{#      <div class="form-control mt-4">#}
+{#        <label class="label">#}
+{#          <span class="label-text font-medium">Enhancement Type</span>#}
+{#        </label>#}
+{#        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">#}
+{#          <label class="cursor-pointer flex items-center gap-2 p-2 border border-gray-200 rounded-lg hover:bg-gray-50">#}
+{#            <input type="radio" name="enhancement_type" value="general" class="radio radio-info" checked>#}
+{#            <div>#}
+{#              <span class="label-text font-medium">General Enhancement</span>#}
+{#              <p class="text-xs text-gray-500">Improve clarity, impact, and metrics</p>#}
+{#            </div>#}
+{#          </label>#}
+{#          <label class="cursor-pointer flex items-center gap-2 p-2 border border-gray-200 rounded-lg hover:bg-gray-50">#}
+{#            <input type="radio" name="enhancement_type" value="ats" class="radio radio-info">#}
+{#            <div>#}
+{#              <span class="label-text font-medium">ATS Optimization</span>#}
+{#              <p class="text-xs text-gray-500">Keywords and ATS compatibility</p>#}
+{#            </div>#}
+{#          </label>#}
+{#        </div>#}
+{#      </div>#}
+{##}
+{#      <!-- AI Model Selection -->#}
+{#      <div class="form-control mt-4">#}
+{#        <label class="label">#}
+{#          <span class="label-text font-medium">AI Model</span>#}
+{#        </label>#}
+{#        <div class="flex gap-4">#}
+{#          <label class="cursor-pointer flex items-center gap-2">#}
+{#            <input type="radio" name="ai_engine" value="chatgpt" class="radio radio-info" checked>#}
+{#            <span class="label-text">ChatGPT</span>#}
+{#          </label>#}
+{#          <label class="cursor-pointer flex items-center gap-2">#}
+{#            <input type="radio" name="ai_engine" value="gemini" class="radio radio-info">#}
+{#            <span class="label-text">Gemini</span>#}
+{#          </label>#}
+{#        </div>#}
+{#      </div>#}
+{##}
+{#      <!-- Target Job (for ATS optimization) -->#}
+{#      <div id="ats_job_container" class="form-control mt-4 hidden">#}
+{#        <label class="label">#}
+{#          <span class="label-text font-medium">Target Job Title/Description</span>#}
+{#          <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#        </label>#}
+{#        <textarea name="job_description" class="textarea textarea-bordered min-h-20"#}
+{#                  placeholder="Enter target job title or paste job description for better keyword matching"></textarea>#}
+{#      </div>#}
+{##}
+{#      <!-- Result Preview -->#}
+{#      <div class="mt-6 p-3 bg-gray-50 rounded-lg border border-gray-200">#}
+{#        <label class="label pb-0">#}
+{#          <span class="label-text font-medium">Enhanced Result</span>#}
+{#        </label>#}
+{#        <div id="enhance_modal_indicator" class="htmx-indicator py-4 flex justify-center">#}
+{#          <span class="loading loading-spinner loading-md text-info"></span>#}
+{#        </div>#}
+{#        <div id="enhanced_bullet_result" class="p-2 min-h-20 text-gray-700"></div>#}
+{#      </div>#}
+{##}
+{#      <div class="modal-action mt-4">#}
+{#        <button type="button" onclick="closeModal('bullet-enhancement-modal')" class="btn btn-outline">Cancel</button>#}
+{#        <button type="button" id="apply_enhancement_btn" class="btn btn-info" disabled#}
+{#                onclick="applyEnhancement()">#}
+{#          Apply Enhancement#}
+{#        </button>#}
+{#        <button type="submit" class="btn btn-primary">#}
+{#          <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Enhance#}
+{#        </button>#}
+{#      </div>#}
+{#    </form>#}
+{#  </div>#}
+{#  <label class="modal-backdrop" for="bullet-enhancement-modal" onclick="closeModal('bullet-enhancement-modal')"></label>#}
+{#</div>#}

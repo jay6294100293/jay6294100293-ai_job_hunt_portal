@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Login - AI Job Hunt{% endblock %}
+
+{% block content %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    .login-container {
+        min-height: calc(100vh - 64px);
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+    }
+
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .card-container {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 24px;
+        box-shadow:
+            0 4px 6px -1px rgba(0, 0, 0, 0.1),
+            0 2px 4px -1px rgba(0, 0, 0, 0.06),
+            0 0 0 1px rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .card-container:hover {
+        transform: translateY(-4px);
+        box-shadow:
+            0 20px 25px -5px rgba(0, 0, 0, 0.1),
+            0 10px 10px -5px rgba(0, 0, 0, 0.04),
+            0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    .logo-container {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        width: 72px;
+        height: 72px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: rotate(-5deg);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow:
+            0 10px 15px -3px rgba(99, 102, 241, 0.3),
+            0 4px 6px -2px rgba(99, 102, 241, 0.2);
+    }
+
+    .logo-container:hover {
+        transform: rotate(0deg) scale(1.05);
+    }
+
+    .custom-input {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 2px solid #e2e8f0;
+        background: rgba(255, 255, 255, 0.9);
+    }
+
+    .custom-input:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        background: white;
+    }
+
+    .primary-button {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .primary-button::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    .primary-button:hover::after {
+        transform: translateX(0);
+    }
+
+    .primary-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .social-button {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .social-button::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(99,102,241,0) 100%);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    .social-button:hover::after {
+        transform: translateX(0);
+    }
+
+    .social-button:hover {
+        transform: translateY(-2px);
+        border-color: #6366f1;
+    }
+
+    .input-icon {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        left: 12px;
+        color: #9ca3af;
+    }
+
+    .checkbox-custom {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .checkbox-custom input:checked + span {
+        border-color: #6366f1;
+        background-color: #6366f1;
+    }
+
+    .error-container {
+        animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    @keyframes shake {
+        10%, 90% { transform: translate3d(-1px, 0, 0); }
+        20%, 80% { transform: translate3d(2px, 0, 0); }
+        30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+        40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+</style>
+
+<div class="login-container flex flex-col justify-center px-4 py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <!-- Logo with enhanced animation -->
+        <div class="flex justify-center">
+            <div class="logo-container">
+                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Enhanced typography -->
+        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 font-['Inter']">
+            Welcome back
+        </h2>
+        <p class="mt-2 text-center text-sm text-gray-600">
+            Sign in to continue your job search journey
+        </p>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="card-container py-8 px-4 sm:px-10">
+            <!-- Form content remains the same but with enhanced styling -->
+            <form class="space-y-6" method="POST">
+                {% csrf_token %}
+
+                <!-- Username field with icon -->
+                <div class="space-y-2">
+                    <label for="{{ form.username.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">
+                        Username
+                    </label>
+                    <div class="relative">
+                        <i class="fas fa-user input-icon"></i>
+                        {% render_field form.username class="custom-input pl-10 w-full px-4 py-3 rounded-lg" placeholder="Enter your username" %}
+                    </div>
+                    {% if form.username.errors %}
+                    <p class="text-sm text-red-600">
+                        {{ form.username.errors|join:", " }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Password field with icon -->
+                <div class="space-y-2">
+                    <label for="{{ form.password.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">
+                        Password
+                    </label>
+                    <div class="relative">
+                        <i class="fas fa-lock input-icon"></i>
+                        {% render_field form.password class="custom-input pl-10 w-full px-4 py-3 rounded-lg" placeholder="Enter your password" %}
+                    </div>
+                    {% if form.password.errors %}
+                    <p class="text-sm text-red-600">
+                        {{ form.password.errors|join:", " }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Enhanced checkbox and forgot password -->
+                <div class="flex items-center justify-between">
+                    <label class="checkbox-custom flex items-center">
+                        <input type="checkbox" class="hidden" name="remember_me">
+                        <span class="w-5 h-5 border-2 border-gray-300 rounded flex items-center justify-center mr-2 transition-all duration-200">
+                            <i class="fas fa-check text-white text-xs hidden"></i>
+                        </span>
+                        <span class="text-sm text-gray-700">Remember me</span>
+                    </label>
+
+                    <a href="{% url 'password_reset' %}"
+                       class="text-sm font-medium text-primary-600 hover:text-primary-500 transition-colors">
+                        Forgot password?
+                    </a>
+                </div>
+
+                <!-- Enhanced sign in button -->
+                <button type="submit"
+                        class="primary-button w-full py-3 px-4 rounded-lg text-white font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    Sign in
+                </button>
+            </form>
+
+            <!-- Enhanced divider -->
+            <div class="mt-8 relative">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-200"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-4 bg-white text-gray-500">
+                        Or continue with
+                    </span>
+                </div>
+            </div>
+
+            <!-- Enhanced social buttons -->
+            <div class="mt-6 grid grid-cols-2 gap-4">
+                <button class="social-button flex items-center justify-center px-4 py-3 rounded-lg border border-gray-200 hover:border-primary-500 transition-all duration-200">
+                    <svg class="w-5 h-5 text-red-500" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
+                    </svg>
+                </button>
+
+                <button class="social-button flex items-center justify-center px-4 py-3 rounded-lg border border-gray-200 hover:border-primary-500 transition-all duration-200">
+                    <svg class="w-5 h-5 text-gray-700" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Enhanced sign up link -->
+            <div class="mt-8 text-center">
+                <p class="text-sm text-gray-600">
+                    Don't have an account?
+                    <a href="{% url 'signup' %}"
+                       class="font-medium text-primary-600 hover:text-primary-500 transition-colors ml-1">
+                        Sign up for free
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

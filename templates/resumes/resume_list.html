@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Resumes{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-10">
+        <div class="flex items-center">
+            <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mr-4">
+                <i class="fa-solid fa-file-lines text-primary text-xl"></i>
+            </div>
+            <h1 class="text-2xl md:text-3xl font-bold">My Resumes</h1>
+        </div>
+        <a href="{% url 'job_portal:template_selection' %}" class="btn btn-primary mt-4 md:mt-0 px-6">
+            <i class="fa-solid fa-plus mr-2"></i> Create New Resume
+        </a>
+    </div>
+
+    {% if resumes %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for resume in resumes %}
+        <div class="card bg-base-100 shadow-xl h-full transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
+            <div class="card-body p-6">
+                <!-- Status indicator -->
+                <div class="absolute -top-2 -right-2">
+                    <div class="badge badge-primary py-3 px-4 shadow-md">{{ resume.get_status_display }}</div>
+                </div>
+
+                <h2 class="card-title text-xl mb-2">{{ resume.full_name }}</h2>
+
+                <div class="my-3 flex flex-wrap gap-2">
+                    <span class="badge badge-ghost bg-gray-100 dark:bg-gray-700">
+                        <i class="fa-solid fa-calendar-alt mr-1 opacity-70"></i>
+                        Created {{ resume.created_at|date:"M d, Y" }}
+                    </span>
+                    {% if resume.updated_at != resume.created_at %}
+                    <span class="badge badge-ghost bg-gray-100 dark:bg-gray-700">
+                        <i class="fa-solid fa-clock-rotate-left mr-1 opacity-70"></i>
+                        Updated {{ resume.updated_at|date:"M d, Y" }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                {% if resume.summary %}
+                <div class="mt-3 mb-5">
+                    <p class="text-sm opacity-75 line-clamp-3 border-l-4 border-gray-200 pl-3 py-1 italic">{{ resume.summary }}</p>
+                </div>
+                {% endif %}
+
+                <div class="flex flex-wrap gap-2 mb-5">
+                    {% for skill in resume.skills.all|slice:":5" %}
+                    <span class="badge badge-outline badge-sm px-3 py-3">{{ skill.skill_name }}</span>
+                    {% endfor %}
+                    {% if resume.skills.count > 5 %}
+                    <span class="badge badge-sm bg-gray-100 dark:bg-gray-700">+{{ resume.skills.count|add:"-5" }} more</span>
+                    {% endif %}
+                </div>
+
+                <div class="card-actions justify-between mt-auto pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" class="btn btn-primary flex-1">
+                        <i class="fa-solid fa-eye mr-2"></i> View
+                    </a>
+                    <div class="dropdown dropdown-end">
+                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                        </div>
+                        <ul tabindex="0" class="dropdown-content z-[1] menu p-3 shadow-lg bg-base-100 rounded-xl w-56 border border-gray-100 dark:border-gray-700">
+                            <li>
+                                <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" class="py-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                                    <i class="fa-solid fa-eye opacity-70 mr-1 w-5"></i> View Resume
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'job_portal:edit_resume' resume_id=resume.id %}" class="py-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                                    <i class="fa-solid fa-edit opacity-70 mr-1 w-5"></i> Edit Resume
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'job_portal:download_resume' resume_id=resume.id %}" class="py-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                                    <i class="fa-solid fa-download opacity-70 mr-1 w-5"></i> Download PDF
+                                </a>
+                            </li>
+                            <li class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                <a href="{% url 'job_portal:delete_resume' resume_id=resume.id %}" class="text-error py-3 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
+                                    <i class="fa-solid fa-trash-can mr-1 w-5"></i> Delete Resume
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="flex flex-col items-center justify-center p-12 bg-base-200 rounded-2xl text-center border border-gray-100 dark:border-gray-700 shadow-lg">
+        <div class="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-6">
+            <i class="fa-solid fa-file-alt text-4xl text-gray-400"></i>
+        </div>
+        <h3 class="text-2xl font-bold mb-3">No Resumes Yet</h3>
+        <p class="text-gray-500 mb-8 max-w-md">You haven't created any resumes yet. Get started by creating your first resume to kickstart your job search journey!</p>
+        <a href="{% url 'job_portal:template_selection' %}" class="btn btn-primary btn-lg">
+            <i class="fa-solid fa-plus mr-2"></i> Create Your First Resume
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

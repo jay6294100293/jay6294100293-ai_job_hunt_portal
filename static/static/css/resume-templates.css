@@ -1,0 +1,570 @@
+/* resume-templates.css */
+/* Main container for all resume templates */
+.resume-container {
+    font-family: 'Roboto', 'Arial', sans-serif;
+    max-width: 210mm; /* A4 width */
+    margin: 0 auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background-color: white;
+    color: #333;
+    line-height: 1.5;
+}
+
+/* Common elements across all templates */
+.resume-container h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.resume-container h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.resume-container h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+}
+
+.resume-container h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+}
+
+.resume-container p {
+    margin: 0 0 0.5rem 0;
+}
+
+.resume-container ul {
+    padding-left: 1.5rem;
+    margin: 0.5rem 0;
+}
+
+.resume-container li {
+    margin-bottom: 0.25rem;
+}
+
+/* ===== MODERN PROFESSIONAL TEMPLATE ===== */
+.modern-professional header {
+    background-color: #4361EE;
+    color: white;
+    padding: 40px 50px 30px;
+}
+
+.modern-professional .contact-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+.modern-professional h3 {
+    color: #4361EE;
+    border-bottom: 2px solid #4361EE;
+    padding-bottom: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.modern-professional .job-entry,
+.modern-professional .education-entry,
+.modern-professional .project-entry {
+    margin-bottom: 1.5rem;
+}
+
+.modern-professional .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+/* ===== CREATIVE TEMPLATE ===== */
+.creative-template {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    min-height: 297mm; /* A4 height */
+}
+
+.creative-template .sidebar {
+    background-color: #2EC4B6;
+    color: white;
+    padding: 40px 30px;
+}
+
+.creative-template .main-content {
+    padding: 40px;
+}
+
+.creative-template .profile-section {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.creative-template .avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    margin: 0 auto 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.creative-template h3 {
+    color: #2EC4B6;
+    border-bottom: 2px solid #2EC4B6;
+    padding-bottom: 0.25rem;
+    margin-bottom: 1.25rem;
+    text-transform: uppercase;
+}
+
+.creative-template .skill-item {
+    background-color: rgba(46, 196, 182, 0.1);
+    border-radius: 20px;
+    padding: 0.25rem 0.75rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+    color: #2EC4B6;
+    font-size: 0.9rem;
+}
+
+/* ===== EXECUTIVE TEMPLATE ===== */
+.executive-template {
+    padding: 40px;
+}
+
+.executive-template header {
+    border-bottom: 3px solid #6A0572;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.executive-template h1 {
+    font-size: 2.25rem;
+    color: #6A0572;
+}
+
+.executive-template h2 {
+    font-size: 1.5rem;
+    color: #AB83A1;
+    font-weight: normal;
+}
+
+.executive-template .contact-info {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.executive-template h3 {
+    color: #6A0572;
+    font-size: 1.25rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 2px solid #6A0572;
+    padding-bottom: 5px;
+    margin-bottom: 1rem;
+}
+
+.executive-template .job-title,
+.executive-template .education-degree {
+    color: #6A0572;
+    font-weight: 600;
+}
+
+.executive-template .job-company,
+.executive-template .education-institution {
+    color: #AB83A1;
+    font-weight: 500;
+}
+
+.executive-template .job-entry,
+.executive-template .education-entry {
+    margin-bottom: 1.5rem;
+}
+
+.executive-template .skills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.executive-template .skill-category {
+    background-color: rgba(106, 5, 114, 0.05);
+    padding: 1rem;
+    border-radius: 5px;
+    flex: 1 1 250px;
+}
+
+/* ===== MINIMALIST TEMPLATE ===== */
+.minimalist-template {
+    padding: 40px;
+    background-color: white;
+    max-width: 210mm; /* A4 width */
+    margin: 0 auto;
+}
+
+.minimalist-template header {
+    margin-bottom: 30px;
+}
+
+.minimalist-template h1 {
+    font-size: 2.25rem;
+    color: #073B4C;
+    letter-spacing: -0.5px;
+}
+
+.minimalist-template h2 {
+    font-size: 1.25rem;
+    color: #073B4C;
+    font-weight: normal;
+    margin-top: 0.25rem;
+}
+
+.minimalist-template .contact-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    color: #06D6A0;
+}
+
+.minimalist-template h3 {
+    color: #073B4C;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.minimalist-template h4 {
+    color: #073B4C;
+    font-weight: 500;
+}
+
+.minimalist-template .job-entry,
+.minimalist-template .education-entry {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.minimalist-template .job-date,
+.minimalist-template .education-date {
+    color: #06D6A0;
+    font-weight: 500;
+}
+
+.minimalist-template .skills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.minimalist-template .skill-item {
+    background-color: rgba(6, 214, 160, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 3px;
+    display: inline-block;
+    font-size: 0.9rem;
+}
+
+/* ===== TRADITIONAL TEMPLATE ===== */
+.traditional-template {
+    padding: 40px;
+    line-height: 1.6;
+    font-family: 'Times New Roman', Times, serif;
+}
+
+.traditional-template header {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #9E2A2B;
+    padding-bottom: 20px;
+}
+
+.traditional-template h1 {
+    font-size: 2rem;
+    color: #540B0E;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.traditional-template h2 {
+    font-size: 1.25rem;
+    color: #9E2A2B;
+    font-weight: normal;
+}
+
+.traditional-template .contact-info {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.traditional-template h3 {
+    color: #540B0E;
+    font-weight: bold;
+    font-size: 1.25rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #540B0E;
+    padding-bottom: 5px;
+}
+
+.traditional-template .job-entry,
+.traditional-template .education-entry {
+    margin-bottom: 1.25rem;
+}
+
+.traditional-template .job-header,
+.traditional-template .education-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.traditional-template .job-title,
+.traditional-template .education-degree {
+    font-weight: bold;
+}
+
+.traditional-template .job-company,
+.traditional-template .education-institution {
+    font-style: italic;
+}
+
+/* ===== SIMPLE TEMPLATE ===== */
+.simple-template {
+    padding: 30px;
+    max-width: 210mm; /* A4 width */
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+}
+
+.simple-template header {
+    margin-bottom: 20px;
+}
+
+.simple-template h1 {
+    font-size: 2rem;
+    color: #212529;
+    margin-bottom: 5px;
+}
+
+.simple-template h2 {
+    font-size: 1.25rem;
+    color: #495057;
+    font-weight: normal;
+}
+
+.simple-template .contact-info {
+    margin-top: 0.75rem;
+    line-height: 1.5;
+}
+
+.simple-template h3 {
+    font-size: 1.25rem;
+    color: #212529;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 5px;
+    margin-bottom: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.simple-template .job-entry,
+.simple-template .education-entry {
+    margin-bottom: 1rem;
+}
+
+.simple-template .job-header,
+.simple-template .education-header {
+    margin-bottom: 0.25rem;
+}
+
+.simple-template .job-title,
+.simple-template .education-degree {
+    font-weight: bold;
+}
+
+.simple-template .job-details,
+.simple-template .education-details {
+    color: #495057;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.simple-template ul {
+    margin-top: 0.5rem;
+}
+
+.simple-template .skills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.simple-template .skill-item {
+    background-color: #f8f9fa;
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    border: 1px solid #dee2e6;
+    display: inline-block;
+    font-size: 0.9rem;
+}
+
+/* Print styles for all templates */
+@media print {
+    .resume-container {
+        box-shadow: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        background: white;
+    }
+
+    @page {
+        margin: 0;
+        size: A4;
+    }
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+    .resume-container {
+        padding: 15px;
+    }
+
+    .modern-professional header,
+    .creative-template .sidebar,
+    .creative-template .main-content {
+        padding: 20px;
+    }
+
+    .creative-template {
+        grid-template-columns: 1fr;
+    }
+
+    .creative-template .sidebar {
+        padding-bottom: 30px;
+    }
+
+    .executive-template .contact-info,
+    .traditional-template .contact-info {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+}
+
+/* Additional utility classes */
+.section {
+    margin-bottom: 1.5rem;
+}
+
+.divider {
+    border-bottom: 1px solid #ccc;
+    margin: 1rem 0;
+}
+
+.text-primary {
+    color: #4361EE;
+}
+
+.text-secondary {
+    color: #6B7280;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.italic {
+    font-style: italic;
+}
+
+/* Specific template class extensions */
+/* Modern Professional template extensions */
+.modern-professional .section-title {
+    color: #4361EE;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.modern-professional .job-period,
+.modern-professional .education-period {
+    color: #6B7280;
+    font-size: 0.9rem;
+}
+
+/* Creative template extensions */
+.creative-template .contact-item i {
+    width: 20px;
+    text-align: center;
+    margin-right: 10px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.creative-template .job-date,
+.creative-template .education-date {
+    color: #2EC4B6;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Executive template extensions */
+.executive-template .job-period,
+.executive-template .education-period {
+    font-style: italic;
+    color: #6B7280;
+}
+
+.executive-template .achievements {
+    margin-top: 0.5rem;
+}
+
+/* Minimalist template extensions */
+.minimalist-template .section-container {
+    margin-bottom: 2rem;
+}
+
+.minimalist-template .job-company,
+.minimalist-template .education-institution {
+    color: #6B7280;
+}
+
+/* Traditional template extensions */
+.traditional-template .job-description,
+.traditional-template .education-description {
+    margin-top: 0.5rem;
+}
+
+/* Simple template extensions */
+.simple-template .section-container {
+    margin-bottom: 1.5rem;
+}

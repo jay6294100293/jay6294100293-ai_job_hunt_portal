@@ -1,0 +1,889 @@
+<!-- resumes/partials/experience_form_row.html -->
+<div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl experience-entry" data-index="{{ index }}">
+    <!-- Header with Title and Status -->
+    <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">
+        <h3 class="text-lg font-medium flex items-center">
+            <span class="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center mr-3 shadow-sm">
+                <i class="fa-solid fa-briefcase text-primary text-sm"></i>
+            </span>
+            <span class="text-gray-800 dark:text-gray-800">Experience #<span class="experience-number font-semibold">{{ index|add:"1" }}</span></span>
+        </h3>
+
+        <div class="flex items-center gap-3">
+            <div class="tooltip tooltip-left" data-tip="Required fields status">
+                <div class="experience-status w-3 h-3 rounded-full bg-error shadow-sm"></div>
+            </div>
+            <!-- Remove Experience Button -->
+            <button type="button" class="btn btn-ghost btn-sm text-error hover:bg-error/10"
+                    onclick="removeExperience(this, '{{ index }}')">
+                <i class="fa-solid fa-trash-can mr-1"></i> Remove
+            </button>
+        </div>
+    </div>
+
+    <!-- Basic Information Section -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- Job Title -->
+        <div class="form-control">
+            <label class="label" for="job_title_{{ index }}">
+                <span class="label-text font-medium">Job Title</span>
+                <span class="label-text-alt text-error">*</span>
+            </label>
+            <div class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-id-badge text-gray-400 group-focus-within:text-primary transition-colors"></i>
+                </div>
+                <input type="text" id="job_title_{{ index }}" name="job_title_{{ index }}"
+                    class="input input-bordered w-full pl-10 focus:border-primary focus:ring-1 focus:ring-primary"
+                    value="" required
+                    placeholder="e.g., Senior Software Engineer"
+                    oninput="updateExperienceStatus('{{ index }}')">
+                <div id="job_title_spinner_{{ index }}" class="htmx-indicator absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <span class="loading loading-spinner loading-xs"></span>
+                </div>
+            </div>
+            <div id="job_title_suggestions_{{ index }}" class="text-xs mt-1 flex flex-wrap gap-1"></div>
+        </div>
+
+        <!-- Employer -->
+        <!-- resumes/partials/experience_form_row.html (continuation) -->
+        <!-- Employer -->
+        <div class="form-control">
+            <label class="label" for="employer_{{ index }}">
+                <span class="label-text font-medium">Employer/Company</span>
+                <span class="label-text-alt text-error">*</span>
+            </label>
+            <div class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-building text-gray-400 group-focus-within:text-primary transition-colors"></i>
+                </div>
+                <input type="text" id="employer_{{ index }}" name="employer_{{ index }}"
+                    class="input input-bordered w-full pl-10 focus:border-primary focus:ring-1 focus:ring-primary"
+                    value="" required
+                    placeholder="e.g., Google, Microsoft"
+                    oninput="updateExperienceStatus('{{ index }}')">
+                <div id="employer_spinner_{{ index }}" class="htmx-indicator absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <span class="loading loading-spinner loading-xs"></span>
+                </div>
+            </div>
+            <div id="employer_suggestions_{{ index }}" class="text-xs mt-1 flex flex-wrap gap-1"></div>
+        </div>
+    </div>
+
+    <!-- Details Section -->
+    <div class="mt-6 p-4 rounded-lg border border-gray-100 dark:border-gray-700">
+        <!-- Location and Employment Type -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="form-control">
+                <label class="label" for="location_{{ index }}">
+                    <span class="label-text font-medium">Location</span>
+                    <span class="label-text-alt text-error">*</span>
+                </label>
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-map-marker-alt text-gray-400 group-focus-within:text-primary transition-colors"></i>
+                    </div>
+                    <input type="text" id="location_{{ index }}" name="location_{{ index }}"
+                        class="input input-bordered w-full pl-10 focus:border-primary focus:ring-1 focus:ring-primary"
+                        value=""
+                        placeholder="San Francisco, CA or Remote" required
+                        oninput="updateExperienceStatus('{{ index }}')">
+                    <div class="flex mt-1 items-center">
+                        <input type="checkbox" id="is_remote_{{ index }}" name="is_remote_{{ index }}"
+                            class="checkbox checkbox-xs checkbox-primary mr-2"
+                            onchange="toggleRemoteLocation('{{ index }}')">
+                        <label for="is_remote_{{ index }}" class="text-xs cursor-pointer">This was a remote position</label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-control">
+                <label class="label" for="employment_type_{{ index }}">
+                    <span class="label-text font-medium">Employment Type</span>
+                    <span class="label-text-alt text-gray-500">(Optional)</span>
+                </label>
+                <select id="employment_type_{{ index }}" name="employment_type_{{ index }}"
+                    class="select select-bordered w-full focus:border-primary">
+                    <option value="" selected>Select employment type</option>
+                    <option value="Full-time">Full-time</option>
+                    <option value="Part-time">Part-time</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Internship">Internship</option>
+                    <option value="Freelance">Freelance</option>
+                    <option value="Volunteer">Volunteer</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Date Range -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+            <!-- Start Date -->
+            <div class="form-control">
+                <label class="label" for="start_date_{{ index }}">
+                    <span class="label-text font-medium">Start Date</span>
+                    <span class="label-text-alt text-error">*</span>
+                </label>
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-calendar-alt text-gray-400 group-focus-within:text-primary transition-colors"></i>
+                    </div>
+                    <input type="date" id="start_date_{{ index }}" name="start_date_{{ index }}"
+                        class="input input-bordered w-full pl-10 focus:border-primary focus:ring-1 focus:ring-primary"
+                        value="" required
+                        onchange="validateDates('{{ index }}'); updateExperienceStatus('{{ index }}')">
+                </div>
+                <div id="date_validation_{{ index }}" class="text-xs mt-1 text-error"></div>
+            </div>
+
+            <!-- End Date / Current -->
+            <div class="form-control end-date-container">
+                <label class="label" for="end_date_{{ index }}">
+                    <span class="label-text font-medium">End Date</span>
+                    <span class="label-text-alt text-gray-500">(Leave blank if current)</span>
+                </label>
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-calendar-check text-gray-400 group-focus-within:text-primary transition-colors"></i>
+                    </div>
+                    <input type="date" id="end_date_{{ index }}" name="end_date_{{ index }}"
+                        class="input input-bordered w-full pl-10 focus:border-primary focus:ring-1 focus:ring-primary"
+                        value=""
+                        onchange="validateDates('{{ index }}')">
+                </div>
+
+                <div class="form-control mt-2">
+                    <label class="cursor-pointer label justify-start gap-3 py-1">
+                        <input type="checkbox" id="is_current_{{ index }}" name="is_current_{{ index }}"
+                            class="checkbox checkbox-primary checkbox-sm"
+                            onchange="toggleEndDate(this)">
+                        <span class="label-text">I currently work here</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bullet Points Section -->
+    <div class="mt-6 bullet-points-container">
+        <div class="flex justify-between items-center mb-2">
+            <div class="flex items-center">
+                <i class="fa-solid fa-list-ul text-primary mr-2"></i>
+                <span class="font-medium text-gray-800 dark:text-gray-700">Responsibilities and Achievements</span>
+                <span class="text-error ml-1">*</span>
+            </div>
+
+            <button type="button" class="btn btn-xs btn-primary text-white shadow-sm">
+                <i class="fa-solid fa-magic mr-1"></i> AI Generate
+            </button>
+        </div>
+
+        <span id="bullet_ai_indicator_{{ index }}" class="htmx-indicator text-sm text-gray-600">
+            <span class="loading loading-spinner loading-sm text-primary"></span> Generating bullet points...
+        </span>
+
+        <!-- Hidden field to track number of bullet points -->
+        <input type="hidden" name="bullet_count_{{ index }}"
+               value="1" class="bullet-count" id="bullet_count_{{ index }}">
+
+        <div class="bullet-points space-y-2 p-2 bg-gradient-to-b from-white to-gray-50 dark:from-gray-500/10 dark:to-gray-800/10 rounded-lg border border-gray-100 dark:border-gray-700 shadow-inner" id="bullet_points_container_{{ index }}">
+            <!-- Default bullet point -->
+            <div class="bullet-point-row flex items-start gap-3 group p-2 rounded-md transition-colors">
+                <div class="mt-3 text-primary">•</div>
+                <div class="form-control flex-1">
+                    <div class="relative">
+                        <textarea class="textarea textarea-bordered w-full min-h-24 focus:border-primary focus:ring-1 focus:ring-primary pr-8"
+                            id="bullet_{{ index }}_0"
+                            name="bullet_{{ index }}_0"
+                            placeholder="Describe your achievement with action verbs and measurable results (e.g., 'Increased customer satisfaction by 20% through implementation of new service protocols')"
+                            onkeyup="checkBulletQuality(this)"
+                            data-parent="{{ index }}"
+                            data-index="0"></textarea>
+                    </div>
+                    <div class="flex justify-between mt-1">
+                        <div class="bullet-quality text-xs"></div>
+                        <div class="text-xs char-counter text-gray-500">
+                            <span class="current">0</span>/<span class="max">100-150 optimal</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <button type="button" class="btn btn-circle btn-outline btn-error btn-sm mt-3 opacity-70 hover:opacity-100 hover:bg-error hover:text-white transition-all"
+                            onclick="removeBulletPoint(this, '{{ index }}')">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                    <button type="button" class="btn btn-circle btn-outline btn-info btn-sm opacity-70 hover:opacity-100 hover:bg-info hover:text-white transition-all">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </button>
+                    <span id="enhance_indicator_{{ index }}_0" class="htmx-indicator">
+                        <span class="loading loading-spinner loading-xs"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end mt-3">
+            <button type="button" class="btn btn-primary btn-sm hover:shadow-md"
+                onclick="addBulletPoint('{{ index }}')">
+                <i class="fa-solid fa-plus mr-2"></i> Add Bullet Point
+            </button>
+        </div>
+    </div>
+
+    <!-- Settings Section -->
+    <details class="mt-5 collapse collapse-arrow bg-gray-50/50 dark:bg-gray-800/10 rounded-lg border border-gray-100 dark:border-gray-700">
+        <summary class="collapse-title font-medium text-gray-700 dark:text-gray-700">
+            Display Settings
+        </summary>
+        <div class="collapse-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Visibility</span>
+                    </label>
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" id="is_visible_{{ index }}" name="is_visible_{{ index }}"
+                            class="toggle toggle-primary" checked>
+                        <label for="is_visible_{{ index }}" class="text-sm cursor-pointer">
+                            Show this experience on resume
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Display Order</span>
+                    </label>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" id="display_order_{{ index }}" name="display_order_{{ index }}"
+                            class="input input-bordered w-20 focus:border-primary"
+                            value="{{ index|add:'1' }}" min="1">
+                        <span class="text-sm">Order in resume (lower numbers appear first)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <!-- Hidden fields for Django form handling -->
+    <input type="hidden" name="experience_ids" value="new">
+</div>
+
+{#<!-- Beautified Template for Single Experience Form Row -->#}
+{#<div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl experience-entry " data-index="{{ index }}">#}
+{#    <!-- Header with Title and Status -->#}
+{#    <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">#}
+{#        <h3 class="text-lg font-medium flex items-center">#}
+{#            <span class="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center mr-3 shadow-sm">#}
+{#                <i class="fa-solid fa-briefcase text-primary text-sm"></i>#}
+{#            </span>#}
+{#            <span class="text-gray-800 dark:text-gray-200">Experience #<span class="experience-number font-semibold">{{ index|add:"1" }}</span></span>#}
+{#        </h3>#}
+{##}
+{#        <div class="flex items-center gap-3">#}
+{#            <div class="tooltip tooltip-left" data-tip="Required fields status">#}
+{#                <div class="experience-status w-3 h-3 rounded-full bg-error shadow-sm"></div>#}
+{#            </div>#}
+{#            <!-- Remove Experience Button -->#}
+{#            <button type="button" class="btn btn-ghost btn-sm text-error hover:bg-error/10"#}
+{#                    onclick="removeExperience(this, '{{ index }}')">#}
+{#                <i class="fa-solid fa-trash-can mr-1"></i> Remove#}
+{#            </button>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Basic Information Section -->#}
+{#    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">#}
+{#        <!-- Job Title -->#}
+{#        <div class="form-control">#}
+{#            <label class="label" for="job_title_{{ index }}">#}
+{#                <span class="label-text font-medium">Job Title</span>#}
+{#                <span class="label-text-alt text-error">*</span>#}
+{#            </label>#}
+{#            <div class="relative group">#}
+{#                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                    <i class="fa-solid fa-id-badge text-gray-400 group-focus-within:text-primary transition-colors"></i>#}
+{#                </div>#}
+{#                <input type="text" id="job_title_{{ index }}" name="job_title_{{ index }}"#}
+{#                    class="input input-bordered w-full pl-10 focus:border-primary focus:ring-1 focus:ring-primary"#}
+{#                    value="" required#}
+{#                    placeholder="e.g., Senior Software Engineer"#}
+{#                    oninput="updateExperienceStatus('{{ index }}')">#}
+{#                <div id="job_title_spinner_{{ index }}" class="htmx-indicator absolute right-3 top-1/2 transform -translate-y-1/2">#}
+{#                    <span class="loading loading-spinner loading-xs"></span>#}
+{#                </div>#}
+{#            </div>#}
+{#            <div id="job_title_suggestions_{{ index }}" class="text-xs mt-1 flex flex-wrap gap-1"></div>#}
+{#        </div>#}
+{##}
+{#        <!-- Employer -->#}
+{#        <div class="form-control">#}
+{#            <label class="label" for="employer_{{ index }}">#}
+{#                <span class="label-text font-medium">Employer/Company</span>#}
+{#                <span class="label-text-alt text-error">*</span>#}
+{#            </label>#}
+{#            <div class="relative group">#}
+{#                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                    <i class="fa-solid fa-building text-gray-400 group-focus-within:text-primary transition-colors"></i>#}
+{#                </div>#}
+{#                <input type="text" id="employer_{{ index }}" name="employer_{{ index }}"#}
+{#                    class="input input-bordered w-full pl-10 focus:border-primary focus:ring-1 focus:ring-primary"#}
+{#                    value="" required#}
+{#                    placeholder="e.g., Google, Microsoft"#}
+{#                    oninput="updateExperienceStatus('{{ index }}')">#}
+{#                <div id="employer_spinner_{{ index }}" class="htmx-indicator absolute right-3 top-1/2 transform -translate-y-1/2">#}
+{#                    <span class="loading loading-spinner loading-xs"></span>#}
+{#                </div>#}
+{#            </div>#}
+{#            <div id="employer_suggestions_{{ index }}" class="text-xs mt-1 flex flex-wrap gap-1"></div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Details Section -->#}
+{#    <div class="mt-6 bg-gray-50/50 dark:bg-gray-800/10 p-4 rounded-lg border border-gray-100 dark:border-gray-700">#}
+{#        <!-- Industry and Company Size -->#}
+{#        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="industry_{{ index }}">#}
+{#                    <span class="label-text font-medium">Industry</span>#}
+{#                    <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                </label>#}
+{#                <select id="industry_{{ index }}" name="industry_{{ index }}"#}
+{#                    class="select select-bordered w-full focus:border-primary">#}
+{#                    <option value="" selected>Select industry</option>#}
+{#                    <option value="Technology">Technology</option>#}
+{#                    <option value="Healthcare">Healthcare</option>#}
+{#                    <option value="Finance">Finance</option>#}
+{#                    <option value="Education">Education</option>#}
+{#                    <option value="Manufacturing">Manufacturing</option>#}
+{#                    <option value="Retail">Retail</option>#}
+{#                    <option value="Media">Media & Entertainment</option>#}
+{#                    <option value="Government">Government</option>#}
+{#                    <option value="Nonprofit">Nonprofit</option>#}
+{#                    <option value="Other">Other</option>#}
+{#                </select>#}
+{#            </div>#}
+{##}
+{#            <div class="form-control">#}
+{#                <label class="label" for="company_size_{{ index }}">#}
+{#                    <span class="label-text font-medium">Company Size</span>#}
+{#                    <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                </label>#}
+{#                <select id="company_size_{{ index }}" name="company_size_{{ index }}"#}
+{#                    class="select select-bordered w-full focus:border-primary">#}
+{#                    <option value="" selected>Select size</option>#}
+{#                    <option value="1-10">1-10 employees</option>#}
+{#                    <option value="11-50">11-50 employees</option>#}
+{#                    <option value="51-200">51-200 employees</option>#}
+{#                    <option value="201-500">201-500 employees</option>#}
+{#                    <option value="501-1000">501-1000 employees</option>#}
+{#                    <option value="1001-5000">1001-5000 employees</option>#}
+{#                    <option value="5001+">5001+ employees</option>#}
+{#                </select>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#        <!-- Location Row -->#}
+{#        <div class="form-control mt-5">#}
+{#            <label class="label" for="location_{{ index }}">#}
+{#                <span class="label-text font-medium">Location</span>#}
+{#                <span class="label-text-alt text-error">*</span>#}
+{#            </label>#}
+{#            <div class="relative group">#}
+{#                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                    <i class="fa-solid fa-map-marker-alt text-gray-400 group-focus-within:text-primary transition-colors"></i>#}
+{#                </div>#}
+{#                <input type="text" id="location_{{ index }}" name="location_{{ index }}"#}
+{#                    class="input input-bordered w-full pl-10 focus:border-primary focus:ring-1 focus:ring-primary"#}
+{#                    value=""#}
+{#                    placeholder="San Francisco, CA or Remote" required#}
+{#                    oninput="updateExperienceStatus('{{ index }}')">#}
+{#                <div class="flex mt-1 items-center">#}
+{#                    <input type="checkbox" id="is_remote_{{ index }}" name="is_remote_{{ index }}"#}
+{#                        class="checkbox checkbox-xs checkbox-primary mr-2"#}
+{#                        onchange="toggleRemoteLocation('{{ index }}')">#}
+{#                    <label for="is_remote_{{ index }}" class="text-xs cursor-pointer">This was a remote position</label>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#        <!-- Date Range -->#}
+{#        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">#}
+{#            <!-- Start Date -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="start_date_{{ index }}">#}
+{#                    <span class="label-text font-medium">Start Date</span>#}
+{#                    <span class="label-text-alt text-error">*</span>#}
+{#                </label>#}
+{#                <div class="relative group">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-calendar-alt text-gray-400 group-focus-within:text-primary transition-colors"></i>#}
+{#                    </div>#}
+{#                    <input type="date" id="start_date_{{ index }}" name="start_date_{{ index }}"#}
+{#                        class="input input-bordered w-full pl-10 focus:border-primary focus:ring-1 focus:ring-primary"#}
+{#                        value="" required#}
+{#                        onchange="validateDates('{{ index }}'); updateExperienceStatus('{{ index }}')">#}
+{#                </div>#}
+{#                <div id="date_validation_{{ index }}" class="text-xs mt-1 text-error"></div>#}
+{#            </div>#}
+{##}
+{#            <!-- End Date / Current -->#}
+{#            <div class="form-control end-date-container">#}
+{#                <label class="label" for="end_date_{{ index }}">#}
+{#                    <span class="label-text font-medium">End Date</span>#}
+{#                    <span class="label-text-alt text-gray-500">(Leave blank if current)</span>#}
+{#                </label>#}
+{#                <div class="relative group">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-calendar-check text-gray-400 group-focus-within:text-primary transition-colors"></i>#}
+{#                    </div>#}
+{#                    <input type="date" id="end_date_{{ index }}" name="end_date_{{ index }}"#}
+{#                        class="input input-bordered w-full pl-10 focus:border-primary focus:ring-1 focus:ring-primary"#}
+{#                        value=""#}
+{#                        onchange="validateDates('{{ index }}')">#}
+{#                </div>#}
+{##}
+{#                <div class="form-control mt-2">#}
+{#                    <label class="cursor-pointer label justify-start gap-3 py-1">#}
+{#                        <input type="checkbox" id="is_current_{{ index }}" name="is_current_{{ index }}"#}
+{#                            class="checkbox checkbox-primary checkbox-sm"#}
+{#                            onchange="toggleEndDate(this, '{{ index }}')">#}
+{#                        <span class="label-text">I currently work here</span>#}
+{#                    </label>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#        <!-- Employment Type -->#}
+{#        <div class="form-control mt-5">#}
+{#            <label class="label" for="employment_type_{{ index }}">#}
+{#                <span class="label-text font-medium">Employment Type</span>#}
+{#                <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#            </label>#}
+{#            <select id="employment_type_{{ index }}" name="employment_type_{{ index }}"#}
+{#                class="select select-bordered w-full focus:border-primary">#}
+{#                <option value="" selected>Select employment type</option>#}
+{#                <option value="Full-time">Full-time</option>#}
+{#                <option value="Part-time">Part-time</option>#}
+{#                <option value="Contract">Contract</option>#}
+{#                <option value="Internship">Internship</option>#}
+{#                <option value="Freelance">Freelance</option>#}
+{#                <option value="Volunteer">Volunteer</option>#}
+{#            </select>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Bullet Points Section -->#}
+{#    <div class="mt-6 bullet-points-container">#}
+{#        <div class="flex justify-between items-center mb-2">#}
+{#            <div class="flex items-center">#}
+{#                <i class="fa-solid fa-list-ul text-primary mr-2"></i>#}
+{#                <span class="font-medium text-gray-800 dark:text-gray-200">Responsibilities and Achievements</span>#}
+{#                <span class="text-error ml-1">*</span>#}
+{#            </div>#}
+{##}
+{#            <button type="button" class="btn btn-xs btn-primary text-white shadow-sm">#}
+{#                <i class="fa-solid fa-magic mr-1"></i> AI Generate#}
+{#            </button>#}
+{#        </div>#}
+{##}
+{#        <span id="bullet_ai_indicator_{{ index }}" class="htmx-indicator text-sm text-gray-600">#}
+{#            <span class="loading loading-spinner loading-sm text-primary"></span> Generating bullet points...#}
+{#        </span>#}
+{##}
+{#        <!-- Hidden field to track number of bullet points -->#}
+{#        <input type="hidden" name="bullet_count_{{ index }}"#}
+{#               value="3" class="bullet-count" id="bullet_count_{{ index }}">#}
+{##}
+{#        <div class="bullet-points space-y-4 p-4 bg-gradient-to-b from-white to-gray-50 dark:from-gray-800/30 dark:to-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700 shadow-inner" id="bullet_points_container_{{ index }}">#}
+{#            <!-- Default 3 bullet points -->#}
+{#            {% for i in "012"|make_list %}#}
+{#            <div class="bullet-point-row flex items-start gap-3 group hover:bg-gray-50/80 dark:hover:bg-gray-800/20 p-2 rounded-md transition-colors">#}
+{#                <div class="mt-3 text-primary">•</div>#}
+{#                <div class="form-control flex-1">#}
+{#                    <div class="relative">#}
+{#                        <textarea class="textarea textarea-bordered w-full min-h-24 focus:border-primary focus:ring-1 focus:ring-primary pr-8"#}
+{#                            id="bullet_{{ index }}_{{ i }}"#}
+{#                            name="bullet_{{ index }}_{{ i }}"#}
+{#                            placeholder="Describe your achievement with action verbs and measurable results (e.g., 'Increased customer satisfaction by 20% through implementation of new service protocols')"#}
+{#                            onkeyup="checkBulletQuality(this)"#}
+{#                            data-parent="{{ index }}"#}
+{#                            data-index="{{ i }}"></textarea>#}
+{#                    </div>#}
+{#                    <div class="flex justify-between mt-1">#}
+{#                        <div class="bullet-quality text-xs"></div>#}
+{#                        <div class="text-xs char-counter text-gray-500">#}
+{#                            <span class="current">0</span>/<span class="max">100-150 optimal</span>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#                <div class="flex flex-col gap-2">#}
+{#                    <button type="button" class="btn btn-circle btn-outline btn-error btn-sm mt-3 opacity-70 hover:opacity-100 hover:bg-error hover:text-white transition-all"#}
+{#                            onclick="removeBulletPoint(this, '{{ index }}')">#}
+{#                        <i class="fa-solid fa-times"></i>#}
+{#                    </button>#}
+{#                    <button type="button" class="btn btn-circle btn-outline btn-info btn-sm opacity-70 hover:opacity-100 hover:bg-info hover:text-white transition-all">#}
+{#                        <i class="fa-solid fa-wand-magic-sparkles"></i>#}
+{#                    </button>#}
+{#                    <span id="enhance_indicator_{{ index }}_{{ i }}" class="htmx-indicator">#}
+{#                        <span class="loading loading-spinner loading-xs"></span>#}
+{#                    </span>#}
+{#                </div>#}
+{#            </div>#}
+{#            {% endfor %}#}
+{#        </div>#}
+{##}
+{#        <div class="flex justify-end mt-3">#}
+{#            <button type="button" class="btn btn-outline btn-primary btn-sm hover:shadow-md"#}
+{#                onclick="addBulletPoint('{{ index }}')">#}
+{#                <i class="fa-solid fa-plus mr-2"></i> Add Bullet Point#}
+{#            </button>#}
+{#        </div>#}
+{##}
+{##}
+{#    </div>#}
+{##}
+{#    <!-- Settings Section -->#}
+{#    <details class="mt-5 collapse collapse-arrow bg-gray-50/50 dark:bg-gray-800/10 rounded-lg border border-gray-100 dark:border-gray-700">#}
+{#        <summary class="collapse-title font-medium text-gray-700 dark:text-gray-300">#}
+{#            Display Settings#}
+{#        </summary>#}
+{#        <div class="collapse-content">#}
+{#            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">#}
+{#                <div class="form-control">#}
+{#                    <label class="label">#}
+{#                        <span class="label-text font-medium">Visibility</span>#}
+{#                    </label>#}
+{#                    <div class="flex items-center space-x-2">#}
+{#                        <input type="checkbox" id="is_visible_{{ index }}" name="is_visible_{{ index }}"#}
+{#                            class="toggle toggle-primary" checked>#}
+{#                        <label for="is_visible_{{ index }}" class="text-sm cursor-pointer">#}
+{#                            Show this experience on resume#}
+{#                        </label>#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <div class="form-control">#}
+{#                    <label class="label">#}
+{#                        <span class="label-text font-medium">Display Order</span>#}
+{#                    </label>#}
+{#                    <div class="flex items-center space-x-2">#}
+{#                        <input type="number" id="display_order_{{ index }}" name="display_order_{{ index }}"#}
+{#                            class="input input-bordered w-20 focus:border-primary"#}
+{#                            value="{{ index|add:'1' }}" min="1">#}
+{#                        <span class="text-sm">Order in resume (lower numbers appear first)</span>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </details>#}
+{##}
+{#    <!-- Hidden fields for Django form handling -->#}
+{#    <input type="hidden" name="experience_ids" value="new">#}
+{#</div>#}
+{##}
+{#<!-- Template snippet for a single experience form row -->#}
+{#<div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg experience-entry" data-index="{{ index }}">#}
+{#    <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">#}
+{#        <h3 class="text-lg font-medium flex items-center">#}
+{#            <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">#}
+{#                <i class="fa-solid fa-briefcase text-primary text-sm"></i>#}
+{#            </span>#}
+{#            Experience #<span class="experience-number">{{ index|add:"1" }}</span>#}
+{#        </h3>#}
+{##}
+{#        <div class="flex items-center gap-2">#}
+{#            <div class="tooltip tooltip-left" data-tip="Required fields status">#}
+{#                <div class="experience-status w-3 h-3 rounded-full bg-error"></div>#}
+{#            </div>#}
+{#            <!-- Remove Experience Button -->#}
+{#            <button type="button" class="btn btn-ghost btn-sm text-error"#}
+{#                    onclick="removeExperience(this, '{{ index }}')">#}
+{#                <i class="fa-solid fa-trash-can mr-1"></i> Remove#}
+{#            </button>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">#}
+{#        <!-- Job Title -->#}
+{#        <div class="form-control">#}
+{#            <label class="label" for="job_title_{{ index }}">#}
+{#                <span class="label-text font-medium">Job Title</span>#}
+{#                <span class="label-text-alt text-error">*</span>#}
+{#            </label>#}
+{#            <div class="relative">#}
+{#                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                    <i class="fa-solid fa-id-badge text-gray-400"></i>#}
+{#                </div>#}
+{#                <input type="text" id="job_title_{{ index }}" name="job_title_{{ index }}"#}
+{#                    class="input input-bordered w-full pl-10" value="" required#}
+{#                    placeholder="e.g., Senior Software Engineer"#}
+{#                    oninput="updateExperienceStatus('{{ index }}')">#}
+{#                <div id="job_title_spinner_{{ index }}" class="htmx-indicator absolute right-3 top-1/2 transform -translate-y-1/2">#}
+{#                    <span class="loading loading-spinner loading-xs"></span>#}
+{#                </div>#}
+{#            </div>#}
+{#            <div id="job_title_suggestions_{{ index }}" class="text-xs mt-1 flex flex-wrap gap-1"></div>#}
+{#        </div>#}
+{##}
+{#        <!-- Employer -->#}
+{#        <div class="form-control">#}
+{#            <label class="label" for="employer_{{ index }}">#}
+{#                <span class="label-text font-medium">Employer/Company</span>#}
+{#                <span class="label-text-alt text-error">*</span>#}
+{#            </label>#}
+{#            <div class="relative">#}
+{#                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                    <i class="fa-solid fa-building text-gray-400"></i>#}
+{#                </div>#}
+{#                <input type="text" id="employer_{{ index }}" name="employer_{{ index }}"#}
+{#                    class="input input-bordered w-full pl-10" value="" required#}
+{#                    placeholder="e.g., Google, Microsoft"#}
+{#                    oninput="updateExperienceStatus('{{ index }}')">#}
+{#                <div id="employer_spinner_{{ index }}" class="htmx-indicator absolute right-3 top-1/2 transform -translate-y-1/2">#}
+{#                    <span class="loading loading-spinner loading-xs"></span>#}
+{#                </div>#}
+{#            </div>#}
+{#            <div id="employer_suggestions_{{ index }}" class="text-xs mt-1 flex flex-wrap gap-1"></div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Industry and Company Size -->#}
+{#    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">#}
+{#        <div class="form-control">#}
+{#            <label class="label" for="industry_{{ index }}">#}
+{#                <span class="label-text font-medium">Industry</span>#}
+{#                <span class="label-text-alt text-opacity-70">(Optional)</span>#}
+{#            </label>#}
+{#            <select id="industry_{{ index }}" name="industry_{{ index }}"#}
+{#                class="select select-bordered w-full">#}
+{#                <option value="" selected>Select industry</option>#}
+{#                <option value="Technology">Technology</option>#}
+{#                <option value="Healthcare">Healthcare</option>#}
+{#                <option value="Finance">Finance</option>#}
+{#                <option value="Education">Education</option>#}
+{#                <option value="Manufacturing">Manufacturing</option>#}
+{#                <option value="Retail">Retail</option>#}
+{#                <option value="Media">Media & Entertainment</option>#}
+{#                <option value="Government">Government</option>#}
+{#                <option value="Nonprofit">Nonprofit</option>#}
+{#                <option value="Other">Other</option>#}
+{#            </select>#}
+{#        </div>#}
+{##}
+{#        <div class="form-control">#}
+{#            <label class="label" for="company_size_{{ index }}">#}
+{#                <span class="label-text font-medium">Company Size</span>#}
+{#                <span class="label-text-alt text-opacity-70">(Optional)</span>#}
+{#            </label>#}
+{#            <select id="company_size_{{ index }}" name="company_size_{{ index }}"#}
+{#                class="select select-bordered w-full">#}
+{#                <option value="" selected>Select size</option>#}
+{#                <option value="1-10">1-10 employees</option>#}
+{#                <option value="11-50">11-50 employees</option>#}
+{#                <option value="51-200">51-200 employees</option>#}
+{#                <option value="201-500">201-500 employees</option>#}
+{#                <option value="501-1000">501-1000 employees</option>#}
+{#                <option value="1001-5000">1001-5000 employees</option>#}
+{#                <option value="5001+">5001+ employees</option>#}
+{#            </select>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Location -->#}
+{#    <div class="form-control mt-5">#}
+{#        <label class="label" for="location_{{ index }}">#}
+{#            <span class="label-text font-medium">Location</span>#}
+{#            <span class="label-text-alt text-error">*</span>#}
+{#        </label>#}
+{#        <div class="relative">#}
+{#            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                <i class="fa-solid fa-map-marker-alt text-gray-400"></i>#}
+{#            </div>#}
+{#            <input type="text" id="location_{{ index }}" name="location_{{ index }}"#}
+{#                class="input input-bordered w-full pl-10" value=""#}
+{#                placeholder="San Francisco, CA or Remote" required#}
+{#                oninput="updateExperienceStatus('{{ index }}')">#}
+{#            <div class="flex mt-1 items-center">#}
+{#                <input type="checkbox" id="is_remote_{{ index }}" name="is_remote_{{ index }}"#}
+{#                    class="checkbox checkbox-xs checkbox-primary mr-2"#}
+{#                    onchange="toggleRemoteLocation('{{ index }}')">#}
+{#                <label for="is_remote_{{ index }}" class="text-xs cursor-pointer">This was a remote position</label>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">#}
+{#        <!-- Start Date -->#}
+{#        <div class="form-control">#}
+{#            <label class="label" for="start_date_{{ index }}">#}
+{#                <span class="label-text font-medium">Start Date</span>#}
+{#                <span class="label-text-alt text-error">*</span>#}
+{#            </label>#}
+{#            <div class="relative">#}
+{#                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                    <i class="fa-solid fa-calendar-alt text-gray-400"></i>#}
+{#                </div>#}
+{#                <input type="date" id="start_date_{{ index }}" name="start_date_{{ index }}"#}
+{#                    class="input input-bordered w-full pl-10" value="" required#}
+{#                    onchange="validateDates('{{ index }}'); updateExperienceStatus('{{ index }}')">#}
+{#            </div>#}
+{#            <div id="date_validation_{{ index }}" class="text-xs mt-1 text-error"></div>#}
+{#        </div>#}
+{##}
+{#        <!-- End Date / Current -->#}
+{#        <div class="form-control end-date-container">#}
+{#            <label class="label" for="end_date_{{ index }}">#}
+{#                <span class="label-text font-medium">End Date</span>#}
+{#                <span class="label-text-alt text-gray-500">(Leave blank if current)</span>#}
+{#            </label>#}
+{#            <div class="relative">#}
+{#                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                    <i class="fa-solid fa-calendar-check text-gray-400"></i>#}
+{#                </div>#}
+{#                <input type="date" id="end_date_{{ index }}" name="end_date_{{ index }}"#}
+{#                    class="input input-bordered w-full pl-10" value=""#}
+{#                    onchange="validateDates('{{ index }}')">#}
+{#            </div>#}
+{##}
+{#            <div class="form-control mt-2">#}
+{#                <label class="cursor-pointer label justify-start gap-3 py-1">#}
+{#                    <input type="checkbox" id="is_current_{{ index }}" name="is_current_{{ index }}"#}
+{#                        class="checkbox checkbox-primary checkbox-sm"#}
+{#                        onchange="toggleEndDate(this, '{{ index }}')">#}
+{#                    <span class="label-text">I currently work here</span>#}
+{#                </label>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Employment Type -->#}
+{#    <div class="form-control mt-5">#}
+{#        <label class="label" for="employment_type_{{ index }}">#}
+{#            <span class="label-text font-medium">Employment Type</span>#}
+{#            <span class="label-text-alt text-opacity-70">(Optional)</span>#}
+{#        </label>#}
+{#        <select id="employment_type_{{ index }}" name="employment_type_{{ index }}"#}
+{#            class="select select-bordered w-full">#}
+{#            <option value="" selected>Select employment type</option>#}
+{#            <option value="Full-time">Full-time</option>#}
+{#            <option value="Part-time">Part-time</option>#}
+{#            <option value="Contract">Contract</option>#}
+{#            <option value="Internship">Internship</option>#}
+{#            <option value="Freelance">Freelance</option>#}
+{#            <option value="Volunteer">Volunteer</option>#}
+{#        </select>#}
+{#    </div>#}
+{##}
+{#    <!-- Bullet Points -->#}
+{#    <div class="mt-6 bullet-points-container">#}
+{#        <div class="flex justify-between items-center">#}
+{#            <label class="label py-1">#}
+{#                <span class="label-text font-medium flex items-center">#}
+{#                    <i class="fa-solid fa-list-ul text-primary mr-2"></i>#}
+{#                    Responsibilities and Achievements#}
+{#                </span>#}
+{#                <span class="label-text-alt text-error">*</span>#}
+{#            </label>#}
+{##}
+{#            <button type="button" class="btn btn-xs btn-outline btn-primary">#}
+{#                <i class="fa-solid fa-magic mr-1"></i> AI Generate#}
+{#            </button>#}
+{#        </div>#}
+{##}
+{#        <span id="bullet_ai_indicator_{{ index }}" class="htmx-indicator">#}
+{#            <span class="loading loading-spinner loading-sm"></span> Generating bullet points...#}
+{#        </span>#}
+{##}
+{#        <!-- Hidden field to track number of bullet points -->#}
+{#        <input type="hidden" name="bullet_count_{{ index }}"#}
+{#               value="3" class="bullet-count" id="bullet_count_{{ index }}">#}
+{##}
+{#        <div class="bullet-points space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700" id="bullet_points_container_{{ index }}">#}
+{#            <!-- Default 3 bullet points -->#}
+{#            {% for i in "012"|make_list %}#}
+{#            <div class="bullet-point-row flex items-start gap-3 group">#}
+{#                <div class="mt-3 text-primary">•</div>#}
+{#                <div class="form-control flex-1">#}
+{#                    <textarea class="textarea textarea-bordered w-full min-h-24"#}
+{#                        id="bullet_{{ index }}_{{ i }}"#}
+{#                        name="bullet_{{ index }}_{{ i }}"#}
+{#                        placeholder="Describe your achievement with action verbs and measurable results (e.g., 'Increased customer satisfaction by 20% through implementation of new service protocols')"#}
+{#                        onkeyup="checkBulletQuality(this)"#}
+{#                        data-parent="{{ index }}"#}
+{#                        data-index="{{ i }}"></textarea>#}
+{#                    <div class="flex justify-between mt-1">#}
+{#                        <div class="bullet-quality text-xs"></div>#}
+{#                        <div class="text-xs char-counter">#}
+{#                            <span class="current">0</span>/<span class="max">100-150 optimal</span>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#                <div class="flex flex-col gap-2">#}
+{#                    <button type="button" class="btn btn-circle btn-outline btn-error btn-sm mt-3 opacity-70 hover:opacity-100"#}
+{#                            onclick="removeBulletPoint(this, '{{ index }}')">#}
+{#                        <i class="fa-solid fa-times"></i>#}
+{#                    </button>#}
+{#                    <button type="button" class="btn btn-circle btn-outline btn-info btn-sm opacity-70 hover:opacity-100">#}
+{#                        <i class="fa-solid fa-wand-magic-sparkles"></i>#}
+{#                    </button>#}
+{#                    <span id="enhance_indicator_{{ index }}_{{ i }}" class="htmx-indicator">#}
+{#                        <span class="loading loading-spinner loading-xs"></span>#}
+{#                    </span>#}
+{#                </div>#}
+{#            </div>#}
+{#            {% endfor %}#}
+{#        </div>#}
+{##}
+{#        <div class="flex justify-end mt-3">#}
+{#            <button type="button" class="btn btn-outline btn-sm"#}
+{#                onclick="addBulletPoint('{{ index }}')">#}
+{#                <i class="fa-solid fa-plus mr-2"></i> Add Bullet Point#}
+{#            </button>#}
+{#        </div>#}
+{##}
+{#        <div class="mt-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-700 p-3 rounded-lg text-sm">#}
+{#            <div class="flex items-start gap-2">#}
+{#                <i class="fa-solid fa-pen-fancy text-amber-500 mt-1"></i>#}
+{#                <div>#}
+{#                    <p class="font-medium text-amber-800 dark:text-amber-300">Tips for effective bullet points:</p>#}
+{#                    <ul class="list-disc ml-4 mt-1 space-y-1 text-amber-700 dark:text-amber-400">#}
+{#                        <li>Start with strong action verbs (Led, Created, Developed)</li>#}
+{#                        <li>Quantify your achievements when possible (%, $, #)</li>#}
+{#                        <li>Focus on results, not just responsibilities</li>#}
+{#                        <li>Keep each bullet to 1-2 lines</li>#}
+{#                    </ul>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Visibility and Display Order -->#}
+{#    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">#}
+{#        <div class="form-control">#}
+{#            <label class="label">#}
+{#                <span class="label-text font-medium">Visibility</span>#}
+{#            </label>#}
+{#            <div class="flex items-center space-x-2">#}
+{#                <input type="checkbox" id="is_visible_{{ index }}" name="is_visible_{{ index }}"#}
+{#                    class="toggle toggle-primary" checked>#}
+{#                <label for="is_visible_{{ index }}" class="text-sm cursor-pointer">#}
+{#                    Show this experience on resume#}
+{#                </label>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#        <div class="form-control">#}
+{#            <label class="label">#}
+{#                <span class="label-text font-medium">Display Order</span>#}
+{#            </label>#}
+{#            <div class="flex items-center space-x-2">#}
+{#                <input type="number" id="display_order_{{ index }}" name="display_order_{{ index }}"#}
+{#                    class="input input-bordered w-20"#}
+{#                    value="{{ index|add:'1' }}" min="1">#}
+{#                <span class="text-sm">Order in resume (lower numbers appear first)</span>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Hidden fields for Django form handling -->#}
+{#    <input type="hidden" name="experience_ids" value="new">#}
+{#</div>#}

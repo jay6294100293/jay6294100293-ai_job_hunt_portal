@@ -1,0 +1,98 @@
+
+<div class="form-row bg-base-200 p-4 rounded-lg">
+    <h3 class="text-lg font-medium mb-4">Education #{{ index|add:"1" }}</h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- School Name -->
+        <div class="form-control">
+            <label class="label" for="school_name_{{ index }}">
+                <span class="label-text">School/University Name</span>
+                <span class="label-text-alt text-error">*</span>
+            </label>
+            <input type="text" id="school_name_{{ index }}" name="school_name_{{ index }}"
+                class="input input-bordered w-full" value="" required>
+        </div>
+
+        <!-- Location -->
+        <div class="form-control">
+            <label class="label" for="location_{{ index }}">
+                <span class="label-text">Location</span>
+                <span class="label-text-alt text-error">*</span>
+            </label>
+            <input type="text" id="location_{{ index }}" name="location_{{ index }}"
+                class="input input-bordered w-full" value=""
+                placeholder="City, State, Country" required>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <!-- Degree -->
+        <div class="form-control">
+            <label class="label" for="degree_{{ index }}">
+                <span class="label-text">Degree</span>
+                <span class="label-text-alt text-error">*</span>
+            </label>
+            <input type="text" id="degree_{{ index }}" name="degree_{{ index }}"
+                class="input input-bordered w-full" value=""
+                placeholder="Bachelor of Science, High School Diploma, etc." required>
+        </div>
+
+        <!-- Degree Type -->
+        <div class="form-control">
+            <label class="label" for="degree_type_{{ index }}">
+                <span class="label-text">Degree Type</span>
+                <span class="label-text-alt text-error">*</span>
+            </label>
+            <select id="degree_type_{{ index }}" name="degree_type_{{ index }}"
+                class="select select-bordered w-full">
+                {% for type_value, type_label in degree_types.items %}
+                <option value="{{ type_value }}">
+                    {{ type_label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <!-- Field of Study -->
+        <div class="form-control md:col-span-2">
+            <label class="label" for="field_of_study_{{ index }}">
+                <span class="label-text">Field of Study</span>
+                <span class="label-text-alt text-error">*</span>
+            </label>
+            <input type="text" id="field_of_study_{{ index }}" name="field_of_study_{{ index }}"
+                class="input input-bordered w-full" value=""
+                placeholder="Computer Science, Business Administration, etc." required>
+        </div>
+
+        <!-- GPA -->
+        <div class="form-control">
+            <label class="label" for="gpa_{{ index }}">
+                <span class="label-text">GPA</span>
+                <span class="label-text-alt">(Optional)</span>
+            </label>
+            <input type="number" id="gpa_{{ index }}" name="gpa_{{ index }}"
+                class="input input-bordered w-full" value=""
+                min="0" max="4.0" step="0.01" placeholder="3.5">
+        </div>
+    </div>
+
+    <!-- Graduation Date -->
+    <div class="form-control mt-4">
+        <label class="label" for="graduation_date_{{ index }}">
+            <span class="label-text">Graduation Date</span>
+            <span class="label-text-alt">(Expected date if not yet graduated)</span>
+        </label>
+        <input type="date" id="graduation_date_{{ index }}" name="graduation_date_{{ index }}"
+            class="input input-bordered w-full" value="">
+    </div>
+
+    <!-- Remove Education Button -->
+    <div class="flex justify-end mt-4">
+        <button type="button" class="btn btn-error"
+                onclick="removeFormRow(this, 'educations_container', 'education_count')">
+            <i class="fa-solid fa-trash-can mr-2"></i> Remove Education
+        </button>
+    </div>
+</div>

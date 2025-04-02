@@ -1,0 +1,279 @@
+{% extends 'resumes/wizard_base.html' %}
+{% load static %}
+
+{% block step_title %}Additional Sections{% endblock %}
+
+{% block step_icon %}<i class="fa-solid fa-puzzle-piece mr-3 text-primary opacity-80"></i>{% endblock %}
+
+{% block step_content %}
+<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">
+    {% csrf_token %}
+
+    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">
+        <div class="flex items-start">
+            <div class="text-primary text-xl mr-4 mt-1">
+                <i class="fa-solid fa-lightbulb"></i>
+            </div>
+            <div>
+                <p class="text-base">
+                    Add custom sections that highlight your unique qualifications, such as
+                    awards, publications, volunteer work, or special achievements.
+                </p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    <strong>Pro tip:</strong> Including specialized sections can help your resume stand out to employers and showcase your unique strengths and accomplishments.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden field to track number of section entries -->
+    <input type="hidden" id="section_count" name="section_count" value="{{ custom_sections|length }}">
+
+    <!-- Custom Sections container -->
+    <div id="custom_sections_container" class="space-y-8">
+        {% for section in custom_sections %}
+        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">
+                <h3 class="text-lg font-medium flex items-center">
+                    <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                        <i class="fa-solid fa-layer-group text-primary text-sm"></i>
+                    </span>
+                    Additional Section #{{ forloop.counter }}
+                </h3>
+
+                <!-- Remove Section Button -->
+                <button type="button" class="btn btn-ghost btn-sm text-error"
+                        onclick="removeFormRow(this, 'custom_sections_container', 'section_count')">
+                    <i class="fa-solid fa-trash-can mr-1"></i> Remove
+                </button>
+            </div>
+
+            <!-- Section Name -->
+            <div class="form-control mb-5">
+                <label class="label" for="name_{{ forloop.counter0 }}">
+                    <span class="label-text font-medium">Section Title</span>
+                    <span class="label-text-alt text-error">*</span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-heading text-gray-400"></i>
+                    </div>
+                    <input type="text" id="name_{{ forloop.counter0 }}" name="name_{{ forloop.counter0 }}"
+                        class="input input-bordered w-full pl-10" value="{{ section.name }}" required
+                        placeholder="Awards, Publications, Volunteer Work, etc.">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- Institution/Organization -->
+                <div class="form-control">
+                    <label class="label" for="institution_name_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">Institution/Organization</span>
+                        <span class="label-text-alt text-gray-500">(Optional)</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-building text-gray-400"></i>
+                        </div>
+                        <input type="text" id="institution_name_{{ forloop.counter0 }}" name="institution_name_{{ forloop.counter0 }}"
+                            class="input input-bordered w-full pl-10" value="{{ section.institution_name }}"
+                            placeholder="e.g., Google, Red Cross, IEEE">
+                    </div>
+                </div>
+
+                <!-- Date -->
+                <div class="form-control">
+                    <label class="label" for="completion_date_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">Date</span>
+                        <span class="label-text-alt text-gray-500">(Optional)</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-calendar-alt text-gray-400"></i>
+                        </div>
+                        <input type="date" id="completion_date_{{ forloop.counter0 }}" name="completion_date_{{ forloop.counter0 }}"
+                            class="input input-bordered w-full pl-10" value="{{ section.completion_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bullet Points -->
+            <div class="form-control mt-5">
+                <label class="label" for="bullet_points_{{ forloop.counter0 }}">
+                    <span class="label-text font-medium">Bullet Points</span>
+                    <span class="label-text-alt text-gray-500">(One per line)</span>
+                </label>
+                <div class="relative">
+                    <textarea id="bullet_points_{{ forloop.counter0 }}" name="bullet_points_{{ forloop.counter0 }}"
+                        class="textarea textarea-bordered w-full min-h-28"
+                        placeholder="• Received Employee of the Month award for exceptional customer service
+• Published research paper on AI efficiency in IEEE Journal
+• Volunteered 200+ hours at local food bank">{{ section.bullet_points }}</textarea>
+                </div>
+                <span class="text-xs text-gray-500 mt-1">Start each accomplishment with a strong action verb for maximum impact.</span>
+            </div>
+
+            <!-- Description -->
+            <div class="form-control mt-5">
+                <label class="label" for="description_{{ forloop.counter0 }}">
+                    <span class="label-text font-medium">Description</span>
+                    <span class="label-text-alt text-gray-500">(Optional)</span>
+                </label>
+                <div class="relative">
+                    <textarea id="description_{{ forloop.counter0 }}" name="description_{{ forloop.counter0 }}"
+                        class="textarea textarea-bordered w-full min-h-24"
+                        placeholder="Add context or additional details about this section that aren't covered in the bullet points.">{{ section.description }}</textarea>
+                </div>
+            </div>
+
+            <!-- Link -->
+            <div class="form-control mt-5">
+                <label class="label" for="link_{{ forloop.counter0 }}">
+                    <span class="label-text font-medium">Link</span>
+                    <span class="label-text-alt text-gray-500">(Optional)</span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-link text-gray-400"></i>
+                    </div>
+                    <input type="url" id="link_{{ forloop.counter0 }}" name="link_{{ forloop.counter0 }}"
+                        class="input input-bordered w-full pl-10" value="{{ section.link }}"
+                        placeholder="https://example.com/award-recognition">
+                </div>
+                <span class="text-xs text-gray-500 mt-1">Include links to projects, publications, awards, or other relevant materials.</span>
+            </div>
+        </div>
+        {% empty %}
+        <!-- Empty state when no sections are added yet -->
+        <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center">
+            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-puzzle-piece text-primary text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-medium mb-2">No Additional Sections Added Yet</h3>
+            <p class="text-gray-500 max-w-md mx-auto mb-6">
+                Stand out from other candidates by showcasing your unique achievements, publications, volunteer work, or other relevant qualifications.
+            </p>
+            <button type="button" class="btn btn-primary"
+                    onclick="addFormRow('custom_section', 'custom_sections_container', 'section_count')">
+                <i class="fa-solid fa-plus mr-2"></i> Add Your First Custom Section
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Add Section Button - Only shown if at least one section exists -->
+    {% if custom_sections %}
+    <div class="flex justify-center mt-8">
+        <button type="button" class="btn btn-outline btn-primary"
+                onclick="addFormRow('custom_section', 'custom_sections_container', 'section_count')">
+            <i class="fa-solid fa-plus mr-2"></i> Add Another Section
+        </button>
+    </div>
+    {% endif %}
+
+    <!-- Ideas for Custom Sections -->
+    <div class="mt-10">
+        <h3 class="font-medium text-lg mb-5 flex items-center">
+            <i class="fa-solid fa-lightbulb text-primary mr-2"></i>
+            Suggested Section Ideas
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {% for idea in section_ideas|default_if_none:default_ideas %}
+            <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-lg p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer" onclick="selectSectionIdea(this)">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid {{ idea.icon|default:'fa-star' }} text-primary"></i>
+                </div>
+                <span class="font-medium">{{ idea.name|default:idea }}</span>
+            </div>
+            {% empty %}
+            <!-- Default ideas if none provided in context -->
+            <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-lg p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer" onclick="selectSectionIdea(this)">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-award text-primary"></i>
+                </div>
+                <span class="font-medium">Awards & Honors</span>
+            </div>
+            <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-lg p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer" onclick="selectSectionIdea(this)">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-book text-primary"></i>
+                </div>
+                <span class="font-medium">Publications</span>
+            </div>
+            <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-lg p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer" onclick="selectSectionIdea(this)">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-hands-helping text-primary"></i>
+                </div>
+                <span class="font-medium">Volunteer Work</span>
+            </div>
+            <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-lg p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer" onclick="selectSectionIdea(this)">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-users text-primary"></i>
+                </div>
+                <span class="font-medium">Professional Memberships</span>
+            </div>
+            <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-lg p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer" onclick="selectSectionIdea(this)">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-comment text-primary"></i>
+                </div>
+                <span class="font-medium">Speaking Engagements</span>
+            </div>
+            <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-lg p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer" onclick="selectSectionIdea(this)">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-palette text-primary"></i>
+                </div>
+                <span class="font-medium">Portfolio Highlights</span>
+            </div>
+            <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-lg p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer" onclick="selectSectionIdea(this)">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-books text-primary"></i>
+                </div>
+                <span class="font-medium">Relevant Courses</span>
+            </div>
+            <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-lg p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer" onclick="selectSectionIdea(this)">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-lightbulb text-primary"></i>
+                </div>
+                <span class="font-medium">Patents & Innovations</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</form>
+
+<script>
+    // Function to select a section idea and create a new section with that title
+    function selectSectionIdea(element) {
+        const sectionTitle = element.querySelector('span').innerText;
+
+        // Create a highlight effect on the selected idea
+        element.classList.add('ring-2', 'ring-primary', 'ring-offset-2');
+
+        // Determine if we need to add a new section or if we're on empty state
+        const emptyState = document.querySelector('#custom_sections_container .bg-base-100.text-center');
+
+        if (emptyState) {
+            // We're in empty state, click the existing button
+            document.querySelector('#custom_sections_container button').click();
+        } else {
+            // Add a new section
+            addFormRow('custom_section', 'custom_sections_container', 'section_count');
+        }
+
+        // Wait for the new section to be added, then set its title
+        setTimeout(() => {
+            const sections = document.querySelectorAll('#custom_sections_container .form-row');
+            const lastSection = sections[sections.length - 1];
+            const titleInput = lastSection.querySelector('input[name^="name_"]');
+            titleInput.value = sectionTitle;
+
+            // Scroll to the new section
+            lastSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Remove highlight effect after a delay
+            setTimeout(() => {
+                element.classList.remove('ring-2', 'ring-primary', 'ring-offset-2');
+            }, 1500);
+        }, 500);
+    }
+</script>
+{% endblock %}

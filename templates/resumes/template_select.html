@@ -1,0 +1,987 @@
+{% extends 'resumes/base.html' %}
+{% load static %}
+
+{% block title %}Choose a Resume Template{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-10">
+    <div class="text-center mb-12">
+        <div class="flex justify-center mb-6">
+            <div class="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center">
+                <i class="fa-solid fa-palette text-primary text-2xl"></i>
+            </div>
+        </div>
+        <h1 class="text-3xl font-bold mb-4">Choose Your Resume Template</h1>
+        <p class="text-gray-600 dark:text-blue-900 max-w-2xl mx-auto text-lg">
+            Select a template that best showcases your professional style. You'll be able to fully customize the content in the next steps.
+        </p>
+    </div>
+
+    <form action="{% url 'job_portal:select_template' %}" method="post" class="mb-14">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for template in templates %}
+            <div class="template-card rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 bg-white cursor-pointer">
+                <div class="relative aspect-[25/16] w-full overflow-hidden bg-white">
+                    <img src="{% static template.thumbnail %}" alt="{{ template.name }} template" class="w-full h-full object-cover object-center">
+
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+                        <div class="text-center transform translate-y-4 opacity-0 hover:translate-y-0 hover:opacity-100 transition-all duration-300">
+                            <button type="button" class="btn btn-primary preview-btn mb-2" data-template-id="{{ template.id }}">
+                                <i class="fa-solid fa-eye mr-2"></i> Preview Template
+                            </button>
+                            <p class="text-white text-sm">Click anywhere else to select</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-white">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-bold text-xl dark:text-blue-900">{{ template.name }}</h3>
+                        <div class="form-control">
+                            <label class="cursor-pointer label">
+                                <input type="radio" id="template_radio_{{ template.id }}" name="template_id" value="{{ template.id }}" class="radio radio-primary"
+                                    {% if forloop.first %}checked{% endif %}>
+                            </label>
+                        </div>
+                    </div>
+                    <p class="text-blue-900 mb-4">{{ template.description }}</p>
+
+                    <!-- Template Features/Tags -->
+                    <div class="flex flex-wrap gap-2 mt-4">
+                        {% if template.tags %}
+                            {% for tag in template.tags %}
+                                <span class="badge badge-outline text-blue-600 border-blue-600 badge-sm">{{ tag }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <!-- Fallback tags if not provided in the context -->
+                            <span class="badge badge-outline text-blue-600 border-blue-600 badge-sm">{{ template.name }}</span>
+                            <span class="badge badge-outline text-blue-600 border-blue-600 badge-sm">ATS-Friendly</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="flex justify-center mt-12">
+            <button type="submit" class="btn btn-primary btn-lg px-10 shadow-md hover:shadow-lg transition-all">
+                <i class="fa-solid fa-arrow-right mr-2"></i> Continue with Selected Template
+            </button>
+        </div>
+    </form>
+
+    <!-- Template Preview Modal -->
+    <div id="previewModal" class="modal">
+        <div class="modal-box w-11/12 max-w-5xl p-0 overflow-hidden rounded-xl">
+            <div class="bg-primary p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold text-lg flex items-center">
+                    <i class="fa-solid fa-file-alt mr-2"></i>
+                    <span id="previewTemplateTitle">Template Preview</span>
+                </h3>
+                <div class="flex items-center gap-2">
+                    <button id="selectThisTemplate" class="btn btn-sm btn-success text-white">
+                        <i class="fa-solid fa-check mr-1"></i> Select This Template
+                    </button>
+                    <button class="btn btn-sm btn-circle btn-ghost text-white" onclick="closePreviewModal()">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="previewContent" class="h-[70vh] overflow-y-auto p-0 bg-white">
+                <!-- Preview content will be loaded here -->
+                <div class="flex justify-center items-center h-full">
+                    <span class="loading loading-spinner loading-lg text-primary"></span>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end bg-base-100">
+                <button class="btn btn-outline mr-2" onclick="closePreviewModal()">
+                    Close Preview
+                </button>
+                <button id="mobileSelectButton" class="btn btn-primary md:hidden">
+                    <i class="fa-solid fa-check mr-2"></i> Select Template
+                </button>
+            </div>
+        </div>
+        <div class="modal-backdrop bg-black/50" onclick="closePreviewModal()"></div>
+    </div>
+</div>
+
+<style>
+    /* Add custom CSS to ensure consistent image sizing and display */
+    .template-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: transparent;
+    }
+
+    .template-card .relative {
+        flex-shrink: 0;
+    }
+
+    /* Ensure images maintain 600×384 pixel ratio (25:16) */
+    @media (min-width: 768px) {
+        .template-card .relative {
+            max-height: 384px;
+        }
+    }
+
+    /* Ensure selected card styling displays properly */
+    .template-card.ring-2 {
+        border-color: transparent;
+    }
+
+    /* Preview content styling */
+    .preview-container {
+        font-family: Arial, sans-serif;
+    }
+
+    .preview-container * {
+        max-width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Store the currently previewed template ID
+    let currentPreviewTemplateId = null;
+
+    // Preview functionality
+    document.querySelectorAll('.preview-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // Prevent triggering the card click
+            const templateId = btn.getAttribute('data-template-id');
+            openPreviewModal(templateId);
+        });
+    });
+
+    function openPreviewModal(templateId) {
+        // Set current template ID
+        currentPreviewTemplateId = templateId;
+        console.log('Opening preview modal for template:', templateId);
+
+        // Find the template name from the DOM
+        const templateCard = document.querySelector(`.preview-btn[data-template-id="${templateId}"]`).closest('.template-card');
+        const templateName = templateCard.querySelector('h3').textContent;
+
+        // Update modal title
+        document.getElementById('previewTemplateTitle').textContent = `${templateName} Preview`;
+
+        // Show loading indicator
+        const previewContent = document.getElementById('previewContent');
+        previewContent.innerHTML = `<div class="flex justify-center items-center h-full">
+            <div class="text-center">
+                <span class="loading loading-spinner loading-lg text-primary"></span>
+                <p class="mt-3 text-gray-500">Loading preview...</p>
+            </div>
+        </div>`;
+
+        // Show modal immediately for better UX
+        const modal = document.getElementById('previewModal');
+        modal.classList.add('modal-open');
+
+        // Prevent body scrolling when modal is open
+        document.body.style.overflow = 'hidden';
+
+        // Use XMLHttpRequest instead of fetch for more control
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', `/job/preview-template/${templateId}/`, true);
+
+        xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 400) {
+                // Success!
+                console.log('Preview content loaded successfully, length:', xhr.responseText.length);
+
+                // Direct approach: insert the HTML into the container
+                previewContent.innerHTML = '';
+
+                // Create a container for the preview content
+                const previewContainer = document.createElement('div');
+                previewContainer.className = 'preview-container p-4';
+                previewContainer.style.height = '100%';
+                previewContainer.style.overflow = 'auto';
+
+                // Insert the HTML content
+                previewContainer.innerHTML = xhr.responseText;
+
+                // Add the container to the preview content
+                previewContent.appendChild(previewContainer);
+            } else {
+                // We reached our target server, but it returned an error
+                console.error('Server error:', xhr.status);
+                showPreviewError(`Server error: ${xhr.status}`);
+            }
+        };
+
+        xhr.onerror = function() {
+            // There was a connection error of some sort
+            console.error('Connection error');
+            showPreviewError('Network connection error');
+        };
+
+        xhr.send();
+    }
+
+    function showPreviewError(errorMessage) {
+        const previewContent = document.getElementById('previewContent');
+        previewContent.innerHTML = `
+            <div class="flex justify-center items-center h-full">
+                <div class="text-center max-w-md p-6">
+                    <div class="alert alert-error mb-4">
+                        <i class="fa-solid fa-circle-exclamation mr-2"></i>
+                        Failed to load the preview
+                    </div>
+                    <p class="text-gray-600">This could be due to a network issue or the preview may not be available for this template.</p>
+                    <p class="text-gray-600 mt-2"><strong>Error details:</strong> ${errorMessage}</p>
+                    <button class="btn btn-outline mt-4" onclick="retryPreview('${currentPreviewTemplateId}')">
+                        <i class="fa-solid fa-rotate mr-2"></i> Try Again
+                    </button>
+                </div>
+            </div>`;
+    }
+
+    function retryPreview(templateId) {
+        console.log('Retrying preview for template:', templateId);
+        openPreviewModal(templateId);
+    }
+
+    function closePreviewModal() {
+        console.log('Closing preview modal');
+        document.getElementById('previewModal').classList.remove('modal-open');
+        // Reset current preview template
+        currentPreviewTemplateId = null;
+        // Re-enable body scrolling
+        document.body.style.overflow = 'auto';
+    }
+
+    // Select template from the preview modal
+    document.getElementById('selectThisTemplate').addEventListener('click', function() {
+        if (currentPreviewTemplateId) {
+            console.log('Selecting template from modal:', currentPreviewTemplateId);
+            // Find the radio button for this template and select it
+            const radio = document.querySelector(`#template_radio_${currentPreviewTemplateId}`);
+            if (radio) {
+                radio.checked = true;
+
+                // Show visual feedback
+                const card = radio.closest('.template-card');
+                highlightSelectedCard(card);
+
+                // Close the modal
+                closePreviewModal();
+
+                // Scroll to the selected template
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    });
+
+    // Mobile select button (duplicate functionality for better mobile UX)
+    document.getElementById('mobileSelectButton').addEventListener('click', function() {
+        document.getElementById('selectThisTemplate').click();
+    });
+
+    // Ensure radio button updates visually when a template card is clicked
+    document.querySelectorAll('.template-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            // Don't trigger when clicking the preview button
+            if (!e.target.closest('.preview-btn')) {
+                const radio = card.querySelector('input[type="radio"]');
+                radio.checked = true;
+
+                // Visual feedback - clear all highlighted cards first
+                document.querySelectorAll('.template-card').forEach(c => {
+                    c.classList.remove('ring-2', 'ring-primary');
+                });
+
+                // Highlight this card
+                highlightSelectedCard(card);
+            }
+        });
+    });
+
+    function highlightSelectedCard(card) {
+        // Reset all cards
+        document.querySelectorAll('.template-card').forEach(c => {
+            c.classList.remove('ring-2', 'ring-primary');
+        });
+
+        // Highlight selected card
+        card.classList.add('ring-2', 'ring-primary');
+
+        // Smooth animation
+        card.classList.add('scale-105');
+        setTimeout(() => {
+            card.classList.remove('scale-105');
+        }, 300);
+    }
+
+    // Set initial selection highlight
+    window.addEventListener('DOMContentLoaded', function() {
+        const checkedRadio = document.querySelector('input[name="template_id"]:checked');
+        if (checkedRadio) {
+            const card = checkedRadio.closest('.template-card');
+            highlightSelectedCard(card);
+        }
+
+        // Add debugging for preview buttons
+        console.log('Number of preview buttons found:', document.querySelectorAll('.preview-btn').length);
+    });
+</script>
+{% endblock %}
+
+
+{#{% extends 'resumes/base.html' %}#}
+{#{% load static %}#}
+{##}
+{#{% block title %}Choose a Resume Template{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#<div class="container mx-auto px-4 py-10">#}
+{#    <div class="text-center mb-12">#}
+{#        <div class="flex justify-center mb-6">#}
+{#            <div class="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center">#}
+{#                <i class="fa-solid fa-palette text-primary text-2xl"></i>#}
+{#            </div>#}
+{#        </div>#}
+{#        <h1 class="text-3xl font-bold mb-4">Choose Your Resume Template</h1>#}
+{#        <p class="text-gray-600 dark:text-blue-900 max-w-2xl mx-auto text-lg">#}
+{#            Select a template that best showcases your professional style. You'll be able to fully customize the content in the next steps.#}
+{#        </p>#}
+{#    </div>#}
+{##}
+{#    <form action="{% url 'job_portal:select_template' %}" method="post" class="mb-14">#}
+{#        {% csrf_token %}#}
+{##}
+{#        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">#}
+{#            {% for template in templates %}#}
+{#            <div class="template-card rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:-translate-y-2 bg-white cursor-pointer">#}
+{#                <div class="relative aspect-[25/16] w-full overflow-hidden bg-white">#}
+{#                    <img src="{% static template.thumbnail %}" alt="{{ template.name }} template" class="w-full h-full object-cover object-center">#}
+{##}
+{#                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">#}
+{#                        <div class="text-center transform translate-y-4 opacity-0 hover:translate-y-0 hover:opacity-100 transition-all duration-300">#}
+{#                            <button type="button" class="btn btn-primary preview-btn mb-2" data-template-id="{{ template.id }}">#}
+{#                                <i class="fa-solid fa-eye mr-2"></i> Preview Template#}
+{#                            </button>#}
+{#                            <p class="text-white text-sm">Click anywhere else to select</p>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <div class="p-6 bg-white">#}
+{#                    <div class="flex items-center justify-between mb-3">#}
+{#                        <h3 class="font-bold text-xl dark:text-blue-900">{{ template.name }}</h3>#}
+{#                        <div class="form-control">#}
+{#                            <label class="cursor-pointer label">#}
+{#                                <input type="radio" id="template_radio_{{ template.id }}" name="template_id" value="{{ template.id }}" class="radio radio-primary"#}
+{#                                    {% if forloop.first %}checked{% endif %}>#}
+{#                            </label>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                    <p class="text-blue-900 mb-4">{{ template.description }}</p>#}
+{##}
+{#                    <!-- Template Features/Tags -->#}
+{#                    <div class="flex flex-wrap gap-2 mt-4">#}
+{#                        {% if template.tags %}#}
+{#                            {% for tag in template.tags %}#}
+{#                                <span class="badge badge-outline text-blue-600 border-blue-600 badge-sm">{{ tag }}</span>#}
+{#                            {% endfor %}#}
+{#                        {% else %}#}
+{#                            <!-- Fallback tags if not provided in the context -->#}
+{#                            <span class="badge badge-outline text-blue-600 border-blue-600 badge-sm">{{ template.name }}</span>#}
+{#                            <span class="badge badge-outline text-blue-600 border-blue-600 badge-sm">ATS-Friendly</span>#}
+{#                        {% endif %}#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#            {% endfor %}#}
+{#        </div>#}
+{##}
+{#        <div class="flex justify-center mt-12">#}
+{#            <button type="submit" class="btn btn-primary btn-lg px-10 shadow-md hover:shadow-lg transition-all">#}
+{#                <i class="fa-solid fa-arrow-right mr-2"></i> Continue with Selected Template#}
+{#            </button>#}
+{#        </div>#}
+{#    </form>#}
+{##}
+{#    <!-- Template Preview Modal -->#}
+{#    <div id="previewModal" class="modal">#}
+{#        <div class="modal-box w-11/12 max-w-5xl p-0 overflow-hidden rounded-xl">#}
+{#            <div class="bg-primary p-4 text-white flex justify-between items-center">#}
+{#                <h3 class="font-bold text-lg flex items-center">#}
+{#                    <i class="fa-solid fa-file-alt mr-2"></i>#}
+{#                    <span id="previewTemplateTitle">Template Preview</span>#}
+{#                </h3>#}
+{#                <div class="flex items-center gap-2">#}
+{#                    <button id="selectThisTemplate" class="btn btn-sm btn-success text-white">#}
+{#                        <i class="fa-solid fa-check mr-1"></i> Select This Template#}
+{#                    </button>#}
+{#                    <button class="btn btn-sm btn-circle btn-ghost text-white" onclick="closePreviewModal()">#}
+{#                        <i class="fa-solid fa-times"></i>#}
+{#                    </button>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <div id="previewContent" class="h-[70vh] overflow-y-auto p-0 bg-white">#}
+{#                <!-- Preview content will be loaded here -->#}
+{#                <div class="flex justify-center items-center h-full">#}
+{#                    <span class="loading loading-spinner loading-lg text-primary"></span>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <div class="border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end bg-base-100">#}
+{#                <button class="btn btn-outline mr-2" onclick="closePreviewModal()">#}
+{#                    Close Preview#}
+{#                </button>#}
+{#                <button id="mobileSelectButton" class="btn btn-primary md:hidden">#}
+{#                    <i class="fa-solid fa-check mr-2"></i> Select Template#}
+{#                </button>#}
+{#            </div>#}
+{#        </div>#}
+{#        <div class="modal-backdrop bg-black/50" onclick="closePreviewModal()"></div>#}
+{#    </div>#}
+{#</div>#}
+{##}
+{#<style>#}
+{#    /* Add custom CSS to ensure consistent image sizing and display */#}
+{#    .template-card {#}
+{#        display: flex;#}
+{#        flex-direction: column;#}
+{#        height: 100%;#}
+{#        background: transparent;#}
+{#    }#}
+{##}
+{#    .template-card .relative {#}
+{#        flex-shrink: 0;#}
+{#    }#}
+{##}
+{#    /* Ensure images maintain 600×384 pixel ratio (25:16) */#}
+{#    @media (min-width: 768px) {#}
+{#        .template-card .relative {#}
+{#            max-height: 384px;#}
+{#        }#}
+{#    }#}
+{##}
+{#    /* Ensure selected card styling displays properly */#}
+{#    .template-card.ring-2 {#}
+{#        border-color: transparent;#}
+{#    }#}
+{#</style>#}
+{#{% endblock %}#}
+{##}
+{#{% block extra_js %}#}
+{#<script>#}
+{#    // Store the currently previewed template ID#}
+{#    let currentPreviewTemplateId = null;#}
+{##}
+{#    // Preview functionality#}
+{#  // Modified preview functionality#}
+{#document.querySelectorAll('.preview-btn').forEach(btn => {#}
+{#    btn.addEventListener('click', (e) => {#}
+{#        e.preventDefault();#}
+{#        e.stopPropagation(); // Prevent triggering the card click#}
+{#        const templateId = btn.getAttribute('data-template-id');#}
+{#        openPreviewModal(templateId);#}
+{#    });#}
+{#});#}
+{##}
+{#function openPreviewModal(templateId) {#}
+{#    // Set current template ID#}
+{#    currentPreviewTemplateId = templateId;#}
+{##}
+{#    // Find the template name from the DOM#}
+{#    const templateCard = document.querySelector(`.preview-btn[data-template-id="${templateId}"]`).closest('.template-card');#}
+{#    const templateName = templateCard.querySelector('h3').textContent;#}
+{##}
+{#    // Update modal title#}
+{#    document.getElementById('previewTemplateTitle').textContent = `${templateName} Preview`;#}
+{##}
+{#    // Show loading indicator#}
+{#    const previewContent = document.getElementById('previewContent');#}
+{#    previewContent.innerHTML = `<div class="flex justify-center items-center h-full">#}
+{#        <div class="text-center">#}
+{#            <span class="loading loading-spinner loading-lg text-primary"></span>#}
+{#            <p class="mt-3 text-gray-500">Loading preview...</p>#}
+{#        </div>#}
+{#    </div>`;#}
+{##}
+{#    // Show modal immediately (before fetch)#}
+{#    const modal = document.getElementById('previewModal');#}
+{#    modal.classList.add('modal-open');#}
+{##}
+{#    // Prevent body scrolling when modal is open#}
+{#    document.body.style.overflow = 'hidden';#}
+{##}
+{#    // Log for debugging#}
+{#    console.log('Fetching template preview:', templateId);#}
+{##}
+{#    // Fetch preview from the server with error handling#}
+{#    fetch(`preview-template/${templateId}/`)#}
+{#        .then(response => {#}
+{#            console.log('Preview response status:', response.status);#}
+{#            if (!response.ok) {#}
+{#                throw new Error(`Status: ${response.status}`);#}
+{#            }#}
+{#            return response.text();#}
+{#        })#}
+{#        .then(html => {#}
+{#            console.log('Preview HTML received, length:', html.length);#}
+{##}
+{#            // Create a container to properly render the preview#}
+{#            const previewFrame = document.createElement('iframe');#}
+{#            previewFrame.className = 'w-full h-full border-0';#}
+{#            previewFrame.title = 'Template Preview';#}
+{#            previewContent.innerHTML = '';#}
+{#            previewContent.appendChild(previewFrame);#}
+{##}
+{#            // Wait for iframe to load then insert content#}
+{#            previewFrame.onload = function() {#}
+{#                // Access the iframe document#}
+{#                const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;#}
+{##}
+{#                // Write the HTML content to the iframe#}
+{#                iframeDoc.open();#}
+{#                iframeDoc.write(`#}
+{#                    <!DOCTYPE html>#}
+{#                    <html>#}
+{#                    <head>#}
+{#                        <meta charset="UTF-8">#}
+{#                        <meta name="viewport" content="width=device-width, initial-scale=1.0">#}
+{#                        <style>#}
+{#                            /* Apply basic styling */#}
+{#                            body {#}
+{#                                margin: 0;#}
+{#                                padding: 0;#}
+{#                                font-family: Arial, sans-serif;#}
+{#                            }#}
+{#                            /* Add any other styling needed for proper preview */#}
+{#                        </style>#}
+{#                        <link href="/static/css/resume-templates.css" rel="stylesheet">#}
+{#                    </head>#}
+{#                    <body class="p-4">#}
+{#                        ${html}#}
+{#                    </body>#}
+{#                    </html>#}
+{#                `);#}
+{#                iframeDoc.close();#}
+{#                console.log('Preview iframe content loaded');#}
+{#            };#}
+{#        })#}
+{#        .catch(error => {#}
+{#            console.error('Preview error:', error);#}
+{#            previewContent.innerHTML = `#}
+{#                <div class="flex justify-center items-center h-full">#}
+{#                    <div class="text-center max-w-md p-6">#}
+{#                        <div class="alert alert-error mb-4">#}
+{#                            <i class="fa-solid fa-circle-exclamation mr-2"></i>#}
+{#                            Failed to load the preview#}
+{#                        </div>#}
+{#                        <p class="text-gray-600">This could be due to a network issue or the preview may not be available for this template.</p>#}
+{#                        <p class="text-gray-600 mt-2">Error details: ${error.message}</p>#}
+{#                        <button class="btn btn-outline mt-4" onclick="retryPreview('${templateId}')">#}
+{#                            <i class="fa-solid fa-rotate mr-2"></i> Try Again#}
+{#                        </button>#}
+{#                    </div>#}
+{#                </div>`;#}
+{#        });#}
+{#}#}
+{##}
+{#function retryPreview(templateId) {#}
+{#    openPreviewModal(templateId);#}
+{#}#}
+{##}
+{#function closePreviewModal() {#}
+{#    document.getElementById('previewModal').classList.remove('modal-open');#}
+{#    // Reset current preview template#}
+{#    currentPreviewTemplateId = null;#}
+{#    // Re-enable body scrolling#}
+{#    document.body.style.overflow = 'auto';#}
+{#}#}
+{##}
+{#// Select template from the preview modal#}
+{#document.getElementById('selectThisTemplate').addEventListener('click', function() {#}
+{#    if (currentPreviewTemplateId) {#}
+{#        // Find the radio button for this template and select it#}
+{#        const radio = document.querySelector(`#template_radio_${currentPreviewTemplateId}`);#}
+{#        if (radio) {#}
+{#            radio.checked = true;#}
+{##}
+{#            // Show visual feedback#}
+{#            const card = radio.closest('.template-card');#}
+{#            highlightSelectedCard(card);#}
+{##}
+{#            // Close the modal#}
+{#            closePreviewModal();#}
+{##}
+{#            // Scroll to the selected template#}
+{#            card.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#        }#}
+{#    }#}
+{#});#}
+{##}
+{#// Mobile select button (duplicate functionality for better mobile UX)#}
+{#document.getElementById('mobileSelectButton').addEventListener('click', function() {#}
+{#    document.getElementById('selectThisTemplate').click();#}
+{#});#}
+{##}
+{#// Ensure radio button updates visually when a template card is clicked#}
+{#document.querySelectorAll('.template-card').forEach(card => {#}
+{#    card.addEventListener('click', (e) => {#}
+{#        // Don't trigger when clicking the preview button#}
+{#        if (!e.target.closest('.preview-btn')) {#}
+{#            const radio = card.querySelector('input[type="radio"]');#}
+{#            radio.checked = true;#}
+{##}
+{#            // Visual feedback - clear all highlighted cards first#}
+{#            document.querySelectorAll('.template-card').forEach(c => {#}
+{#                c.classList.remove('ring-2', 'ring-primary');#}
+{#            });#}
+{##}
+{#            // Highlight this card#}
+{#            highlightSelectedCard(card);#}
+{#        }#}
+{#    });#}
+{#});#}
+{##}
+{#function highlightSelectedCard(card) {#}
+{#    // Reset all cards#}
+{#    document.querySelectorAll('.template-card').forEach(c => {#}
+{#        c.classList.remove('ring-2', 'ring-primary');#}
+{#    });#}
+{##}
+{#    // Highlight selected card#}
+{#    card.classList.add('ring-2', 'ring-primary');#}
+{##}
+{#    // Smooth animation#}
+{#    card.classList.add('scale-105');#}
+{#    setTimeout(() => {#}
+{#        card.classList.remove('scale-105');#}
+{#    }, 300);#}
+{#}#}
+{##}
+{#// Set initial selection highlight#}
+{#window.addEventListener('DOMContentLoaded', function() {#}
+{#    const checkedRadio = document.querySelector('input[name="template_id"]:checked');#}
+{#    if (checkedRadio) {#}
+{#        const card = checkedRadio.closest('.template-card');#}
+{#        highlightSelectedCard(card);#}
+{#    }#}
+{##}
+{#    // Add debugging for preview buttons#}
+{#    console.log('Number of preview buttons found:', document.querySelectorAll('.preview-btn').length);#}
+{#});#}
+{#</script>#}
+{#{% endblock %}#}
+{##}
+{#{% extends 'resumes/base.html' %}#}
+{#{% load static %}#}
+{##}
+{#{% block title %}Choose a Resume Template{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#<div class="container mx-auto px-4 py-10">#}
+{#    <div class="text-center mb-12">#}
+{#        <div class="flex justify-center mb-6">#}
+{#            <div class="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center">#}
+{#                <i class="fa-solid fa-palette text-primary text-2xl"></i>#}
+{#            </div>#}
+{#        </div>#}
+{#        <h1 class="text-3xl font-bold mb-4">Choose Your Resume Template</h1>#}
+{#        <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-lg">#}
+{#            Select a template that best showcases your professional style. You'll be able to fully customize the content in the next steps.#}
+{#        </p>#}
+{#    </div>#}
+{##}
+{#    <form action="{% url 'job_portal:select_template' %}" method="post" class="mb-14">#}
+{#        {% csrf_token %}#}
+{##}
+{#        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">#}
+{#            {% for template in templates %}#}
+{#            <div class="template-card rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:-translate-y-2 bg-white dark:bg-gray-800 cursor-pointer">#}
+{#                <div class="relative">#}
+{#                    <img src="{% static template.thumbnail %}" alt="{{ template.name }} template" class="w-full h-64 object-cover">#}
+{##}
+{#                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">#}
+{#                        <div class="text-center transform translate-y-4 opacity-0 hover:translate-y-0 hover:opacity-100 transition-all duration-300">#}
+{#                            <button type="button" class="btn btn-primary preview-btn mb-2" data-template-id="{{ template.id }}">#}
+{#                                <i class="fa-solid fa-eye mr-2"></i> Preview Template#}
+{#                            </button>#}
+{#                            <p class="text-white text-sm">Click anywhere else to select</p>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <div class="p-6">#}
+{#                    <div class="flex items-center justify-between mb-3">#}
+{#                        <h3 class="font-bold text-xl">{{ template.name }}</h3>#}
+{#                        <div class="form-control">#}
+{#                            <label class="cursor-pointer label">#}
+{#                                <input type="radio" id="template_radio_{{ template.id }}" name="template_id" value="{{ template.id }}" class="radio radio-primary"#}
+{#                                    {% if forloop.first %}checked{% endif %}>#}
+{#                            </label>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                    <p class="text-gray-600 dark:text-gray-300 mb-4">{{ template.description }}</p>#}
+{##}
+{#                    <!-- Template Features/Tags -->#}
+{#                    <div class="flex flex-wrap gap-2 mt-4">#}
+{#                        {% if template.tags %}#}
+{#                            {% for tag in template.tags %}#}
+{#                                <span class="badge badge-outline badge-sm">{{ tag }}</span>#}
+{#                            {% endfor %}#}
+{#                        {% else %}#}
+{#                            <!-- Fallback tags if not provided in the context -->#}
+{#                            <span class="badge badge-outline badge-sm">Professional</span>#}
+{#                            <span class="badge badge-outline badge-sm">ATS-Friendly</span>#}
+{#                        {% endif %}#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#            {% endfor %}#}
+{#        </div>#}
+{##}
+{#        <div class="flex justify-center mt-12">#}
+{#            <button type="submit" class="btn btn-primary btn-lg px-10 shadow-md hover:shadow-lg transition-all">#}
+{#                <i class="fa-solid fa-arrow-right mr-2"></i> Continue with Selected Template#}
+{#            </button>#}
+{#        </div>#}
+{#    </form>#}
+{##}
+{#    <!-- Template Preview Modal -->#}
+{#    <div id="previewModal" class="modal">#}
+{#        <div class="modal-box w-11/12 max-w-5xl p-0 overflow-hidden rounded-xl">#}
+{#            <div class="bg-primary p-4 text-white flex justify-between items-center">#}
+{#                <h3 class="font-bold text-lg flex items-center">#}
+{#                    <i class="fa-solid fa-file-alt mr-2"></i>#}
+{#                    <span id="previewTemplateTitle">Template Preview</span>#}
+{#                </h3>#}
+{#                <div class="flex items-center gap-2">#}
+{#                    <button id="selectThisTemplate" class="btn btn-sm btn-success text-white">#}
+{#                        <i class="fa-solid fa-check mr-1"></i> Select This Template#}
+{#                    </button>#}
+{#                    <button class="btn btn-sm btn-circle btn-ghost text-white" onclick="closePreviewModal()">#}
+{#                        <i class="fa-solid fa-times"></i>#}
+{#                    </button>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <div id="previewContent" class="h-[70vh] overflow-y-auto p-0 bg-white">#}
+{#                <!-- Preview content will be loaded here -->#}
+{#                <div class="flex justify-center items-center h-full">#}
+{#                    <span class="loading loading-spinner loading-lg text-primary"></span>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <div class="border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end bg-base-100">#}
+{#                <button class="btn btn-outline mr-2" onclick="closePreviewModal()">#}
+{#                    Close Preview#}
+{#                </button>#}
+{#                <button id="mobileSelectButton" class="btn btn-primary md:hidden">#}
+{#                    <i class="fa-solid fa-check mr-2"></i> Select Template#}
+{#                </button>#}
+{#            </div>#}
+{#        </div>#}
+{#        <div class="modal-backdrop bg-black/50" onclick="closePreviewModal()"></div>#}
+{#    </div>#}
+{#</div>#}
+{##}
+{#{% endblock %}#}
+{##}
+{#{% block extra_js %}#}
+{#<script>#}
+{#    // Store the currently previewed template ID#}
+{#    let currentPreviewTemplateId = null;#}
+{##}
+{#    // Preview functionality#}
+{#    document.querySelectorAll('.preview-btn').forEach(btn => {#}
+{#        btn.addEventListener('click', (e) => {#}
+{#            e.preventDefault();#}
+{#            e.stopPropagation(); // Prevent triggering the card click#}
+{#            const templateId = btn.getAttribute('data-template-id');#}
+{#            openPreviewModal(templateId);#}
+{#        });#}
+{#    });#}
+{##}
+{#    function openPreviewModal(templateId) {#}
+{#        // Set current template ID#}
+{#        currentPreviewTemplateId = templateId;#}
+{##}
+{#        // Find the template name from the DOM#}
+{#        const templateCard = document.querySelector(`.preview-btn[data-template-id="${templateId}"]`).closest('.template-card');#}
+{#        const templateName = templateCard.querySelector('h3').textContent;#}
+{##}
+{#        // Update modal title#}
+{#        document.getElementById('previewTemplateTitle').textContent = `${templateName} Preview`;#}
+{##}
+{#        // Show loading indicator#}
+{#        const previewContent = document.getElementById('previewContent');#}
+{#        previewContent.innerHTML = `<div class="flex justify-center items-center h-full">#}
+{#            <div class="text-center">#}
+{#                <span class="loading loading-spinner loading-lg text-primary"></span>#}
+{#                <p class="mt-3 text-gray-500">Loading preview...</p>#}
+{#            </div>#}
+{#        </div>`;#}
+{##}
+{#        // Fetch preview from the server with error handling#}
+{#        fetch(`/job/preview-template/${templateId}/`)#}
+{#            .then(response => {#}
+{#                if (!response.ok) {#}
+{#                    throw new Error(`Status: ${response.status}`);#}
+{#                }#}
+{#                return response.text();#}
+{#            })#}
+{#            .then(html => {#}
+{#                // Create a container to properly render the preview#}
+{#                const previewFrame = document.createElement('iframe');#}
+{#                previewFrame.className = 'w-full h-full border-0';#}
+{#                previewFrame.title = 'Template Preview';#}
+{#                previewContent.innerHTML = '';#}
+{#                previewContent.appendChild(previewFrame);#}
+{##}
+{#                // Wait for iframe to load then insert content#}
+{#                previewFrame.onload = function() {#}
+{#                    // Access the iframe document#}
+{#                    const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;#}
+{##}
+{#                    // Write the HTML content to the iframe#}
+{#                    iframeDoc.open();#}
+{#                    iframeDoc.write(`#}
+{#                        <!DOCTYPE html>#}
+{#                        <html>#}
+{#                        <head>#}
+{#                            <meta charset="UTF-8">#}
+{#                            <meta name="viewport" content="width=device-width, initial-scale=1.0">#}
+{#                            <style>#}
+{#                                /* Apply basic styling */#}
+{#                                body {#}
+{#                                    margin: 0;#}
+{#                                    padding: 0;#}
+{#                                    font-family: Arial, sans-serif;#}
+{#                                }#}
+{#                                /* Add any other styling needed for proper preview */#}
+{#                            </style>#}
+{#                            <link href="/static/css/resume-templates.css" rel="stylesheet">#}
+{#                        </head>#}
+{#                        <body class="p-4">#}
+{#                            ${html}#}
+{#                        </body>#}
+{#                        </html>#}
+{#                    `);#}
+{#                    iframeDoc.close();#}
+{#                };#}
+{#            })#}
+{#            .catch(error => {#}
+{#                console.error('Preview error:', error);#}
+{#                previewContent.innerHTML = `#}
+{#                    <div class="flex justify-center items-center h-full">#}
+{#                        <div class="text-center max-w-md p-6">#}
+{#                            <div class="alert alert-error mb-4">#}
+{#                                <i class="fa-solid fa-circle-exclamation mr-2"></i>#}
+{#                                Failed to load the preview#}
+{#                            </div>#}
+{#                            <p class="text-gray-600">This could be due to a network issue or the preview may not be available for this template.</p>#}
+{#                            <button class="btn btn-outline mt-4" onclick="retryPreview('${templateId}')">#}
+{#                                <i class="fa-solid fa-rotate mr-2"></i> Try Again#}
+{#                            </button>#}
+{#                        </div>#}
+{#                    </div>`;#}
+{#            });#}
+{##}
+{#        // Show modal#}
+{#        const modal = document.getElementById('previewModal');#}
+{#        modal.classList.add('modal-open');#}
+{##}
+{#        // Prevent body scrolling when modal is open#}
+{#        document.body.style.overflow = 'hidden';#}
+{#    }#}
+{##}
+{#    function retryPreview(templateId) {#}
+{#        openPreviewModal(templateId);#}
+{#    }#}
+{##}
+{#    function closePreviewModal() {#}
+{#        document.getElementById('previewModal').classList.remove('modal-open');#}
+{#        // Reset current preview template#}
+{#        currentPreviewTemplateId = null;#}
+{#        // Re-enable body scrolling#}
+{#        document.body.style.overflow = 'auto';#}
+{#    }#}
+{##}
+{#    // Select template from the preview modal#}
+{#    document.getElementById('selectThisTemplate').addEventListener('click', function() {#}
+{#        if (currentPreviewTemplateId) {#}
+{#            // Find the radio button for this template and select it#}
+{#            const radio = document.querySelector(`#template_radio_${currentPreviewTemplateId}`);#}
+{#            if (radio) {#}
+{#                radio.checked = true;#}
+{##}
+{#                // Show visual feedback#}
+{#                const card = radio.closest('.template-card');#}
+{#                highlightSelectedCard(card);#}
+{##}
+{#                // Close the modal#}
+{#                closePreviewModal();#}
+{##}
+{#                // Scroll to the selected template#}
+{#                card.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#            }#}
+{#        }#}
+{#    });#}
+{##}
+{#    // Mobile select button (duplicate functionality for better mobile UX)#}
+{#    document.getElementById('mobileSelectButton').addEventListener('click', function() {#}
+{#        document.getElementById('selectThisTemplate').click();#}
+{#    });#}
+{##}
+{#    // Ensure radio button updates visually when a template card is clicked#}
+{#    document.querySelectorAll('.template-card').forEach(card => {#}
+{#        card.addEventListener('click', (e) => {#}
+{#            // Don't trigger when clicking the preview button#}
+{#            if (!e.target.closest('.preview-btn')) {#}
+{#                const radio = card.querySelector('input[type="radio"]');#}
+{#                radio.checked = true;#}
+{##}
+{#                // Visual feedback - clear all highlighted cards first#}
+{#                document.querySelectorAll('.template-card').forEach(c => {#}
+{#                    c.classList.remove('ring-2', 'ring-primary');#}
+{#                });#}
+{##}
+{#                // Highlight this card#}
+{#                highlightSelectedCard(card);#}
+{#            }#}
+{#        });#}
+{#    });#}
+{##}
+{#    function highlightSelectedCard(card) {#}
+{#        // Reset all cards#}
+{#        document.querySelectorAll('.template-card').forEach(c => {#}
+{#            c.classList.remove('ring-2', 'ring-primary');#}
+{#        });#}
+{##}
+{#        // Highlight selected card#}
+{#        card.classList.add('ring-2', 'ring-primary');#}
+{##}
+{#        // Smooth animation#}
+{#        card.classList.add('scale-105');#}
+{#        setTimeout(() => {#}
+{#            card.classList.remove('scale-105');#}
+{#        }, 300);#}
+{#    }#}
+{##}
+{#    // Set initial selection highlight#}
+{#    window.addEventListener('DOMContentLoaded', function() {#}
+{#        const checkedRadio = document.querySelector('input[name="template_id"]:checked');#}
+{#        if (checkedRadio) {#}
+{#            const card = checkedRadio.closest('.template-card');#}
+{#            highlightSelectedCard(card);#}
+{#        }#}
+{#    });#}
+{#</script>#}
+{#{% endblock %}#}

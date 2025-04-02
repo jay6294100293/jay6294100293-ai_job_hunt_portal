@@ -1,0 +1,269 @@
+{% extends 'resumes/wizard_base.html' %}
+{% load static %}
+
+{% block step_title %}Education{% endblock %}
+
+{% block step_icon %}<i class="fa-solid fa-graduation-cap mr-3 text-primary opacity-80"></i>{% endblock %}
+
+{% block step_content %}
+<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">
+    {% csrf_token %}
+
+    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">
+        <div class="flex items-start">
+            <div class="text-primary text-xl mr-4 mt-1">
+                <i class="fa-solid fa-lightbulb"></i>
+            </div>
+            <div>
+                <p class="text-base">
+                    Add your educational background below. Start with your highest level of education.
+                    Include degrees, certifications, and relevant coursework.
+                </p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    <strong>Pro tip:</strong> For recent graduates, education should be prominently featured. If you have several years of experience, you may want to keep this section more concise.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden field to track number of education entries -->
+    <input type="hidden" id="education_count" name="education_count" value="{{ educations|length }}">
+
+    <!-- Educations container -->
+    <div id="educations_container" class="space-y-8">
+        {% for education in educations %}
+        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">
+                <h3 class="text-lg font-medium flex items-center">
+                    <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                        <i class="fa-solid fa-graduation-cap text-primary text-sm"></i>
+                    </span>
+                    Education #{{ forloop.counter }}
+                </h3>
+
+                <!-- Remove Education Button - Moved to header -->
+                <button type="button" class="btn btn-ghost btn-sm text-error"
+                        onclick="removeFormRow(this, 'educations_container', 'education_count')">
+                    <i class="fa-solid fa-trash-can mr-1"></i> Remove
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- School Name -->
+                <div class="form-control">
+                    <label class="label" for="school_name_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">School/University Name</span>
+                        <span class="label-text-alt text-error">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-university text-gray-400"></i>
+                        </div>
+                        <input type="text" id="school_name_{{ forloop.counter0 }}" name="school_name_{{ forloop.counter0 }}"
+                            class="input input-bordered w-full pl-10" value="{{ education.school_name }}" required
+                            placeholder="e.g., Harvard University, Stanford University">
+                    </div>
+                </div>
+
+                <!-- Location -->
+                <div class="form-control">
+                    <label class="label" for="location_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">Location</span>
+                        <span class="label-text-alt text-error">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-map-marker-alt text-gray-400"></i>
+                        </div>
+                        <input type="text" id="location_{{ forloop.counter0 }}" name="location_{{ forloop.counter0 }}"
+                            class="input input-bordered w-full pl-10" value="{{ education.location }}"
+                            placeholder="Cambridge, MA, USA" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+                <!-- Degree -->
+                <div class="form-control">
+                    <label class="label" for="degree_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">Degree</span>
+                        <span class="label-text-alt text-error">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-scroll text-gray-400"></i>
+                        </div>
+                        <input type="text" id="degree_{{ forloop.counter0 }}" name="degree_{{ forloop.counter0 }}"
+                            class="input input-bordered w-full pl-10" value="{{ education.degree }}"
+                            placeholder="Bachelor of Science, Master of Arts, etc." required>
+                    </div>
+                </div>
+
+                <!-- Degree Type -->
+                <div class="form-control">
+                    <label class="label" for="degree_type_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">Degree Type</span>
+                        <span class="label-text-alt text-error">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-certificate text-gray-400"></i>
+                        </div>
+                        <select id="degree_type_{{ forloop.counter0 }}" name="degree_type_{{ forloop.counter0 }}"
+                            class="select select-bordered w-full pl-10">
+                            {% for type_value, type_label in degree_types.items %}
+                            <option value="{{ type_value }}" {% if education.degree_type == type_value %}selected{% endif %}>
+                                {{ type_label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
+                <!-- Field of Study -->
+                <div class="form-control md:col-span-2">
+                    <label class="label" for="field_of_study_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">Field of Study</span>
+                        <span class="label-text-alt text-error">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-book text-gray-400"></i>
+                        </div>
+                        <input type="text" id="field_of_study_{{ forloop.counter0 }}" name="field_of_study_{{ forloop.counter0 }}"
+                            class="input input-bordered w-full pl-10" value="{{ education.field_of_study }}"
+                            placeholder="Computer Science, Business Administration, etc." required>
+                    </div>
+                </div>
+
+                <!-- GPA -->
+                <div class="form-control">
+                    <label class="label" for="gpa_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">GPA</span>
+                        <span class="label-text-alt text-gray-500">(Optional)</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-chart-line text-gray-400"></i>
+                        </div>
+                        <input type="number" id="gpa_{{ forloop.counter0 }}" name="gpa_{{ forloop.counter0 }}"
+                            class="input input-bordered w-full pl-10" value="{{ education.gpa }}"
+                            min="0" max="4.0" step="0.01" placeholder="3.5">
+                    </div>
+                    <span class="text-xs text-gray-500 mt-1">Only include if 3.0 or higher</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+                <!-- Graduation Date -->
+                <div class="form-control">
+                    <label class="label" for="graduation_date_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">Graduation Date</span>
+                        <span class="label-text-alt text-gray-500">(Expected date if not yet graduated)</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-calendar-alt text-gray-400"></i>
+                        </div>
+                        <input type="date" id="graduation_date_{{ forloop.counter0 }}" name="graduation_date_{{ forloop.counter0 }}"
+                            class="input input-bordered w-full pl-10" value="{{ education.graduation_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+
+                <!-- Currently Attending Checkbox -->
+                <div class="form-control mt-6">
+                    <label class="cursor-pointer label justify-start gap-4 py-3">
+                        <input type="checkbox" class="checkbox checkbox-primary"
+                              id="is_current_{{ forloop.counter0 }}" name="is_current_{{ forloop.counter0 }}"
+                              {% if education.is_current %}checked{% endif %}
+                              onchange="toggleGraduationDate(this)">
+                        <span class="label-text">I am currently attending this school</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Relevant Coursework (Optional) -->
+            <div class="form-control mt-5">
+                <label class="label" for="relevant_courses_{{ forloop.counter0 }}">
+                    <span class="label-text font-medium">Relevant Coursework</span>
+                    <span class="label-text-alt text-gray-500">(Optional)</span>
+                </label>
+                <div class="relative">
+                    <textarea id="relevant_courses_{{ forloop.counter0 }}" name="relevant_courses_{{ forloop.counter0 }}"
+                        class="textarea textarea-bordered w-full min-h-24"
+                        placeholder="List relevant courses separated by commas (e.g., Advanced Algorithms, Machine Learning, Data Structures)">{{ education.relevant_courses }}</textarea>
+                </div>
+                <span class="text-xs text-gray-500 mt-1">Include 3-5 courses most relevant to your target job</span>
+            </div>
+
+            <!-- Achievements and Activities (Optional) -->
+            <div class="form-control mt-5">
+                <label class="label" for="achievements_{{ forloop.counter0 }}">
+                    <span class="label-text font-medium">Achievements & Activities</span>
+                    <span class="label-text-alt text-gray-500">(Optional)</span>
+                </label>
+                <div class="relative">
+                    <textarea id="achievements_{{ forloop.counter0 }}" name="achievements_{{ forloop.counter0 }}"
+                        class="textarea textarea-bordered w-full min-h-24"
+                        placeholder="• Dean's List (Fall 2019 - Spring 2021)
+• Member of Computer Science Club
+• Student Government Representative">{{ education.achievements }}</textarea>
+                </div>
+                <span class="text-xs text-gray-500 mt-1">Include honors, awards, leadership roles, or notable activities</span>
+            </div>
+        </div>
+        {% empty %}
+        <!-- Empty state when no education is added yet -->
+        <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center">
+            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-graduation-cap text-primary text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-medium mb-2">No Education Added Yet</h3>
+            <p class="text-gray-500 max-w-md mx-auto mb-6">
+                Your educational background helps employers understand your qualifications and academic achievements.
+            </p>
+            <button type="button" class="btn btn-primary"
+                    onclick="addFormRow('education', 'educations_container', 'education_count')">
+                <i class="fa-solid fa-plus mr-2"></i> Add Your Education
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Add Education Button - Only shown if at least one education exists -->
+    {% if educations %}
+    <div class="flex justify-center mt-8">
+        <button type="button" class="btn btn-primary"
+                onclick="addFormRow('education', 'educations_container', 'education_count')">
+            <i class="fa-solid fa-plus mr-2"></i> Add Another Education
+        </button>
+    </div>
+    {% endif %}
+</form>
+
+<script>
+    function toggleGraduationDate(checkbox) {
+        const row = checkbox.closest('.form-row');
+        const dateContainer = row.querySelector('[name$="graduation_date"]').closest('.form-control');
+
+        if (checkbox.checked) {
+            dateContainer.classList.add('opacity-50');
+            dateContainer.querySelector('input').disabled = true;
+            dateContainer.querySelector('.label-text').textContent = "Expected Graduation Date";
+        } else {
+            dateContainer.classList.remove('opacity-50');
+            dateContainer.querySelector('input').disabled = false;
+            dateContainer.querySelector('.label-text').textContent = "Graduation Date";
+        }
+    }
+
+    // Initialize any "currently attending" checkboxes
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('input[name^="is_current_"]').forEach(function(checkbox) {
+            toggleGraduationDate(checkbox);
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+
+<div class="form-row bg-base-200 p-4 rounded-lg">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Language Name -->
+        <div class="form-control">
+            <label class="label" for="language_name_{{ index }}">
+                <span class="label-text">Language</span>
+                <span class="label-text-alt text-error">*</span>
+            </label>
+            <input type="text" id="language_name_{{ index }}" name="language_name_{{ index }}"
+                class="input input-bordered w-full" value="" required>
+        </div>
+
+        <!-- Proficiency Level -->
+        <div class="form-control">
+            <label class="label" for="proficiency_{{ index }}">
+                <span class="label-text">Proficiency Level</span>
+                <span class="label-text-alt text-error">*</span>
+            </label>
+            <select id="proficiency_{{ index }}" name="proficiency_{{ index }}"
+                class="select select-bordered w-full">
+                {% for prof_value, prof_label in proficiency_levels.items %}
+                <option value="{{ prof_value }}">
+                    {{ prof_label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Remove Language Button -->
+    <div class="flex justify-end mt-4">
+        <button type="button" class="btn btn-error btn-sm"
+                onclick="removeFormRow(this, 'languages_container', 'language_count')">
+            <i class="fa-solid fa-trash-can mr-2"></i> Remove Language
+        </button>
+    </div>
+</div>

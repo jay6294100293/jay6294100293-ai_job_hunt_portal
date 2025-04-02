@@ -1,0 +1,843 @@
+{% extends 'resumes/wizard_base.html' %}
+{% load resume_extras %}
+{% load static %}
+
+{% block step_title %}Languages{% endblock %}
+
+{% block step_icon %}<i class="fa-solid fa-language mr-3 text-primary opacity-80"></i>{% endblock %}
+
+{% block step_content %}
+<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">
+    {% csrf_token %}
+
+    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">
+        <div class="flex items-start">
+            <div class="text-primary text-xl mr-4 mt-1">
+                <i class="fa-solid fa-lightbulb"></i>
+            </div>
+            <div>
+                <p class="text-base">
+                    Add languages you speak and your proficiency level for each.
+                    This helps employers understand your communication abilities, especially for roles requiring multilingual skills.
+                </p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    <strong>Pro tip:</strong> Be honest about your proficiency levels. Many employers may test language skills during interviews, especially for roles where these skills are important.
+                </p>
+                <div class="mt-3">
+                    <button type="button" class="btn btn-sm btn-outline"
+{#                            hx-get="{% url 'job_portal:detect_system_language' %}"#}
+                            hx-target="#languages_container"
+                            hx-swap="beforeend"
+                            hx-indicator="#system-lang-indicator">
+                        <i class="fa-solid fa-microchip mr-2"></i> Add System Language
+                    </button>
+                    <span id="system-lang-indicator" class="htmx-indicator ml-2">
+                        <span class="loading loading-spinner loading-sm"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden field to track number of language entries -->
+    <input type="hidden" id="language_count" name="language_count" value="{{ languages|length }}">
+
+    <!-- Languages container -->
+    <div id="languages_container" class="space-y-5">
+        {% for language in languages %}
+        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-5 transition-all duration-300 hover:shadow-lg language-entry" data-index="{{ forloop.counter0 }}">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium flex items-center">
+                    <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                        <i class="fa-solid fa-globe text-primary text-sm"></i>
+                    </span>
+                    Language #<span class="language-number">{{ forloop.counter }}</span>
+                </h3>
+
+                <div class="flex items-center gap-2">
+                    <div class="tooltip tooltip-left" data-tip="Required fields status">
+                        <div class="language-status w-3 h-3 rounded-full {% if language.language_name and language.proficiency %}bg-success{% else %}bg-error{% endif %}"></div>
+                    </div>
+                    <!-- Remove Language Button -->
+                    <button type="button" class="btn btn-ghost btn-sm text-error"
+                            onclick="removeLanguage(this, '{{ forloop.counter0 }}')">
+                        <i class="fa-solid fa-trash-can mr-1"></i> Remove
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- Language Name -->
+                <div class="form-control">
+                    <label class="label" for="language_name_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">Language</span>
+                        <span class="label-text-alt text-error">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-globe text-gray-400"></i>
+                        </div>
+                        <input type="text" id="language_name_{{ forloop.counter0 }}" name="language_name_{{ forloop.counter0 }}"
+                            class="input input-bordered w-full pl-10" value="{{ language.language_name }}" required
+                            placeholder="e.g., English, Spanish, Mandarin"
+                            oninput="updateLanguageStatus('{{ forloop.counter0 }}')"
+{#                            hx-get="{% url 'job_portal:verify_language' %}"#}
+                            hx-trigger="keyup changed delay:500ms"
+                            hx-target="#language_verification_{{ forloop.counter0 }}"
+                            hx-indicator="#language_spinner_{{ forloop.counter0 }}">
+                        <div id="language_spinner_{{ forloop.counter0 }}" class="htmx-indicator absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <span class="loading loading-spinner loading-xs"></span>
+                        </div>
+                    </div>
+                    <div id="language_verification_{{ forloop.counter0 }}" class="text-xs mt-1"></div>
+                </div>
+
+                <!-- Proficiency Level -->
+                <div class="form-control">
+                    <label class="label" for="proficiency_{{ forloop.counter0 }}">
+                        <span class="label-text font-medium">Proficiency Level</span>
+                        <span class="label-text-alt text-error">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-chart-bar text-gray-400"></i>
+                        </div>
+                        <select id="proficiency_{{ forloop.counter0 }}" name="proficiency_{{ forloop.counter0 }}"
+                            class="select select-bordered w-full pl-10"
+                            onchange="updateProficiencyBadge('{{ forloop.counter0 }}'); updateLanguageStatus('{{ forloop.counter0 }}')">
+                            <option value="" disabled {% if not language.proficiency %}selected{% endif %}>Select proficiency</option>
+                            {% for prof_value, prof_label in proficiency_levels.items %}
+                            <option value="{{ prof_value }}" {% if language.proficiency == prof_value %}selected{% endif %}>
+                                {{ prof_label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+
+                        <div class="absolute inset-y-0 right-3 flex items-center">
+                            <span id="proficiency_badge_{{ forloop.counter0 }}" class="badge {% if language.proficiency == 'native' %}badge-primary{% elif language.proficiency == 'advanced' %}badge-success{% elif language.proficiency == 'intermediate' %}badge-warning{% elif language.proficiency == 'basic' %}badge-ghost{% endif %}">
+                                {% if language.proficiency %}
+                                    {{ language.proficiency|title }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional details (optional) -->
+            <div class="form-control mt-4">
+                <label class="label" for="details_{{ forloop.counter0 }}">
+                    <span class="label-text font-medium">Additional Details</span>
+                    <span class="label-text-alt text-gray-500">(Optional)</span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 top-3 pl-3 flex items-start pointer-events-none">
+                        <i class="fa-solid fa-info-circle text-gray-400"></i>
+                    </div>
+                    <textarea id="details_{{ forloop.counter0 }}" name="details_{{ forloop.counter0 }}"
+                        class="textarea textarea-bordered w-full pl-10"
+                        placeholder="e.g., Certified by TOEFL, Studied abroad for 1 year, Business fluency"
+                        maxlength="250">{{ language.details }}</textarea>
+                    <div class="absolute bottom-2 right-2 text-xs text-gray-400">
+                        <span id="details_count_{{ forloop.counter0 }}">0</span>/250
+                    </div>
+                </div>
+                <div class="flex justify-between mt-1">
+                    <span class="text-xs text-gray-500">Include certifications, relevant experience, or specific skills (reading, writing, speaking)</span>
+                    <button type="button" class="btn btn-xs btn-ghost"
+{#                            hx-get="{% url 'job_portal:suggest_language_details' %}"#}
+                            hx-include="#language_name_{{ forloop.counter0 }}, #proficiency_{{ forloop.counter0 }}"
+                            hx-target="#details_{{ forloop.counter0 }}"
+                            hx-indicator="#details_ai_indicator_{{ forloop.counter0 }}">
+                        <i class="fa-solid fa-magic-wand-sparkles text-primary"></i> Suggest
+                    </button>
+                </div>
+                <span id="details_ai_indicator_{{ forloop.counter0 }}" class="htmx-indicator text-xs">
+                    <span class="loading loading-spinner loading-xs"></span> Generating suggestions...
+                </span>
+            </div>
+
+            <!-- Certifications or Test Scores (New field) -->
+            <div class="form-control mt-4">
+                <label class="label">
+                    <span class="label-text font-medium">Certifications or Test Scores</span>
+                    <span class="label-text-alt text-gray-500">(Optional)</span>
+                </label>
+                <div class="flex flex-wrap gap-2 p-2 border border-base-300 rounded-lg min-h-12 bg-base-100" id="certifications_container_{{ forloop.counter0 }}">
+                    {% if language.certifications %}
+                        {% for cert in language.certifications|split:"," %}
+                            <div class="badge badge-outline py-3 px-3 gap-1">
+                                <span>{{ cert|trim }}</span>
+                                <button type="button" class="btn btn-xs btn-ghost btn-circle" onclick="removeCertification(this)">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    <input type="text" id="certification_input_{{ forloop.counter0 }}"
+                        class="input input-xs border-none focus:outline-none bg-transparent flex-grow min-w-[150px]"
+                        placeholder="Type certification and press Enter"
+                        onkeydown="addCertification(event, {{ forloop.counter0 }})">
+                </div>
+                <input type="hidden" id="certifications_{{ forloop.counter0 }}" name="certifications_{{ forloop.counter0 }}" value="{{ language.certifications|default:'' }}">
+                <div class="flex justify-between mt-1">
+                    <span class="text-xs text-info">Add certifications like TOEFL, IELTS, CEFR (B2, C1), DELE, HSK, etc.</span>
+                    <div>
+                        <button type="button" class="btn btn-xs btn-ghost"
+{#                                hx-get="{% url 'job_portal:suggest_language_certifications' %}"#}
+                                hx-include="#language_name_{{ forloop.counter0 }}"
+                                hx-target="#certification_suggestions_{{ forloop.counter0 }}"
+                                hx-indicator="#cert_indicator_{{ forloop.counter0 }}">
+                            <i class="fa-solid fa-lightbulb mr-1"></i> Suggest
+                        </button>
+                        <span id="cert_indicator_{{ forloop.counter0 }}" class="htmx-indicator">
+                            <span class="loading loading-spinner loading-xs"></span>
+                        </span>
+                    </div>
+                </div>
+                <div id="certification_suggestions_{{ forloop.counter0 }}" class="text-xs mt-1 flex flex-wrap gap-1"></div>
+            </div>
+
+            <!-- Professional Usage (New field) -->
+            <div class="form-control mt-4">
+                <label class="label">
+                    <span class="label-text font-medium">Professional Usage</span>
+                    <span class="label-text-alt text-gray-500">(Optional)</span>
+                </label>
+                <div class="flex flex-wrap gap-2">
+                    <label class="cursor-pointer label gap-2 p-2 border rounded-lg bg-base-100 hover:bg-base-200 transition-colors">
+                        <input type="checkbox" class="checkbox checkbox-xs checkbox-primary"
+                               name="can_read_{{ forloop.counter0 }}"
+                               {% if language.can_read %}checked{% endif %}>
+                        <span class="label-text">Reading</span>
+                    </label>
+                    <label class="cursor-pointer label gap-2 p-2 border rounded-lg bg-base-100 hover:bg-base-200 transition-colors">
+                        <input type="checkbox" class="checkbox checkbox-xs checkbox-primary"
+                               name="can_write_{{ forloop.counter0 }}"
+                               {% if language.can_write %}checked{% endif %}>
+                        <span class="label-text">Writing</span>
+                    </label>
+                    <label class="cursor-pointer label gap-2 p-2 border rounded-lg bg-base-100 hover:bg-base-200 transition-colors">
+                        <input type="checkbox" class="checkbox checkbox-xs checkbox-primary"
+                               name="can_speak_{{ forloop.counter0 }}"
+                               {% if language.can_speak %}checked{% endif %}>
+                        <span class="label-text">Speaking</span>
+                    </label>
+                    <label class="cursor-pointer label gap-2 p-2 border rounded-lg bg-base-100 hover:bg-base-200 transition-colors">
+                        <input type="checkbox" class="checkbox checkbox-xs checkbox-primary"
+                               name="business_fluent_{{ forloop.counter0 }}"
+                               {% if language.business_fluent %}checked{% endif %}>
+                        <span class="label-text">Business Fluent</span>
+                    </label>
+                    <label class="cursor-pointer label gap-2 p-2 border rounded-lg bg-base-100 hover:bg-base-200 transition-colors">
+                        <input type="checkbox" class="checkbox checkbox-xs checkbox-primary"
+                               name="technical_fluent_{{ forloop.counter0 }}"
+                               {% if language.technical_fluent %}checked{% endif %}>
+                        <span class="label-text">Technical Fluency</span>
+                    </label>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">Select all that apply to your proficiency in this language</div>
+            </div>
+
+            <!-- Visibility toggle (New) -->
+            <div class="form-control mt-4">
+                <label class="cursor-pointer label justify-start gap-2">
+                    <input type="checkbox" class="toggle toggle-primary toggle-sm"
+                           name="is_visible_{{ forloop.counter0 }}"
+                           {% if language.is_visible|default:True %}checked{% endif %}>
+                    <span class="label-text">Show this language on your resume</span>
+                </label>
+            </div>
+
+            <!-- Hidden fields for Django form handling -->
+            <input type="hidden" name="language_ids" value="{{ language.id|default:'new' }}">
+        </div>
+        {% empty %}
+        <!-- Empty state when no languages are added yet -->
+        <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center">
+            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-language text-primary text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-medium mb-2">No Languages Added Yet</h3>
+            <p class="text-gray-500 max-w-md mx-auto mb-6">
+                Language skills can set you apart from other candidates, especially in roles requiring international communication or serving diverse populations.
+            </p>
+            <button type="button" class="btn btn-primary"
+                    onclick="addNewLanguage()">
+                <i class="fa-solid fa-plus mr-2"></i> Add Your First Language
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Add Language Button -->
+    {% if languages %}
+    <div class="flex justify-center mt-8">
+        <button type="button" class="btn btn-outline btn-primary"
+                onclick="addNewLanguage()">
+            <i class="fa-solid fa-plus mr-2"></i> Add Another Language
+        </button>
+    </div>
+    {% endif %}
+
+    <!-- Proficiency Guide -->
+    <div class="mt-10 bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6">
+        <h3 class="font-medium text-lg mb-4 flex items-center">
+            <i class="fa-solid fa-info-circle text-primary mr-2"></i>
+            Language Proficiency Guide
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+                <div class="flex items-start gap-3">
+                    <div class="mt-1">
+                        <span class="badge badge-primary">Native</span>
+                    </div>
+                    <div>
+                        <p class="font-medium">First language or mother tongue</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Spoken from childhood with complete fluency and intuitive understanding of nuances and cultural contexts.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3">
+                    <div class="mt-1">
+                        <span class="badge badge-success">Advanced</span>
+                    </div>
+                    <div>
+                        <p class="font-medium">Professional working proficiency</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Can handle complex discussions, understand native speakers easily, read sophisticated texts, and express complex ideas clearly.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex items-start gap-3">
+                    <div class="mt-1">
+                        <span class="badge badge-warning">Intermediate</span>
+                    </div>
+                    <div>
+                        <p class="font-medium">Limited working proficiency</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Can participate in routine conversations, understand the main ideas of texts, and express basic ideas, though sometimes with hesitation.</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-3">
+                    <div class="mt-1">
+                        <span class="badge badge-ghost">Basic</span>
+                    </div>
+                    <div>
+                        <p class="font-medium">Elementary proficiency</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Can understand and use familiar everyday expressions, introduce yourself, and ask/answer simple questions about basic personal information.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-5 pt-5 border-t border-gray-100 dark:border-gray-700">
+            <h4 class="font-medium mb-2">Alternative Frameworks:</h4>
+            <div class="flex flex-wrap gap-3">
+                <div class="badge badge-outline p-3 tooltip" data-tip="Common European Framework of Reference">CEFR: A1-C2</div>
+                <div class="badge badge-outline p-3 tooltip" data-tip="Interagency Language Roundtable">ILR: 0-5</div>
+                <div class="badge badge-outline p-3 tooltip" data-tip="American Council on the Teaching of Foreign Languages">ACTFL: Novice-Distinguished</div>
+                <div class="badge badge-outline p-3 tooltip" data-tip="Cambridge English Qualifications">Cambridge: KET-CPE</div>
+                <div class="badge badge-outline p-3 tooltip" data-tip="Standardized test scores">TOEFL/IELTS Scores</div>
+            </div>
+            <p class="text-sm text-gray-500 mt-3">You may also use these standardized frameworks if you have official certifications. Include your certification details in the "Additional Details" field.</p>
+        </div>
+    </div>
+
+    <!-- Common Languages Quick Add -->
+    <div class="mt-6">
+        <h3 class="font-medium mb-4 flex items-center">
+            <i class="fa-solid fa-plus text-primary mr-2"></i>
+            Quick Add Common Languages
+        </h3>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            <button type="button" class="btn btn-outline btn-sm" onclick="quickAddLanguage('English')">
+                <span class="flag-icon">🇺🇸</span> English
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="quickAddLanguage('Spanish')">
+                <span class="flag-icon">🇪🇸</span> Spanish
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="quickAddLanguage('French')">
+                <span class="flag-icon">🇫🇷</span> French
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="quickAddLanguage('German')">
+                <span class="flag-icon">🇩🇪</span> German
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="quickAddLanguage('Mandarin')">
+                <span class="flag-icon">🇨🇳</span> Mandarin
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="quickAddLanguage('Arabic')">
+                <span class="flag-icon">🇸🇦</span> Arabic
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="quickAddLanguage('Japanese')">
+                <span class="flag-icon">🇯🇵</span> Japanese
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="quickAddLanguage('Russian')">
+                <span class="flag-icon">🇷🇺</span> Russian
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="quickAddLanguage('Portuguese')">
+                <span class="flag-icon">🇵🇹</span> Portuguese
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="quickAddLanguage('Hindi')">
+                <span class="flag-icon">🇮🇳</span> Hindi
+            </button>
+        </div>
+    </div>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize all language entries
+        document.querySelectorAll('.language-entry').forEach(entry => {
+            const index = entry.dataset.index;
+
+            // Initialize character counter for details
+            initCharCounter(index);
+
+            // Initialize proficiency badges
+            updateProficiencyBadge(index);
+
+            // Initialize validation status
+            updateLanguageStatus(index);
+        });
+    });
+
+    // Initialize character counter for details
+    function initCharCounter(index) {
+        const textarea = document.getElementById(`details_${index}`);
+        const counter = document.getElementById(`details_count_${index}`);
+
+        if (textarea && counter) {
+            counter.textContent = textarea.value.length;
+
+            textarea.addEventListener('input', function() {
+                counter.textContent = this.value.length;
+            });
+        }
+    }
+
+    // Update proficiency badge
+    function updateProficiencyBadge(index) {
+        const select = document.getElementById(`proficiency_${index}`);
+        const badge = document.getElementById(`proficiency_badge_${index}`);
+
+        if (!select || !badge) return;
+
+        const proficiency = select.value;
+
+        // Clear existing classes
+        badge.className = 'badge';
+
+        // Add specific badge class and text based on proficiency
+        if (proficiency === 'native') {
+            badge.classList.add('badge-primary');
+            badge.textContent = 'Native';
+        } else if (proficiency === 'advanced') {
+            badge.classList.add('badge-success');
+            badge.textContent = 'Advanced';
+        } else if (proficiency === 'intermediate') {
+            badge.classList.add('badge-warning');
+            badge.textContent = 'Intermediate';
+        } else if (proficiency === 'basic') {
+            badge.classList.add('badge-ghost');
+            badge.textContent = 'Basic';
+        } else {
+            badge.textContent = '';
+        }
+    }
+
+    // Add a new language
+    function addNewLanguage() {
+        // Get current count of languages
+        const countField = document.getElementById('language_count');
+        const newIndex = parseInt(countField.value);
+
+        // Increment the count
+        countField.value = newIndex + 1;
+
+        // Create AJAX request to get a new language template
+        fetch(`{% url 'job_portal:get_language_template' %}?index=${newIndex}`)
+            .then(response => response.text())
+            .then(html => {
+                // Add the new entry to the container
+                const container = document.getElementById('languages_container');
+
+                // If this is the first language, clear the empty state
+                if (newIndex === 0) {
+                    container.innerHTML = '';
+                }
+
+                // Add the new language at the top
+                container.insertAdjacentHTML('afterbegin', html);
+
+                // Initialize the new language
+                initCharCounter(newIndex);
+                updateLanguageStatus(newIndex);
+
+                // Show the "Add Another" button if not already visible
+                if (!document.querySelector('.add-another-btn')) {
+                    const btnContainer = document.createElement('div');
+                    btnContainer.className = 'flex justify-center mt-8';
+                    btnContainer.innerHTML = `
+                        <button type="button" class="btn btn-outline btn-primary add-another-btn"
+                                onclick="addNewLanguage()">
+                            <i class="fa-solid fa-plus mr-2"></i> Add Another Language
+                        </button>
+                    `;
+                    container.parentNode.appendChild(btnContainer);
+                }
+
+                // Smooth scroll to the new language
+                const newEntry = document.querySelector(`.language-entry[data-index="${newIndex}"]`);
+                newEntry.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                // Focus on the language name field
+                setTimeout(() => {
+                    document.getElementById(`language_name_${newIndex}`).focus();
+                }, 500);
+            })
+            .catch(error => {
+                console.error('Error adding new language:', error);
+                // Show error message
+                showToast('error', 'Failed to add new language. Please try again.');
+            });
+    }
+
+    // Remove a language
+    function removeLanguage(button, index) {
+        const container = document.getElementById('languages_container');
+
+        // Check if this is the only language
+        if (container.querySelectorAll('.language-entry').length <= 1) {
+            showToast('info', 'You must have at least one language entry.');
+            return;
+        }
+
+        // Get the language entry to remove
+        const entry = button.closest('.language-entry');
+
+        // Animation for smooth removal
+        entry.style.transition = 'all 0.3s ease';
+        entry.style.opacity = '0';
+        entry.style.maxHeight = '0';
+        entry.style.overflow = 'hidden';
+        entry.style.marginBottom = '0';
+
+        setTimeout(() => {
+            entry.remove();
+
+            // Update the counter
+            const countField = document.getElementById('language_count');
+            countField.value = parseInt(countField.value) - 1;
+
+            // If no more languages, show the empty state
+            if (container.children.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center">
+                        <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                            <i class="fa-solid fa-language text-primary text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium mb-2">No Languages Added Yet</h3>
+                        <p class="text-gray-500 max-w-md mx-auto mb-6">
+                            Language skills can set you apart from other candidates, especially in roles requiring international communication or serving diverse populations.
+                        </p>
+                        <button type="button" class="btn btn-primary"
+                                onclick="addNewLanguage()">
+                            <i class="fa-solid fa-plus mr-2"></i> Add Your First Language
+                        </button>
+                    </div>
+                `;
+
+                // Hide the "Add Another" button
+                const addBtn = document.querySelector('.add-another-btn');
+                if (addBtn) {
+                    addBtn.closest('div').remove();
+                }
+            } else {
+                // Update language numbers
+                updateLanguageNumbers();
+            }
+        }, 300);
+    }
+
+    // Update language numbers after removal
+    function updateLanguageNumbers() {
+        document.querySelectorAll('.language-entry').forEach((entry, idx) => {
+            const numberEl = entry.querySelector('.language-number');
+            if (numberEl) {
+                numberEl.textContent = (idx + 1).toString();
+            }
+        });
+    }
+
+   // Update the language validation status
+    function updateLanguageStatus(index) {
+        const entry = document.querySelector(`.language-entry[data-index="${index}"]`);
+        if (!entry) return;
+
+        const statusIndicator = entry.querySelector('.language-status');
+        const nameField = document.getElementById(`language_name_${index}`);
+        const proficiencyField = document.getElementById(`proficiency_${index}`);
+
+        if (!nameField || !proficiencyField || !statusIndicator) return;
+
+        // Check if required fields are filled
+        const isValid = nameField.value.trim() !== '' && proficiencyField.value !== '';
+
+        // Update status indicator
+        if (isValid) {
+            statusIndicator.classList.remove('bg-error');
+            statusIndicator.classList.add('bg-success');
+        } else {
+            statusIndicator.classList.remove('bg-success');
+            statusIndicator.classList.add('bg-error');
+        }
+
+        return isValid;
+    }
+
+    // Function to add certification tag
+    function addCertification(event, index) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+
+            const input = document.getElementById(`certification_input_${index}`);
+            const container = document.getElementById(`certifications_container_${index}`);
+            const hiddenInput = document.getElementById(`certifications_${index}`);
+
+            if (input.value.trim() === '') return;
+
+            // Create certification badge
+            const badge = document.createElement('div');
+            badge.className = 'badge badge-outline py-3 px-3 gap-1';
+            badge.innerHTML = `
+                <span>${input.value.trim()}</span>
+                <button type="button" class="btn btn-xs btn-ghost btn-circle" onclick="removeCertification(this)">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+
+            // Insert before the input element
+            container.insertBefore(badge, input);
+
+            // Update hidden field
+            updateCertificationsHiddenField(container, hiddenInput);
+
+            // Clear input
+            input.value = '';
+        }
+    }
+
+    // Function to remove certification
+    function removeCertification(button) {
+        const badge = button.closest('.badge');
+        const container = badge.parentElement;
+        const index = container.id.split('_').pop();
+        const hiddenInput = document.getElementById(`certifications_${index}`);
+
+        // Fade out and remove badge
+        badge.style.transition = 'all 0.2s ease';
+        badge.style.opacity = '0';
+        badge.style.transform = 'translateX(-10px)';
+
+        setTimeout(() => {
+            badge.remove();
+            updateCertificationsHiddenField(container, hiddenInput);
+        }, 200);
+    }
+
+    // Update hidden certifications field
+    function updateCertificationsHiddenField(container, hiddenInput) {
+        const certifications = [];
+        container.querySelectorAll('.badge > span').forEach(span => {
+            certifications.push(span.textContent.trim());
+        });
+
+        hiddenInput.value = certifications.join(',');
+    }
+
+    // Function to quickly add a common language
+    function quickAddLanguage(language) {
+        const emptyState = document.querySelector('#languages_container .bg-base-100.text-center');
+
+        // Flag emojis mapped to languages
+        const languageFlags = {
+            'English': '🇺🇸',
+            'Spanish': '🇪🇸',
+            'French': '🇫🇷',
+            'German': '🇩🇪',
+            'Mandarin': '🇨🇳',
+            'Arabic': '🇸🇦',
+            'Japanese': '🇯🇵',
+            'Russian': '🇷🇺',
+            'Portuguese': '🇵🇹',
+            'Hindi': '🇮🇳',
+            'Italian': '🇮🇹',
+            'Korean': '🇰🇷'
+        };
+
+        if (emptyState) {
+            // We're in empty state, click the existing button to add first language
+            document.querySelector('#languages_container button').click();
+        } else {
+            // Add a new language
+            addNewLanguage();
+        }
+
+        // Wait for the new language form to be added, then set its name
+        setTimeout(() => {
+            const forms = document.querySelectorAll('#languages_container .language-entry');
+            const lastForm = forms[0]; // We insert at the beginning now
+            const nameInput = lastForm.querySelector('input[name^="language_name_"]');
+            const index = lastForm.dataset.index;
+
+            // Set the language name
+            nameInput.value = language;
+
+            // Set default proficiency to Intermediate
+            const proficiencySelect = document.getElementById(`proficiency_${index}`);
+            if (proficiencySelect) {
+                proficiencySelect.value = 'intermediate';
+                updateProficiencyBadge(index);
+            }
+
+            // Add common certifications for the language
+            const certSuggestions = {
+                'English': ['TOEFL', 'IELTS', 'Cambridge C1'],
+                'Spanish': ['DELE B2', 'SIELE'],
+                'French': ['DELF B2', 'TCF'],
+                'German': ['Goethe-Zertifikat B2', 'TestDaF'],
+                'Mandarin': ['HSK 4', 'TOCFL'],
+                'Japanese': ['JLPT N2', 'J-Test'],
+                'Arabic': ['ALPT', 'CIMA'],
+                'Russian': ['TORFL'],
+                'Portuguese': ['CELPE-Bras'],
+                'Italian': ['CELI', 'CILS']
+            };
+
+            // Add appropriate flags to the display if available
+            if (languageFlags[language]) {
+                // We could add a flag to the UI here if wanted
+                // For now, we'll just provide better certification suggestions
+            }
+
+            // Update certification suggestions if available
+            const certSuggestionDiv = document.getElementById(`certification_suggestions_${index}`);
+            if (certSuggestionDiv && certSuggestions[language]) {
+                let suggestions = '';
+                certSuggestions[language].forEach(cert => {
+                    suggestions += `<span class="badge badge-sm badge-outline cursor-pointer hover:bg-base-300"
+                        onclick="addSuggestedCertification('${cert}', ${index})">${cert}</span>`;
+                });
+                certSuggestionDiv.innerHTML = suggestions;
+            }
+
+            // Set default skills
+            document.querySelector(`input[name="can_read_${index}"]`).checked = true;
+            document.querySelector(`input[name="can_speak_${index}"]`).checked = true;
+            document.querySelector(`input[name="can_write_${index}"]`).checked = true;
+
+            // Update validation status
+            updateLanguageStatus(index);
+
+            // Scroll to the new language
+            lastForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Highlight it briefly
+            lastForm.classList.add('ring-2', 'ring-primary', 'ring-offset-2');
+            setTimeout(() => {
+                lastForm.classList.remove('ring-2', 'ring-primary', 'ring-offset-2');
+            }, 1500);
+        }, 500);
+    }
+
+    // Add a suggested certification
+    function addSuggestedCertification(certification, index) {
+        const container = document.getElementById(`certifications_container_${index}`);
+        const hiddenInput = document.getElementById(`certifications_${index}`);
+        const input = document.getElementById(`certification_input_${index}`);
+
+        // Check if the certification already exists
+        let exists = false;
+        container.querySelectorAll('.badge > span').forEach(span => {
+            if (span.textContent.trim() === certification) {
+                exists = true;
+                // Highlight existing certification
+                const badge = span.closest('.badge');
+                badge.classList.add('badge-primary');
+                setTimeout(() => {
+                    badge.classList.remove('badge-primary');
+                }, 1000);
+            }
+        });
+
+        if (exists) return;
+
+        // Create certification badge
+        const badge = document.createElement('div');
+        badge.className = 'badge badge-outline py-3 px-3 gap-1';
+        badge.innerHTML = `
+            <span>${certification}</span>
+            <button type="button" class="btn btn-xs btn-ghost btn-circle" onclick="removeCertification(this)">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        `;
+
+        // Add animation for the new badge
+        badge.style.opacity = '0';
+        badge.style.transform = 'translateX(10px)';
+
+        // Insert before the input element
+        container.insertBefore(badge, input);
+
+        // Trigger animation
+        setTimeout(() => {
+            badge.style.transition = 'all 0.3s ease';
+            badge.style.opacity = '1';
+            badge.style.transform = 'translateX(0)';
+        }, 10);
+
+        // Update hidden field
+        updateCertificationsHiddenField(container, hiddenInput);
+    }
+
+    // Show toast notification
+    function showToast(type, message) {
+        // Remove any existing toasts
+        const existingToast = document.querySelector('.toast-notification');
+        if (existingToast) {
+            existingToast.remove();
+        }
+
+        // Create new toast
+        const toast = document.createElement('div');
+        toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 toast-notification transition-all duration-300 transform translate-y-0 opacity-100`;
+
+        // Set style based on type
+        if (type === 'success') {
+            toast.classList.add('bg-success', 'text-white');
+            toast.innerHTML = `<div class="flex items-center gap-2"><i class="fa-solid fa-check"></i> ${message}</div>`;
+        } else if (type === 'error') {
+            toast.classList.add('bg-error', 'text-white');
+            toast.innerHTML = `<div class="flex items-center gap-2"><i class="fa-solid fa-exclamation-circle"></i> ${message}</div>`;
+        } else if (type === 'info') {
+            toast.classList.add('bg-info', 'text-white');
+            toast.innerHTML = `<div class="flex items-center gap-2"><i class="fa-solid fa-info-circle"></i> ${message}</div>`;
+        }
+
+        document.body.appendChild(toast);
+
+        // Fade out after delay
+        setTimeout(() => {
+            toast.classList.replace('translate-y-0', 'translate-y-2');
+            toast.classList.replace('opacity-100', 'opacity-0');
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 300);
+        }, 3000);
+    }
+</script>
+{% endblock %}

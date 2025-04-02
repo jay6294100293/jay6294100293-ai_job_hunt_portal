@@ -1,0 +1,43 @@
+<!-- templates/auth/signup.html -->
+{% extends 'auth/../base.html' %}
+{% load custom_filters %}
+{% block title %}Create Your Account{% endblock %}
+
+{% block content %}
+<div class="flex justify-center items-center min-h-screen bg-gray-100">
+    <div class="max-w-lg w-full bg-white rounded-lg shadow-lg p-8">
+        <h2 class="text-3xl font-semibold text-center text-gray-800 mb-6">Create Your Account</h2>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label for="username" class="block text-gray-700 font-medium mb-2">Username:</label>
+                {{ form.username|add_class:"block w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" }}
+            </div>
+            <div class="mb-4">
+                <label for="email" class="block text-gray-700 font-medium mb-2">Email:</label>
+                {{ form.email|add_class:"block w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" }}
+            </div>
+            <div class="mb-4">
+                <label for="password" class="block text-gray-700 font-medium mb-2">Password:</label>
+                {{ form.password1|add_class:"block w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" }}
+            </div>
+            <div class="mb-4">
+                <label for="password_confirmation" class="block text-gray-700 font-medium mb-2">Password confirmation:</label>
+                {{ form.password2|add_class:"block w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" }}
+            </div>
+
+            <div class="text-sm text-gray-600 mb-4">
+                <p>Your password must contain at least 8 characters, and it can’t be extremely similar to your other personal information.</p>
+                <p>Your password can’t be entirely numeric.</p>
+            </div>
+        
+            <button type="submit" class="w-full py-2 mt-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-200">
+                Sign Up
+            </button>
+        </form>
+        <div class="mt-6 text-center">
+            <p class="text-gray-600">Already have an account? <a href="{% url 'login' %}" class="text-blue-600 hover:underline">Login</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

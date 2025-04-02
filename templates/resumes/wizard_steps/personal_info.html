@@ -1,0 +1,840 @@
+
+{% extends 'resumes/wizard_base.html' %}
+{% load resume_extras %}
+{% load static %}
+
+{% block step_name %}Personal Information{% endblock %}
+{% block step_title %}Personal Information{% endblock %}
+
+{% block step_icon %}<i class="fa-solid fa-user-circle mr-3 text-primary opacity-80"></i>{% endblock %}
+
+{% block extra_head %}
+<style>
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Add responsive adjustments */
+    @media (max-width: 767px) {
+        .card {
+            padding: 1rem !important;
+        }
+
+        .grid-cols-3 {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* For very small screens */
+    @media (max-width: 480px) {
+        .page-title {
+            font-size: 1.25rem;
+        }
+    }
+
+    /* Larger screens padding */
+    @media (min-width: 768px) {
+        .card {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block step_content %}
+<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">
+    {% csrf_token %}
+
+    <div class="bg-primary/5 border border-primary/10 rounded-lg p-4 sm:p-5 mb-6 sm:mb-8">
+        <div class="flex items-start">
+            <div class="text-primary text-lg sm:text-xl mr-3 sm:mr-4 mt-1">
+                <i class="fa-solid fa-lightbulb"></i>
+            </div>
+            <div>
+                <p class="text-sm sm:text-base">
+                    Your personal information is the gateway for employers to contact you. Make sure your contact details are professional and up-to-date.
+                </p>
+                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2">
+                    <strong>Pro tip:</strong> For your email address, use a professional format like firstname.lastname@domain.com rather than nicknames or creative addresses.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-4 sm:p-6 mb-6 sm:mb-8">
+        <h3 class="text-base sm:text-lg font-medium flex items-center mb-4 sm:mb-5 pb-2 sm:pb-3 border-b border-gray-100 dark:border-gray-700">
+            <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center mr-2 sm:mr-3">
+                <i class="fa-solid fa-id-card text-primary text-xs sm:text-sm"></i>
+            </span>
+            Contact Information
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <!-- First Name -->
+            <div class="form-control">
+                <label class="label" for="{{ form.first_name.id_for_label }}">
+                    <span class="label-text font-medium">First Name</span>
+                    <span class="label-text-alt text-error">*</span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-user text-gray-400"></i>
+                    </div>
+                    {{ form.first_name|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:e.g., John" }}
+                </div>
+                {% if form.first_name.errors %}
+                    <div class="text-error text-xs sm:text-sm mt-1 flex items-center">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i>
+                        {{ form.first_name.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Middle Name -->
+            <div class="form-control">
+                <label class="label" for="{{ form.mid_name.id_for_label }}">
+                    <span class="label-text font-medium">Middle Name</span>
+                    <span class="label-text-alt text-gray-500">(Optional)</span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-user-tag text-gray-400"></i>
+                    </div>
+                    {{ form.mid_name|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:e.g., Robert" }}
+                </div>
+            </div>
+
+            <!-- Last Name -->
+            <div class="form-control">
+                <label class="label" for="{{ form.last_name.id_for_label }}">
+                    <span class="label-text font-medium">Last Name</span>
+                    <span class="label-text-alt text-error">*</span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-user text-gray-400"></i>
+                    </div>
+                    {{ form.last_name|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:e.g., Smith" }}
+                </div>
+                {% if form.last_name.errors %}
+                    <div class="text-error text-xs sm:text-sm mt-1 flex items-center">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i>
+                        {{ form.last_name.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Email -->
+            <div class="form-control">
+                <label class="label" for="{{ form.email.id_for_label }}">
+                    <span class="label-text font-medium">Email</span>
+                    <span class="label-text-alt text-error">*</span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-envelope text-gray-400"></i>
+                    </div>
+                    {{ form.email|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:e.g., john.smith@example.com" }}
+                </div>
+                {% if form.email.errors %}
+                    <div class="text-error text-xs sm:text-sm mt-1 flex items-center">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i>
+                        {{ form.email.errors.0 }}
+                    </div>
+                {% endif %}
+                <span class="text-xs text-gray-500 mt-1">Use a professional email address that you check regularly</span>
+            </div>
+
+            <!-- Phone -->
+            <div class="form-control">
+                <label class="label" for="{{ form.phone.id_for_label }}">
+                    <span class="label-text font-medium">Phone</span>
+                    <span class="label-text-alt text-error">*</span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-phone text-gray-400"></i>
+                    </div>
+                    {{ form.phone|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:e.g., (555) 123-4567" }}
+                </div>
+                {% if form.phone.errors %}
+                    <div class="text-error text-xs sm:text-sm mt-1 flex items-center">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i>
+                        {{ form.phone.errors.0 }}
+                    </div>
+                {% endif %}
+                <span class="text-xs text-gray-500 mt-1">Include your country code for international positions</span>
+            </div>
+        </div>
+
+        <!-- Address -->
+        <div class="form-control mt-4 sm:mt-5">
+            <label class="label" for="{{ form.address.id_for_label }}">
+                <span class="label-text font-medium">Address</span>
+                <span class="label-text-alt text-gray-500">(Optional)</span>
+            </label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-location-dot text-gray-400"></i>
+                </div>
+                {{ form.address|add_class:"textarea textarea-bordered w-full pl-10"|attr:"placeholder:e.g., San Francisco, CA or full street address" }}
+            </div>
+            <span class="text-xs text-gray-500 mt-1">You can include your full address or just city/state for privacy</span>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-4 sm:p-6">
+        <h3 class="text-base sm:text-lg font-medium flex items-center mb-4 sm:mb-5 pb-2 sm:pb-3 border-b border-gray-100 dark:border-gray-700">
+            <span class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center mr-2 sm:mr-3">
+                <i class="fa-solid fa-globe text-primary text-xs sm:text-sm"></i>
+            </span>
+            Online Presence
+        </h3>
+
+        <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-5">
+            Including relevant online profiles can strengthen your application, especially for technical or creative roles.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <!-- LinkedIn -->
+            <div class="form-control">
+                <label class="label" for="{{ form.linkedin.id_for_label }}">
+                    <span class="label-text font-medium flex items-center">
+                        <i class="fa-brands fa-linkedin text-[#0077b5] mr-2"></i>
+                        LinkedIn Profile
+                    </span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-link text-gray-400"></i>
+                    </div>
+                    {{ form.linkedin|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:linkedin.com/in/username" }}
+                </div>
+            </div>
+
+            <!-- GitHub -->
+            <div class="form-control">
+                <label class="label" for="{{ form.github.id_for_label }}">
+                    <span class="label-text font-medium flex items-center">
+                        <i class="fa-brands fa-github text-gray-800 dark:text-gray-200 mr-2"></i>
+                        GitHub Profile
+                    </span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-link text-gray-400"></i>
+                    </div>
+                    {{ form.github|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:github.com/username" }}
+                </div>
+            </div>
+
+            <!-- Portfolio -->
+            <div class="form-control">
+                <label class="label" for="{{ form.portfolio.id_for_label }}">
+                    <span class="label-text font-medium flex items-center">
+                        <i class="fa-solid fa-briefcase text-primary mr-2"></i>
+                        Portfolio Website
+                    </span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-link text-gray-400"></i>
+                    </div>
+                    {{ form.portfolio|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:example.com/portfolio" }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Note -->
+    <div class="mt-6 sm:mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-700 p-3 sm:p-4 rounded-lg text-xs sm:text-sm">
+        <div class="flex items-start gap-2 sm:gap-3">
+            <i class="fa-solid fa-shield-alt text-blue-500 mt-1"></i>
+            <div>
+                <p class="font-medium text-blue-800 dark:text-blue-300">Privacy Note</p>
+                <p class="text-blue-700 dark:text-blue-400 mt-1">
+                    Your personal information will only be included in the resumes you generate. Consider which details you want to include based on your comfort level and the job requirements.
+                </p>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+{#{% extends 'resumes/wizard_steps/../wizard_base.html' %}#}
+{#{% load resume_extras %}#}
+{#{% load static %}#}
+{##}
+{#{% block step_name %}Personal Information{% endblock %}#}
+{#{% block step_title %}Personal Information{% endblock %}#}
+{##}
+{#{% block step_icon %}<i class="fa-solid fa-user-circle mr-3 text-primary opacity-80"></i>{% endblock %}#}
+{##}
+{#{% block step_content %}#}
+{#<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">#}
+{#    {% csrf_token %}#}
+{##}
+{#    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">#}
+{#        <div class="flex items-start">#}
+{#            <div class="text-primary text-xl mr-4 mt-1">#}
+{#                <i class="fa-solid fa-lightbulb"></i>#}
+{#            </div>#}
+{#            <div>#}
+{#                <p class="text-base">#}
+{#                    Your personal information is the gateway for employers to contact you. Make sure your contact details are professional and up-to-date.#}
+{#                </p>#}
+{#                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">#}
+{#                    <strong>Pro tip:</strong> For your email address, use a professional format like firstname.lastname@domain.com rather than nicknames or creative addresses.#}
+{#                </p>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div class="card bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 mb-8">#}
+{#        <h3 class="text-lg font-medium flex items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">#}
+{#            <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">#}
+{#                <i class="fa-solid fa-id-card text-primary text-sm"></i>#}
+{#            </span>#}
+{#            Contact Information#}
+{#        </h3>#}
+{##}
+{#        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">#}
+{#            <!-- First Name -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="{{ form.first_name.id_for_label }}">#}
+{#                    <span class="label-text font-medium">First Name</span>#}
+{#                    <span class="label-text-alt text-error">*</span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-user text-gray-400"></i>#}
+{#                    </div>#}
+{#                    {{ form.first_name|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:e.g., John" }}#}
+{#                </div>#}
+{#                {% if form.first_name.errors %}#}
+{#                    <div class="text-error text-sm mt-1 flex items-center">#}
+{#                        <i class="fa-solid fa-circle-exclamation mr-1"></i>#}
+{#                        {{ form.first_name.errors.0 }}#}
+{#                    </div>#}
+{#                {% endif %}#}
+{#            </div>#}
+{##}
+{#            <!-- Middle Name -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="{{ form.mid_name.id_for_label }}">#}
+{#                    <span class="label-text font-medium">Middle Name</span>#}
+{#                    <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-user-tag text-gray-400"></i>#}
+{#                    </div>#}
+{#                    {{ form.mid_name|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:e.g., Robert" }}#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <!-- Last Name -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="{{ form.last_name.id_for_label }}">#}
+{#                    <span class="label-text font-medium">Last Name</span>#}
+{#                    <span class="label-text-alt text-error">*</span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-user text-gray-400"></i>#}
+{#                    </div>#}
+{#                    {{ form.last_name|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:e.g., Smith" }}#}
+{#                </div>#}
+{#                {% if form.last_name.errors %}#}
+{#                    <div class="text-error text-sm mt-1 flex items-center">#}
+{#                        <i class="fa-solid fa-circle-exclamation mr-1"></i>#}
+{#                        {{ form.last_name.errors.0 }}#}
+{#                    </div>#}
+{#                {% endif %}#}
+{#            </div>#}
+{##}
+{#            <!-- Email -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="{{ form.email.id_for_label }}">#}
+{#                    <span class="label-text font-medium">Email</span>#}
+{#                    <span class="label-text-alt text-error">*</span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-envelope text-gray-400"></i>#}
+{#                    </div>#}
+{#                    {{ form.email|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:e.g., john.smith@example.com" }}#}
+{#                </div>#}
+{#                {% if form.email.errors %}#}
+{#                    <div class="text-error text-sm mt-1 flex items-center">#}
+{#                        <i class="fa-solid fa-circle-exclamation mr-1"></i>#}
+{#                        {{ form.email.errors.0 }}#}
+{#                    </div>#}
+{#                {% endif %}#}
+{#                <span class="text-xs text-gray-500 mt-1">Use a professional email address that you check regularly</span>#}
+{#            </div>#}
+{##}
+{#            <!-- Phone -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="{{ form.phone.id_for_label }}">#}
+{#                    <span class="label-text font-medium">Phone</span>#}
+{#                    <span class="label-text-alt text-error">*</span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-phone text-gray-400"></i>#}
+{#                    </div>#}
+{#                    {{ form.phone|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:e.g., (555) 123-4567" }}#}
+{#                </div>#}
+{#                {% if form.phone.errors %}#}
+{#                    <div class="text-error text-sm mt-1 flex items-center">#}
+{#                        <i class="fa-solid fa-circle-exclamation mr-1"></i>#}
+{#                        {{ form.phone.errors.0 }}#}
+{#                    </div>#}
+{#                {% endif %}#}
+{#                <span class="text-xs text-gray-500 mt-1">Include your country code for international positions</span>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#        <!-- Address -->#}
+{#        <div class="form-control mt-5">#}
+{#            <label class="label" for="{{ form.address.id_for_label }}">#}
+{#                <span class="label-text font-medium">Address</span>#}
+{#                <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#            </label>#}
+{#            <div class="relative">#}
+{#                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                    <i class="fa-solid fa-location-dot text-gray-400"></i>#}
+{#                </div>#}
+{#                {{ form.address|add_class:"textarea textarea-bordered w-full pl-10"|attr:"placeholder:e.g., San Francisco, CA or full street address" }}#}
+{#            </div>#}
+{#            <span class="text-xs text-gray-500 mt-1">You can include your full address or just city/state for privacy</span>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div class="card bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6">#}
+{#        <h3 class="text-lg font-medium flex items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">#}
+{#            <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">#}
+{#                <i class="fa-solid fa-globe text-primary text-sm"></i>#}
+{#            </span>#}
+{#            Online Presence#}
+{#        </h3>#}
+{##}
+{#        <p class="text-sm text-gray-600 dark:text-gray-400 mb-5">#}
+{#            Including relevant online profiles can strengthen your application, especially for technical or creative roles.#}
+{#        </p>#}
+{##}
+{#        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">#}
+{#            <!-- LinkedIn -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="{{ form.linkedin.id_for_label }}">#}
+{#                    <span class="label-text font-medium flex items-center">#}
+{#                        <i class="fa-brands fa-linkedin text-[#0077b5] mr-2"></i>#}
+{#                        LinkedIn Profile#}
+{#                    </span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-link text-gray-400"></i>#}
+{#                    </div>#}
+{#                    {{ form.linkedin|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:linkedin.com/in/username" }}#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <!-- GitHub -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="{{ form.github.id_for_label }}">#}
+{#                    <span class="label-text font-medium flex items-center">#}
+{#                        <i class="fa-brands fa-github text-gray-800 dark:text-gray-200 mr-2"></i>#}
+{#                        GitHub Profile#}
+{#                    </span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-link text-gray-400"></i>#}
+{#                    </div>#}
+{#                    {{ form.github|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:github.com/username" }}#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <!-- Portfolio -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="{{ form.portfolio.id_for_label }}">#}
+{#                    <span class="label-text font-medium flex items-center">#}
+{#                        <i class="fa-solid fa-briefcase text-primary mr-2"></i>#}
+{#                        Portfolio Website#}
+{#                    </span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-link text-gray-400"></i>#}
+{#                    </div>#}
+{#                    {{ form.portfolio|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:example.com/portfolio" }}#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#    </div>#}
+{##}
+{#    <!-- Privacy Note -->#}
+{#    <div class="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-700 p-4 rounded-lg text-sm">#}
+{#        <div class="flex items-start gap-3">#}
+{#            <i class="fa-solid fa-shield-alt text-blue-500 mt-1"></i>#}
+{#            <div>#}
+{#                <p class="font-medium text-blue-800 dark:text-blue-300">Privacy Note</p>#}
+{#                <p class="text-blue-700 dark:text-blue-400 mt-1">#}
+{#                    Your personal information will only be included in the resumes you generate. Consider which details you want to include based on your comfort level and the job requirements.#}
+{#                </p>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{#</form>#}
+{##}
+{#<script>#}
+{#    function toggleMoreProfiles() {#}
+{#        const moreProfiles = document.getElementById('more-profiles');#}
+{#        const button = document.getElementById('add-more-profiles');#}
+{##}
+{#        if (moreProfiles.classList.contains('hidden')) {#}
+{#            // Show more profiles#}
+{#            moreProfiles.classList.remove('hidden');#}
+{#            moreProfiles.classList.add('animate-fade-in');#}
+{#            button.innerHTML = '<i class="fa-solid fa-minus mr-2"></i> Show fewer profiles';#}
+{#        } else {#}
+{#            // Hide more profiles#}
+{#            moreProfiles.classList.add('hidden');#}
+{#            button.innerHTML = '<i class="fa-solid fa-plus mr-2"></i> Add more profiles';#}
+{#        }#}
+{#    }#}
+{#</script>#}
+{##}
+{#<style>#}
+{#    .animate-fade-in {#}
+{#        animation: fadeIn 0.3s ease-in-out;#}
+{#    }#}
+{##}
+{#    @keyframes fadeIn {#}
+{#        from { opacity: 0; transform: translateY(-10px); }#}
+{#        to { opacity: 1; transform: translateY(0); }#}
+{#    }#}
+{#</style>#}
+{#{% endblock %}#}
+{##}
+{#{% extends 'resumes/wizard_steps/../wizard_base.html' %}#}
+{#{% load resume_extras %}#}
+{#{% load static %}#}
+{##}
+{#{% load custom_filters %}#}
+{#{% block step_title %}Personal Information{% endblock %}#}
+{##}
+{#{% block step_icon %}<i class="fa-solid fa-user-circle mr-3 text-primary opacity-80"></i>{% endblock %}#}
+{##}
+{#{% block step_content %}#}
+{#<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">#}
+{#    {% csrf_token %}#}
+{##}
+{#    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">#}
+{#        <div class="flex items-start">#}
+{#            <div class="text-primary text-xl mr-4 mt-1">#}
+{#                <i class="fa-solid fa-lightbulb"></i>#}
+{#            </div>#}
+{#            <div>#}
+{#                <p class="text-base">#}
+{#                    Your personal information is the gateway for employers to contact you. Make sure your contact details are professional and up-to-date.#}
+{#                </p>#}
+{#                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">#}
+{#                    <strong>Pro tip:</strong> For your email address, use a professional format like firstname.lastname@domain.com rather than nicknames or creative addresses.#}
+{#                </p>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div class="card bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 mb-8">#}
+{#        <h3 class="text-lg font-medium flex items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">#}
+{#            <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">#}
+{#                <i class="fa-solid fa-id-card text-primary text-sm"></i>#}
+{#            </span>#}
+{#            Contact Information#}
+{#        </h3>#}
+{##}
+{#        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">#}
+{#            <!-- First Name -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="{{ form.first_name.id_for_label }}">#}
+{#                    <span class="label-text font-medium">First Name</span>#}
+{#                    <span class="label-text-alt text-error">*</span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-user text-gray-400"></i>#}
+{#                    </div>#}
+{#                    {{ form.first_name.as_widget|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:e.g., John" }}#}
+{#                </div>#}
+{#                {% if form.first_name.errors %}#}
+{#                    <div class="text-error text-sm mt-1 flex items-center">#}
+{#                        <i class="fa-solid fa-circle-exclamation mr-1"></i>#}
+{#                        {{ form.first_name.errors.0 }}#}
+{#                    </div>#}
+{#                {% endif %}#}
+{#            </div>#}
+{##}
+{#            <!-- Middle Name -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="{{ form.mid_name.id_for_label }}">#}
+{#                    <span class="label-text font-medium">Middle Name</span>#}
+{#                    <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-user-tag text-gray-400"></i>#}
+{#                    </div>#}
+{#                    {{ form.mid_name.as_widget|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:e.g., Robert" }}#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <!-- Last Name -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="{{ form.last_name.id_for_label }}">#}
+{#                    <span class="label-text font-medium">Last Name</span>#}
+{#                    <span class="label-text-alt text-error">*</span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-user text-gray-400"></i>#}
+{#                    </div>#}
+{#                    {{ form.last_name.as_widget|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:e.g., Smith" }}#}
+{#                </div>#}
+{#                {% if form.last_name.errors %}#}
+{#                    <div class="text-error text-sm mt-1 flex items-center">#}
+{#                        <i class="fa-solid fa-circle-exclamation mr-1"></i>#}
+{#                        {{ form.last_name.errors.0 }}#}
+{#                    </div>#}
+{#                {% endif %}#}
+{#            </div>#}
+{##}
+{#            <!-- Email -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="{{ form.email.id_for_label }}">#}
+{#                    <span class="label-text font-medium">Email</span>#}
+{#                    <span class="label-text-alt text-error">*</span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-envelope text-gray-400"></i>#}
+{#                    </div>#}
+{#                    {{ form.email.as_widget|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:e.g., john.smith@example.com" }}#}
+{#                </div>#}
+{#                {% if form.email.errors %}#}
+{#                    <div class="text-error text-sm mt-1 flex items-center">#}
+{#                        <i class="fa-solid fa-circle-exclamation mr-1"></i>#}
+{#                        {{ form.email.errors.0 }}#}
+{#                    </div>#}
+{#                {% endif %}#}
+{#                <span class="text-xs text-gray-500 mt-1">Use a professional email address that you check regularly</span>#}
+{#            </div>#}
+{##}
+{#            <!-- Phone -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="{{ form.phone.id_for_label }}">#}
+{#                    <span class="label-text font-medium">Phone</span>#}
+{#                    <span class="label-text-alt text-error">*</span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-phone text-gray-400"></i>#}
+{#                    </div>#}
+{#                    {{ form.phone.as_widget|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:e.g., (555) 123-4567" }}#}
+{#                </div>#}
+{#                {% if form.phone.errors %}#}
+{#                    <div class="text-error text-sm mt-1 flex items-center">#}
+{#                        <i class="fa-solid fa-circle-exclamation mr-1"></i>#}
+{#                        {{ form.phone.errors.0 }}#}
+{#                    </div>#}
+{#                {% endif %}#}
+{#                <span class="text-xs text-gray-500 mt-1">Include your country code for international positions</span>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#        <!-- Address -->#}
+{#        <div class="form-control mt-5">#}
+{#            <label class="label" for="{{ form.address.id_for_label }}">#}
+{#                <span class="label-text font-medium">Address</span>#}
+{#                <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#            </label>#}
+{#            <div class="relative">#}
+{#                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                    <i class="fa-solid fa-location-dot text-gray-400"></i>#}
+{#                </div>#}
+{#                {{ form.address.as_widget|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:e.g., San Francisco, CA or full street address" }}#}
+{#            </div>#}
+{#            <span class="text-xs text-gray-500 mt-1">You can include your full address or just city/state for privacy</span>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div class="card bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6">#}
+{#        <h3 class="text-lg font-medium flex items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">#}
+{#            <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">#}
+{#                <i class="fa-solid fa-globe text-primary text-sm"></i>#}
+{#            </span>#}
+{#            Online Presence#}
+{#        </h3>#}
+{##}
+{#        <p class="text-sm text-gray-600 dark:text-gray-400 mb-5">#}
+{#            Including relevant online profiles can strengthen your application, especially for technical or creative roles.#}
+{#        </p>#}
+{##}
+{#        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">#}
+{#            <!-- LinkedIn -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="{{ form.linkedin.id_for_label }}">#}
+{#                    <span class="label-text font-medium flex items-center">#}
+{#                        <i class="fa-brands fa-linkedin text-[#0077b5] mr-2"></i>#}
+{#                        LinkedIn Profile#}
+{#                    </span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-link text-gray-400"></i>#}
+{#                    </div>#}
+{#                    {{ form.linkedin.as_widget|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:linkedin.com/in/username" }}#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <!-- GitHub -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="{{ form.github.id_for_label }}">#}
+{#                    <span class="label-text font-medium flex items-center">#}
+{#                        <i class="fa-brands fa-github text-gray-800 dark:text-gray-200 mr-2"></i>#}
+{#                        GitHub Profile#}
+{#                    </span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-link text-gray-400"></i>#}
+{#                    </div>#}
+{#                    {{ form.github.as_widget|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:github.com/username" }}#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <!-- Portfolio -->#}
+{#            <div class="form-control">#}
+{#                <label class="label" for="{{ form.portfolio.id_for_label }}">#}
+{#                    <span class="label-text font-medium flex items-center">#}
+{#                        <i class="fa-solid fa-briefcase text-primary mr-2"></i>#}
+{#                        Portfolio Website#}
+{#                    </span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-link text-gray-400"></i>#}
+{#                    </div>#}
+{#                    {{ form.portfolio.as_widget|add_class:"input input-bordered w-full pl-10"|attr:"placeholder:example.com/portfolio" }}#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#        <!-- Add more profiles button -->#}
+{#        <div class="mt-5 pt-3">#}
+{#            <button type="button" id="add-more-profiles" class="btn btn-ghost btn-sm text-primary" onclick="toggleMoreProfiles()">#}
+{#                <i class="fa-solid fa-plus mr-2"></i> Add more profiles#}
+{#            </button>#}
+{##}
+{#            <div id="more-profiles" class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5 hidden">#}
+{#                <!-- Twitter -->#}
+{#                <div class="form-control">#}
+{#                    <label class="label">#}
+{#                        <span class="label-text font-medium flex items-center">#}
+{#                            <i class="fa-brands fa-twitter text-[#1DA1F2] mr-2"></i>#}
+{#                            Twitter/X#}
+{#                        </span>#}
+{#                    </label>#}
+{#                    <div class="relative">#}
+{#                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                            <i class="fa-solid fa-link text-gray-400"></i>#}
+{#                        </div>#}
+{#                        <input type="url" name="twitter" class="input input-bordered w-full pl-10" placeholder="twitter.com/username">#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <!-- Behance/Dribbble (for designers) -->#}
+{#                <div class="form-control">#}
+{#                    <label class="label">#}
+{#                        <span class="label-text font-medium flex items-center">#}
+{#                            <i class="fa-brands fa-behance text-[#053eff] mr-2"></i>#}
+{#                            Behance/Dribbble#}
+{#                        </span>#}
+{#                    </label>#}
+{#                    <div class="relative">#}
+{#                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                            <i class="fa-solid fa-link text-gray-400"></i>#}
+{#                        </div>#}
+{#                        <input type="url" name="behance" class="input input-bordered w-full pl-10" placeholder="behance.net/username">#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <!-- Medium/Blog -->#}
+{#                <div class="form-control">#}
+{#                    <label class="label">#}
+{#                        <span class="label-text font-medium flex items-center">#}
+{#                            <i class="fa-brands fa-medium text-gray-800 dark:text-gray-200 mr-2"></i>#}
+{#                            Medium/Blog#}
+{#                        </span>#}
+{#                    </label>#}
+{#                    <div class="relative">#}
+{#                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                            <i class="fa-solid fa-link text-gray-400"></i>#}
+{#                        </div>#}
+{#                        <input type="url" name="blog" class="input input-bordered w-full pl-10" placeholder="medium.com/@username">#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Privacy Note -->#}
+{#    <div class="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-700 p-4 rounded-lg text-sm">#}
+{#        <div class="flex items-start gap-3">#}
+{#            <i class="fa-solid fa-shield-alt text-blue-500 mt-1"></i>#}
+{#            <div>#}
+{#                <p class="font-medium text-blue-800 dark:text-blue-300">Privacy Note</p>#}
+{#                <p class="text-blue-700 dark:text-blue-400 mt-1">#}
+{#                    Your personal information will only be included in the resumes you generate. Consider which details you want to include based on your comfort level and the job requirements.#}
+{#                </p>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{#</form>#}
+{##}
+{#<script>#}
+{#    function toggleMoreProfiles() {#}
+{#        const moreProfiles = document.getElementById('more-profiles');#}
+{#        const button = document.getElementById('add-more-profiles');#}
+{##}
+{#        if (moreProfiles.classList.contains('hidden')) {#}
+{#            // Show more profiles#}
+{#            moreProfiles.classList.remove('hidden');#}
+{#            moreProfiles.classList.add('animate-fade-in');#}
+{#            button.innerHTML = '<i class="fa-solid fa-minus mr-2"></i> Show fewer profiles';#}
+{#        } else {#}
+{#            // Hide more profiles#}
+{#            moreProfiles.classList.add('hidden');#}
+{#            button.innerHTML = '<i class="fa-solid fa-plus mr-2"></i> Add more profiles';#}
+{#        }#}
+{#    }#}
+{#</script>#}
+{##}
+{#<style>#}
+{#    .animate-fade-in {#}
+{#        animation: fadeIn 0.3s ease-in-out;#}
+{#    }#}
+{##}
+{#    @keyframes fadeIn {#}
+{#        from { opacity: 0; transform: translateY(-10px); }#}
+{#        to { opacity: 1; transform: translateY(0); }#}
+{#    }#}
+{#</style>#}
+{#{% endblock %}#}

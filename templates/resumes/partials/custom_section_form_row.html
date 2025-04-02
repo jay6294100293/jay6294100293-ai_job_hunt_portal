@@ -1,0 +1,77 @@
+
+<div class="form-row bg-base-200 p-4 rounded-lg">
+    <h3 class="text-lg font-medium mb-4">Additional Section #{{ index|add:"1" }}</h3>
+
+    <!-- Section Name -->
+    <div class="form-control">
+        <label class="label" for="name_{{ index }}">
+            <span class="label-text">Section Title</span>
+            <span class="label-text-alt text-error">*</span>
+        </label>
+        <input type="text" id="name_{{ index }}" name="name_{{ index }}"
+            class="input input-bordered w-full" value="" required
+            placeholder="Awards, Publications, Volunteer Work, etc.">
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <!-- Institution/Organization -->
+        <div class="form-control">
+            <label class="label" for="institution_name_{{ index }}">
+                <span class="label-text">Institution/Organization</span>
+                <span class="label-text-alt">(Optional)</span>
+            </label>
+            <input type="text" id="institution_name_{{ index }}" name="institution_name_{{ index }}"
+                class="input input-bordered w-full" value="">
+        </div>
+
+        <!-- Date -->
+        <div class="form-control">
+            <label class="label" for="completion_date_{{ index }}">
+                <span class="label-text">Date</span>
+                <span class="label-text-alt">(Optional)</span>
+            </label>
+            <input type="date" id="completion_date_{{ index }}" name="completion_date_{{ index }}"
+                class="input input-bordered w-full" value="">
+        </div>
+    </div>
+
+    <!-- Bullet Points -->
+    <div class="form-control mt-4">
+        <label class="label" for="bullet_points_{{ index }}">
+            <span class="label-text">Bullet Points</span>
+            <span class="label-text-alt">(One per line)</span>
+        </label>
+        <textarea id="bullet_points_{{ index }}" name="bullet_points_{{ index }}"
+            class="textarea textarea-bordered w-full" rows="5"
+            placeholder="Enter bullet points, one per line"></textarea>
+    </div>
+
+    <!-- Description -->
+    <div class="form-control mt-4">
+        <label class="label" for="description_{{ index }}">
+            <span class="label-text">Description</span>
+            <span class="label-text-alt">(Optional)</span>
+        </label>
+        <textarea id="description_{{ index }}" name="description_{{ index }}"
+            class="textarea textarea-bordered w-full" rows="3"></textarea>
+    </div>
+
+    <!-- Link -->
+    <div class="form-control mt-4">
+        <label class="label" for="link_{{ index }}">
+            <span class="label-text">Link</span>
+            <span class="label-text-alt">(Optional)</span>
+        </label>
+        <input type="url" id="link_{{ index }}" name="link_{{ index }}"
+            class="input input-bordered w-full" value=""
+            placeholder="https://example.com">
+    </div>
+
+    <!-- Remove Section Button -->
+    <div class="flex justify-end mt-4">
+        <button type="button" class="btn btn-error"
+                onclick="removeFormRow(this, 'custom_sections_container', 'section_count')">
+            <i class="fa-solid fa-trash-can mr-2"></i> Remove Section
+        </button>
+    </div>
+</div>
