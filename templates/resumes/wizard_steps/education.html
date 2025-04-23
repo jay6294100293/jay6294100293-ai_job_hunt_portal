@@ -1,16 +1,21 @@
+{# templates/resumes/wizard_steps/education.html #}
 {% extends 'resumes/wizard_base.html' %}
 {% load static %}
+{% load widget_tweaks %} {# Ensure widget_tweaks is loaded #}
 
 {% block step_title %}Education{% endblock %}
-
 {% block step_icon %}<i class="fa-solid fa-graduation-cap mr-3 text-primary opacity-80"></i>{% endblock %}
 
 {% block step_content %}
-<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">
+<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}">
     {% csrf_token %}
 
+    {# Management Form #}
+    {{ formset.management_form }}
+
     <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">
-        <div class="flex items-start">
+        {# ... Info box content ... #}
+         <div class="flex items-start">
             <div class="text-primary text-xl mr-4 mt-1">
                 <i class="fa-solid fa-lightbulb"></i>
             </div>
@@ -26,13 +31,14 @@
         </div>
     </div>
 
-    <!-- Hidden field to track number of education entries -->
-    <input type="hidden" id="education_count" name="education_count" value="{{ educations|length }}">
-
-    <!-- Educations container -->
     <div id="educations_container" class="space-y-8">
-        {% for education in educations %}
-        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">
+        {% for form in formset.forms %}
+        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg" id="{{ form.prefix }}-row">
+             {% if form.instance.pk %}{{ form.id }}{% endif %}
+             {% if formset.can_delete %}
+                 <div class="hidden">{{ form.DELETE }}</div>
+             {% endif %}
+
             <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">
                 <h3 class="text-lg font-medium flex items-center">
                     <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
@@ -40,230 +46,296 @@
                     </span>
                     Education #{{ forloop.counter }}
                 </h3>
-
-                <!-- Remove Education Button - Moved to header -->
-                <button type="button" class="btn btn-ghost btn-sm text-error"
-                        onclick="removeFormRow(this, 'educations_container', 'education_count')">
+                {% if formset.can_delete %}
+                <button type="button" class="btn btn-ghost btn-sm text-error formset-delete-btn"
+                        onclick="deleteForm(this, '{{ formset.prefix }}')">
                     <i class="fa-solid fa-trash-can mr-1"></i> Remove
                 </button>
+                {% endif %}
             </div>
 
+            {# Fields using render_field #}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <!-- School Name -->
                 <div class="form-control">
-                    <label class="label" for="school_name_{{ forloop.counter0 }}">
+                    <label class="label" for="{{ form.school_name.id_for_label }}">
                         <span class="label-text font-medium">School/University Name</span>
-                        <span class="label-text-alt text-error">*</span>
+                         {% if form.school_name.field.required %}<span class="label-text-alt text-error">*</span>{% endif %}
                     </label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-university text-gray-400"></i>
-                        </div>
-                        <input type="text" id="school_name_{{ forloop.counter0 }}" name="school_name_{{ forloop.counter0 }}"
-                            class="input input-bordered w-full pl-10" value="{{ education.school_name }}" required
-                            placeholder="e.g., Harvard University, Stanford University">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-university text-gray-400"></i></div>
+                        {% render_field form.school_name class+="input input-bordered w-full pl-10" placeholder="e.g., Harvard University" %}
                     </div>
+                    {% if form.school_name.errors %}<div class="text-error text-xs mt-1">{{ form.school_name.errors|first }}</div>{% endif %}
                 </div>
-
-                <!-- Location -->
                 <div class="form-control">
-                    <label class="label" for="location_{{ forloop.counter0 }}">
+                    <label class="label" for="{{ form.location.id_for_label }}">
                         <span class="label-text font-medium">Location</span>
-                        <span class="label-text-alt text-error">*</span>
+                         {% if form.location.field.required %}<span class="label-text-alt text-error">*</span>{% endif %}
                     </label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-map-marker-alt text-gray-400"></i>
-                        </div>
-                        <input type="text" id="location_{{ forloop.counter0 }}" name="location_{{ forloop.counter0 }}"
-                            class="input input-bordered w-full pl-10" value="{{ education.location }}"
-                            placeholder="Cambridge, MA, USA" required>
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-map-marker-alt text-gray-400"></i></div>
+                        {% render_field form.location class+="input input-bordered w-full pl-10" placeholder="Cambridge, MA, USA" %}
                     </div>
+                     {% if form.location.errors %}<div class="text-error text-xs mt-1">{{ form.location.errors|first }}</div>{% endif %}
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-                <!-- Degree -->
                 <div class="form-control">
-                    <label class="label" for="degree_{{ forloop.counter0 }}">
+                    <label class="label" for="{{ form.degree.id_for_label }}">
                         <span class="label-text font-medium">Degree</span>
-                        <span class="label-text-alt text-error">*</span>
+                         {% if form.degree.field.required %}<span class="label-text-alt text-error">*</span>{% endif %}
                     </label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-scroll text-gray-400"></i>
-                        </div>
-                        <input type="text" id="degree_{{ forloop.counter0 }}" name="degree_{{ forloop.counter0 }}"
-                            class="input input-bordered w-full pl-10" value="{{ education.degree }}"
-                            placeholder="Bachelor of Science, Master of Arts, etc." required>
+                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-scroll text-gray-400"></i></div>
+                        {% render_field form.degree class+="input input-bordered w-full pl-10" placeholder="Bachelor of Science, Master of Arts, etc." %}
                     </div>
+                     {% if form.degree.errors %}<div class="text-error text-xs mt-1">{{ form.degree.errors|first }}</div>{% endif %}
                 </div>
-
-                <!-- Degree Type -->
                 <div class="form-control">
-                    <label class="label" for="degree_type_{{ forloop.counter0 }}">
+                    <label class="label" for="{{ form.degree_type.id_for_label }}">
                         <span class="label-text font-medium">Degree Type</span>
-                        <span class="label-text-alt text-error">*</span>
+                         {% if form.degree_type.field.required %}<span class="label-text-alt text-error">*</span>{% endif %}
                     </label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-certificate text-gray-400"></i>
-                        </div>
-                        <select id="degree_type_{{ forloop.counter0 }}" name="degree_type_{{ forloop.counter0 }}"
-                            class="select select-bordered w-full pl-10">
-                            {% for type_value, type_label in degree_types.items %}
-                            <option value="{{ type_value }}" {% if education.degree_type == type_value %}selected{% endif %}>
-                                {{ type_label }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-certificate text-gray-400"></i></div>
+                         {% render_field form.degree_type class+="select select-bordered w-full pl-10" %}
                     </div>
+                    {% if form.degree_type.errors %}<div class="text-error text-xs mt-1">{{ form.degree_type.errors|first }}</div>{% endif %}
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
-                <!-- Field of Study -->
                 <div class="form-control md:col-span-2">
-                    <label class="label" for="field_of_study_{{ forloop.counter0 }}">
+                    <label class="label" for="{{ form.field_of_study.id_for_label }}">
                         <span class="label-text font-medium">Field of Study</span>
-                        <span class="label-text-alt text-error">*</span>
+                         {% if form.field_of_study.field.required %}<span class="label-text-alt text-error">*</span>{% endif %}
                     </label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-book text-gray-400"></i>
-                        </div>
-                        <input type="text" id="field_of_study_{{ forloop.counter0 }}" name="field_of_study_{{ forloop.counter0 }}"
-                            class="input input-bordered w-full pl-10" value="{{ education.field_of_study }}"
-                            placeholder="Computer Science, Business Administration, etc." required>
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-book text-gray-400"></i></div>
+                        {% render_field form.field_of_study class+="input input-bordered w-full pl-10" placeholder="Computer Science, Business Administration, etc." %}
                     </div>
+                     {% if form.field_of_study.errors %}<div class="text-error text-xs mt-1">{{ form.field_of_study.errors|first }}</div>{% endif %}
                 </div>
-
-                <!-- GPA -->
                 <div class="form-control">
-                    <label class="label" for="gpa_{{ forloop.counter0 }}">
+                    <label class="label" for="{{ form.gpa.id_for_label }}">
                         <span class="label-text font-medium">GPA</span>
                         <span class="label-text-alt text-gray-500">(Optional)</span>
                     </label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-chart-line text-gray-400"></i>
-                        </div>
-                        <input type="number" id="gpa_{{ forloop.counter0 }}" name="gpa_{{ forloop.counter0 }}"
-                            class="input input-bordered w-full pl-10" value="{{ education.gpa }}"
-                            min="0" max="4.0" step="0.01" placeholder="3.5">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-chart-line text-gray-400"></i></div>
+                        {% render_field form.gpa type="number" step="0.01" class+="input input-bordered w-full pl-10" placeholder="3.5" %}
                     </div>
+                    {% if form.gpa.errors %}<div class="text-error text-xs mt-1">{{ form.gpa.errors|first }}</div>{% endif %}
                     <span class="text-xs text-gray-500 mt-1">Only include if 3.0 or higher</span>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-                <!-- Graduation Date -->
                 <div class="form-control">
-                    <label class="label" for="graduation_date_{{ forloop.counter0 }}">
+                    <label class="label" for="{{ form.graduation_date.id_for_label }}">
                         <span class="label-text font-medium">Graduation Date</span>
                         <span class="label-text-alt text-gray-500">(Expected date if not yet graduated)</span>
                     </label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-calendar-alt text-gray-400"></i>
-                        </div>
-                        <input type="date" id="graduation_date_{{ forloop.counter0 }}" name="graduation_date_{{ forloop.counter0 }}"
-                            class="input input-bordered w-full pl-10" value="{{ education.graduation_date|date:'Y-m-d' }}">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-calendar-alt text-gray-400"></i></div>
+                        {% render_field form.graduation_date type="date" class+="input input-bordered w-full pl-10" %}
                     </div>
+                     {% if form.graduation_date.errors %}<div class="text-error text-xs mt-1">{{ form.graduation_date.errors|first }}</div>{% endif %}
                 </div>
 
-                <!-- Currently Attending Checkbox -->
+                {# Render "Currently Attending" only if field exists on EducationForm #}
+                {% if form.is_current %}
                 <div class="form-control mt-6">
                     <label class="cursor-pointer label justify-start gap-4 py-3">
-                        <input type="checkbox" class="checkbox checkbox-primary"
-                              id="is_current_{{ forloop.counter0 }}" name="is_current_{{ forloop.counter0 }}"
-                              {% if education.is_current %}checked{% endif %}
-                              onchange="toggleGraduationDate(this)">
+                        {% render_field form.is_current class+="checkbox checkbox-primary" onchange="toggleGraduationDate(this)" %}
                         <span class="label-text">I am currently attending this school</span>
                     </label>
                 </div>
+                {% endif %}
             </div>
 
-            <!-- Relevant Coursework (Optional) -->
+            {# Optional Fields - Render if they exist on the form #}
+            {% if form.relevant_courses %}
             <div class="form-control mt-5">
-                <label class="label" for="relevant_courses_{{ forloop.counter0 }}">
+                <label class="label" for="{{ form.relevant_courses.id_for_label }}">
                     <span class="label-text font-medium">Relevant Coursework</span>
                     <span class="label-text-alt text-gray-500">(Optional)</span>
                 </label>
-                <div class="relative">
-                    <textarea id="relevant_courses_{{ forloop.counter0 }}" name="relevant_courses_{{ forloop.counter0 }}"
-                        class="textarea textarea-bordered w-full min-h-24"
-                        placeholder="List relevant courses separated by commas (e.g., Advanced Algorithms, Machine Learning, Data Structures)">{{ education.relevant_courses }}</textarea>
-                </div>
-                <span class="text-xs text-gray-500 mt-1">Include 3-5 courses most relevant to your target job</span>
+                 {# *** MODIFICATION: Use single quotes for placeholder *** #}
+                {% render_field form.relevant_courses class+="textarea textarea-bordered w-full min-h-24" placeholder='List relevant courses separated by commas (e.g., Advanced Algorithms, Machine Learning, Data Structures)' %}
+                {% if form.relevant_courses.errors %}<div class="text-error text-xs mt-1">{{ form.relevant_courses.errors.0 }}</div>{% endif %}
             </div>
+            {% endif %}
 
-            <!-- Achievements and Activities (Optional) -->
+             {% if form.achievements %}
             <div class="form-control mt-5">
-                <label class="label" for="achievements_{{ forloop.counter0 }}">
+                <label class="label" for="{{ form.achievements.id_for_label }}">
                     <span class="label-text font-medium">Achievements & Activities</span>
                     <span class="label-text-alt text-gray-500">(Optional)</span>
                 </label>
-                <div class="relative">
-                    <textarea id="achievements_{{ forloop.counter0 }}" name="achievements_{{ forloop.counter0 }}"
-                        class="textarea textarea-bordered w-full min-h-24"
-                        placeholder="• Dean's List (Fall 2019 - Spring 2021)
-• Member of Computer Science Club
-• Student Government Representative">{{ education.achievements }}</textarea>
-                </div>
-                <span class="text-xs text-gray-500 mt-1">Include honors, awards, leadership roles, or notable activities</span>
+                 {# *** MODIFICATION: Use single quotes for placeholder *** #}
+                 {% render_field form.achievements class+="textarea textarea-bordered w-full min-h-24" placeholder='• Dean''s List (Fall 2019 - Spring 2021)\n• Member of Computer Science Club\n• Student Government Representative' %}
+                 {% if form.achievements.errors %}<div class="text-error text-xs mt-1">{{ form.achievements.errors.0 }}</div>{% endif %}
             </div>
-        </div>
+             {% endif %}
+
+        </div> {# End form-row #}
         {% empty %}
-        <!-- Empty state when no education is added yet -->
-        <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center">
-            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <i class="fa-solid fa-graduation-cap text-primary text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-medium mb-2">No Education Added Yet</h3>
-            <p class="text-gray-500 max-w-md mx-auto mb-6">
-                Your educational background helps employers understand your qualifications and academic achievements.
-            </p>
-            <button type="button" class="btn btn-primary"
-                    onclick="addFormRow('education', 'educations_container', 'education_count')">
-                <i class="fa-solid fa-plus mr-2"></i> Add Your Education
-            </button>
-        </div>
+         {% if formset.total_form_count == 0 %}
+             <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center" id="education-empty-state">
+                 <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                     <i class="fa-solid fa-graduation-cap text-primary text-2xl"></i>
+                 </div>
+                 <h3 class="text-lg font-medium mb-2">No Education Added Yet</h3>
+                 <p class="text-gray-500 max-w-md mx-auto mb-6">
+                     Add your educational background.
+                 </p>
+                 <button type="button" class="btn btn-primary" onclick="addForm(this, '{{ formset.prefix }}')">
+                     <i class="fa-solid fa-plus mr-2"></i> Add Your Education
+                 </button>
+             </div>
+         {% endif %}
         {% endfor %}
     </div>
 
-    <!-- Add Education Button - Only shown if at least one education exists -->
-    {% if educations %}
+    {# Template for adding new forms via JS #}
+    <template id="{{ formset.prefix }}-form-template">
+         <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6" id="{{ formset.prefix }}-__prefix__-row">
+              {% with form=formset.empty_form %} {# Use empty_form for template structure #}
+              {% if formset.can_delete %}<div class="hidden"><input type="checkbox" name="{{ form.prefix }}-DELETE" id="id_{{ form.prefix }}-DELETE"></div>{% endif %}
+              {# Add the structure for an empty education form here, using empty_form fields #}
+              <div class="flex justify-between items-center mb-5 pb-3 border-b"><h3>New Education</h3><button type="button" onclick="deleteForm(this, '{{ formset.prefix }}')">Remove</button></div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                   <div class="form-control">
+                       <label class="label" for="id_{{ form.prefix }}-school_name"><span class="label-text font-medium">School*</span></label>
+                       {% render_field form.school_name class+="input input-bordered w-full pl-10" %}
+                   </div>
+                   <div class="form-control">
+                        <label class="label" for="id_{{ form.prefix }}-location"><span class="label-text font-medium">Location*</span></label>
+                        {% render_field form.location class+="input input-bordered w-full pl-10" %}
+                   </div>
+                   <div class="form-control">
+                       <label class="label" for="id_{{ form.prefix }}-degree"><span class="label-text font-medium">Degree*</span></label>
+                       {% render_field form.degree class+="input input-bordered w-full pl-10" %}
+                   </div>
+                   <div class="form-control">
+                       <label class="label" for="id_{{ form.prefix }}-degree_type"><span class="label-text font-medium">Degree Type*</span></label>
+                       {% render_field form.degree_type class+="select select-bordered w-full pl-10" %}
+                   </div>
+              </div>
+               <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
+                   <div class="form-control md:col-span-2">
+                       <label class="label" for="id_{{ form.prefix }}-field_of_study"><span class="label-text font-medium">Field of Study*</span></label>
+                       {% render_field form.field_of_study class+="input input-bordered w-full pl-10" %}
+                   </div>
+                    <div class="form-control">
+                        <label class="label" for="id_{{ form.prefix }}-gpa"><span class="label-text font-medium">GPA</span></label>
+                        {% render_field form.gpa type="number" step="0.01" class+="input input-bordered w-full pl-10" %}
+                    </div>
+               </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+                    <div class="form-control">
+                        <label class="label" for="id_{{ form.prefix }}-graduation_date"><span class="label-text font-medium">Graduation Date</span></label>
+                        {% render_field form.graduation_date type="date" class+="input input-bordered w-full pl-10" %}
+                    </div>
+                    {% if form.is_current %} {# Only include if field exists #}
+                    <div class="form-control mt-6"><label><input type="checkbox" name="{{ form.prefix }}-is_current" class="checkbox checkbox-primary"> Currently Attending</label></div>
+                    {% endif %}
+                </div>
+                {% if form.relevant_courses %}<div class="form-control mt-5"><label>Relevant Coursework</label>{% render_field form.relevant_courses class+="textarea" %}</div>{% endif %}
+                {% if form.achievements %}<div class="form-control mt-5"><label>Achievements</label>{% render_field form.achievements class+="textarea" %}</div>{% endif %}
+              {% endwith %}
+         </div>
+    </template>
+
     <div class="flex justify-center mt-8">
+        {# Ensure JS function addForm exists and works with the prefix #}
         <button type="button" class="btn btn-primary"
-                onclick="addFormRow('education', 'educations_container', 'education_count')">
+                onclick="addForm(this, '{{ formset.prefix }}')">
             <i class="fa-solid fa-plus mr-2"></i> Add Another Education
         </button>
     </div>
-    {% endif %}
+
+    {# Navigation buttons are in wizard_base.html #}
 </form>
 
+{# Include any specific JS needed for this step, like toggleGraduationDate #}
 <script>
+    // Ensure toggleGraduationDate, addForm, deleteForm are defined
+    // (Keep the existing JS functions as provided in the template)
     function toggleGraduationDate(checkbox) {
-        const row = checkbox.closest('.form-row');
-        const dateContainer = row.querySelector('[name$="graduation_date"]').closest('.form-control');
-
+        const formRow = checkbox.closest('.form-row');
+        if (!formRow) return;
+        const gradDateInput = formRow.querySelector('input[name$="-graduation_date"]');
+        if (!gradDateInput) return;
+        const label = gradDateInput.closest('.form-control').querySelector('.label-text');
         if (checkbox.checked) {
-            dateContainer.classList.add('opacity-50');
-            dateContainer.querySelector('input').disabled = true;
-            dateContainer.querySelector('.label-text').textContent = "Expected Graduation Date";
+            gradDateInput.closest('.form-control').classList.add('opacity-50');
+            gradDateInput.disabled = true;
+            gradDateInput.value = '';
+             if(label) label.textContent = "Expected Graduation Date";
         } else {
-            dateContainer.classList.remove('opacity-50');
-            dateContainer.querySelector('input').disabled = false;
-            dateContainer.querySelector('.label-text').textContent = "Graduation Date";
+            gradDateInput.closest('.form-control').classList.remove('opacity-50');
+            gradDateInput.disabled = false;
+             if(label) label.textContent = "Graduation Date";
         }
     }
-
-    // Initialize any "currently attending" checkboxes
+     if (typeof addForm !== 'function') {
+         function addForm(button, prefix) {
+             console.warn("addForm function not fully defined. Using basic example.");
+             const formContainer = document.getElementById('educations_container'); // Target specific container
+             const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
+             const template = document.getElementById(prefix + '-form-template');
+             if (!formContainer || !totalFormsInput || !template) { console.error("Missing elements for addForm"); return; }
+             const formNum = parseInt(totalFormsInput.value);
+             let newFormHtml = template.innerHTML.replace(/__prefix__/g, formNum);
+             const tempDiv = document.createElement('div');
+             tempDiv.innerHTML = newFormHtml;
+             const newFormElement = tempDiv.firstElementChild;
+             const emptyState = document.getElementById('education-empty-state');
+             if(emptyState) emptyState.classList.add('hidden');
+             formContainer.appendChild(newFormElement);
+             totalFormsInput.value = formNum + 1;
+         }
+     }
+     if (typeof deleteForm !== 'function') {
+         function deleteForm(button, prefix) {
+             console.warn("deleteForm function not fully defined. Using basic example.");
+             const formRow = button.closest('.form-row');
+             const deleteInput = formRow.querySelector('input[name$="-DELETE"]');
+             if (deleteInput) {
+                 deleteInput.checked = true;
+                 formRow.style.display = 'none';
+             } else {
+                 formRow.remove();
+             }
+             const container = document.getElementById('educations_container');
+             const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');
+             const emptyState = document.getElementById('education-empty-state');
+             if(visibleForms.length === 0 && emptyState) {
+                 emptyState.classList.remove('hidden');
+             }
+         }
+     }
     document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('input[name^="is_current_"]').forEach(function(checkbox) {
-            toggleGraduationDate(checkbox);
-        });
+         document.querySelectorAll('.form-row input[name$="-is_current"]').forEach(function(checkbox) {
+             // Check if 'is_current' actually exists on the EducationForm
+             // If not, this might cause an error or do nothing.
+             // toggleGraduationDate(checkbox);
+         });
+          const container = document.getElementById('educations_container');
+          const emptyState = document.getElementById('education-empty-state');
+          if (container && emptyState) { // Check if elements exist
+              const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');
+              if(visibleForms.length === 0 && container.querySelector('.form-row')) { // Check if forms existed but are hidden
+                 emptyState.classList.add('hidden'); // Keep hidden if forms are just marked deleted
+              } else if (visibleForms.length === 0) {
+                  emptyState.classList.remove('hidden');
+              } else {
+                   emptyState.classList.add('hidden');
+              }
+          }
     });
 </script>
 {% endblock %}

@@ -11,7 +11,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -49,6 +51,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "django_browser_reload.middleware.BrowserReloadMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -83,9 +86,13 @@ WSGI_APPLICATION = "ai_job_hunt_portal.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
@@ -171,18 +178,7 @@ DEFAULT_AI_SERVICE = 'chatgpt'  # Options: 'chatgpt', 'gemini'
 OPENAI_API_KEY = os.getenv('API_KEY_CHATGPT')  # Replace with environment variable
 GOOGLE_GENAI_API_KEY = os.getenv('API_KEY_GEMINI')
 
-AI_SETTINGS = {
-    'max_resume_tokens': 4000,
-    'max_job_description_tokens': 2000,
-    'chatgpt': {
-        'model': 'gpt-4o',
-        'temperature': 0.1,
-    },
-    'gemini': {
-        'model': 'gemini-1.5-pro',
-        'temperature': 0.2,
-    }
-}
+
 
 # Resume file upload settings
 RESUME_FILE_MAX_SIZE = 5 * 1024 * 1024  # 5MB
@@ -213,3 +209,18 @@ LOGGING = {
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
 CRISPY_TEMPLATE_PACK = "tailwind"
+
+# In settings.py
+AI_SETTINGS = {
+    'max_resume_tokens': 4000,
+    'max_job_description_tokens': 2000,
+    'chatgpt': {
+        'model': 'gpt-3.5-turbo',  # Update this value
+        'temperature': 0.1,
+    },
+    'gemini': {
+        'model': 'gemini-1.5-pro',
+        'temperature': 0.2,
+    }
+}
+

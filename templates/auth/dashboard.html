@@ -1,157 +1,124 @@
-{% extends 'base.html' %}
+{% extends 'base_authenticated.html' %}
 
-{% block title %}Dashboard - AI Job Hunt{% endblock %}
+{% block title %}Dashboard - AI Job Portal{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <!-- Welcome Section -->
-        <div class="px-4 py-6 sm:px-0">
-            <div class="border-4 border-dashed border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 p-6">
-                <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
-                    Welcome back, {{ user.username }}!
-                </h1>
-                <p class="mt-2 text-gray-600 dark:text-gray-400">
-                    Here's an overview of your job hunt progress and tools.
-                </p>
+<div class="container mx-auto">
+    <div class="mb-8 p-6 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg shadow-md">
+        <h1 class="text-3xl font-semibold">Dashboard Overview</h1>
+        <p class="mt-1 text-primary-100">Welcome back, {{ user.username }}!</p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
+            <div class="p-5">
+                 <div class="flex items-center">
+                    <div class="flex-shrink-0 p-3 bg-blue-100 rounded-full">
+                        <i class="fa-solid fa-file-lines text-blue-500 text-xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Saved Resumes</dt>
+                            <dd><div class="text-2xl font-semibold text-gray-900">{{ resume_count }}</div></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <a href="{% url 'job_portal:resume_list' %}" class="text-sm font-medium text-primary-600 hover:text-primary-700">View Resumes</a>
             </div>
         </div>
 
-        <!-- Stats Section -->
-        <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            <!-- Applications Stat -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <svg class="h-6 w-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                                    Total Applications
-                                </dt>
-                                <dd class="flex items-baseline">
-                                    <div class="text-2xl font-semibold text-gray-900 dark:text-white">
-                                        0
-                                    </div>
-                                </dd>
-                            </dl>
-                        </div>
+        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 p-3 bg-green-100 rounded-full">
+                        <i class="fa-solid fa-key text-green-500 text-xl"></i>
                     </div>
-                </div>
-                <div class="bg-gray-50 dark:bg-gray-700 px-5 py-3">
-                    <div class="text-sm">
-                        <a href="#" class="font-medium text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">
-                            View all
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Resumes Stat -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <svg class="h-6 w-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                                    Saved Resumes
-                                </dt>
-                                <dd class="flex items-baseline">
-                                    <div class="text-2xl font-semibold text-gray-900 dark:text-white">
-                                        0
-                                    </div>
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 dark:bg-gray-700 px-5 py-3">
-                    <div class="text-sm">
-                        <a href="#" class="font-medium text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">
-                            Manage resumes
-                        </a>
+                    <div class="ml-5 w-0 flex-1">
+                         <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">API Keys Status</dt>
+                            <dd>
+                                <div class="text-sm font-medium text-gray-900 mt-1">
+                                     {% if user.chatgpt_api_key and user.gemini_api_key %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>
+                                          All Configured
+                                        </span>
+                                     {% elif user.chatgpt_api_key or user.gemini_api_key %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-yellow-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>
+                                          Partially Configured
+                                        </span>
+                                     {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-red-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>
+                                          Not Configured
+                                        </span>
+                                     {% endif %}
+                                </div>
+                            </dd>
+                        </dl>
                     </div>
                 </div>
             </div>
-
-            <!-- API Status -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <svg class="h-6 w-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                                    API Configuration
-                                </dt>
-                                <dd class="flex items-baseline">
-                                    <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                        {% if user.openai_api_key %}
-                                            <span class="text-green-500">●</span> Configured
-                                        {% else %}
-                                            <span class="text-red-500">●</span> Not configured
-                                        {% endif %}
-                                    </div>
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 dark:bg-gray-700 px-5 py-3">
-                    <div class="text-sm">
-                        <a href="{% url 'update_api_keys' %}" class="font-medium text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">
-                            Update API keys
-                        </a>
-                    </div>
-                </div>
+             <div class="bg-gray-50 px-5 py-3">
+                <a href="{% url 'update_api_keys' %}" class="text-sm font-medium text-primary-600 hover:text-primary-700">Manage Keys</a>
             </div>
         </div>
-
-        <!-- Quick Actions -->
-        <div class="mt-8">
-            <h2 class="text-lg font-medium text-gray-900 dark:text-white">Quick Actions</h2>
-            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <button class="relative block w-full border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg p-12 text-center hover:border-gray-400 dark:hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                    </svg>
-                    <span class="mt-2 block text-sm font-medium text-gray-900 dark:text-white">
-                        Create New Resume
-                    </span>
-                </button>
-
-                <button class="relative block w-full border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg p-12 text-center hover:border-gray-400 dark:hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                    </svg>
-                    <span class="mt-2 block text-sm font-medium text-gray-900 dark:text-white">
-                        Write Cover Letter
-                    </span>
-                </button>
-
-                <button class="relative block w-full border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg p-12 text-center hover:border-gray-400 dark:hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                    </svg>
-                    <span class="mt-2 block text-sm font-medium text-gray-900 dark:text-white">
-                        Track Applications
-                    </span>
-                </button>
+        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 p-3 bg-purple-100 rounded-full">
+                        <i class="fa-solid fa-briefcase text-purple-500 text-xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Tracked Applications</dt>
+                            <dd><div class="text-2xl font-semibold text-gray-900">0</div></dd> </dl>
+                    </div>
+                </div>
             </div>
+            <div class="bg-gray-50 px-5 py-3">
+                 <a href="#" class="text-sm font-medium text-gray-500 cursor-not-allowed">Coming Soon</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Recent Resumes</h2>
+            {% if recent_resumes %}
+                <ul class="space-y-3">
+                    {% for resume in recent_resumes %}
+                        <li class="flex justify-between items-center p-3 bg-gray-50 rounded-md hover:bg-gray-100">
+                            <span class="font-medium text-gray-700">{{ resume.full_name }}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-500">Updated {{ resume.updated_at|timesince }} ago</span>
+                                <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" class="text-primary-600 hover:text-primary-800 text-sm"><i class="fa-solid fa-eye"></i></a>
+                                <a href="{% url 'job_portal:edit_resume' resume_id=resume.id %}" class="text-primary-600 hover:text-primary-800 text-sm"><i class="fa-solid fa-edit"></i></a>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-gray-500">No resumes created yet.</p>
+            {% endif %}
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+             <h2 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
+             <div class="space-y-3">
+                 <a href="{% url 'job_portal:resume_creation_choice' %}" class="block w-full text-center px-4 py-3 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition font-medium">
+                    <i class="fa-solid fa-plus-circle mr-2"></i>Create/Upload Resume
+                 </a>
+                 <a href="{% url 'update_api_keys' %}" class="block w-full text-center px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition font-medium">
+                    <i class="fa-solid fa-key mr-2"></i>Update API Keys
+                 </a>
+                  <a href="#" class="block w-full text-center px-4 py-3 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed font-medium">
+                    <i class="fa-solid fa-briefcase mr-2"></i>Track Applications (Soon)
+                 </a>
+             </div>
         </div>
     </div>
 </div>

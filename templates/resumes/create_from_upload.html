@@ -1,0 +1,126 @@
+{% extends 'base_authenticated.html' %}
+
+{% block title %}Create Resume{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-10">
+    <div class="text-center mb-10">
+        <h1 class="text-3xl font-bold text-primary">Create Your Resume</h1>
+        <p class="text-gray-600 mt-2">Review your information and create your resume</p>
+    </div>
+
+    <div class="max-w-4xl mx-auto">
+        <div class="card bg-base-100 shadow-xl rounded-xl border border-gray-100">
+            <div class="card-body p-8">
+                <h2 class="text-xl font-bold mb-4">Resume Preview</h2>
+
+                <!-- Brief summary of the resume data -->
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <div class="flex flex-col md:flex-row justify-between">
+                        <div>
+                            <p class="font-medium text-lg">{{ parsed_data.personal_info.first_name }} {{ parsed_data.personal_info.last_name }}</p>
+                            <p>{{ parsed_data.personal_info.email }}</p>
+                            <p>{{ parsed_data.personal_info.phone }}</p>
+                        </div>
+                        <div class="mt-4 md:mt-0">
+                            <p class="font-medium">Selected Template:</p>
+                            <p class="text-primary">Template #{{ template_id }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sections summary -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-2">Resume Sections</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-user text-primary"></i>
+                            <span>Personal Information</span>
+                            <span class="badge badge-success badge-sm">✓</span>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-file-alt text-primary"></i>
+                            <span>Professional Summary</span>
+                            {% if parsed_data.summary %}
+                                <span class="badge badge-success badge-sm">✓</span>
+                            {% else %}
+                                <span class="badge badge-warning badge-sm">?</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-tools text-primary"></i>
+                            <span>Skills</span>
+                            {% if parsed_data.skills %}
+                                <span class="badge badge-success badge-sm">✓ {{ parsed_data.skills|length }}</span>
+                            {% else %}
+                                <span class="badge badge-warning badge-sm">?</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-briefcase text-primary"></i>
+                            <span>Work Experience</span>
+                            {% if parsed_data.experiences %}
+                                <span class="badge badge-success badge-sm">✓ {{ parsed_data.experiences|length }}</span>
+                            {% else %}
+                                <span class="badge badge-warning badge-sm">?</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-graduation-cap text-primary"></i>
+                            <span>Education</span>
+                            {% if parsed_data.educations %}
+                                <span class="badge badge-success badge-sm">✓ {{ parsed_data.educations|length }}</span>
+                            {% else %}
+                                <span class="badge badge-warning badge-sm">?</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-code-branch text-primary"></i>
+                            <span>Projects</span>
+                            {% if parsed_data.projects %}
+                                <span class="badge badge-success badge-sm">✓ {{ parsed_data.projects|length }}</span>
+                            {% else %}
+                                <span class="badge badge-warning badge-sm">?</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+
+                    <!-- Hidden field to pass template_id -->
+                    <input type="hidden" name="template_id" value="{{ template_id }}">
+
+                    <!-- Additional options -->
+                    <div class="form-control">
+                        <label class="label cursor-pointer justify-start gap-3">
+                            <input type="checkbox" class="checkbox checkbox-primary" name="optimize_for_ats" checked>
+                            <span class="label-text">Optimize resume for ATS (Applicant Tracking Systems)</span>
+                        </label>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fa-solid fa-info-circle"></i>
+                        <span>Your resume will be created with the data extracted from your uploaded file. You can edit it further after creation.</span>
+                    </div>
+
+                    <div class="flex justify-between mt-6">
+                        <a href="{% url 'job_portal:template_selection' %}" class="btn btn-outline">
+                            <i class="fa-solid fa-arrow-left mr-2"></i> Change Template
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-magic mr-2"></i> Create Resume
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

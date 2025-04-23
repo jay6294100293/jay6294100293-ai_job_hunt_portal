@@ -10,6 +10,12 @@ from ..models import (
     Language, CustomData
 )
 
+from django import forms
+from django.core.validators import FileExtensionValidator
+from django.conf import settings
+
+
+
 
 
 class ResumeBasicInfoForm(forms.ModelForm):

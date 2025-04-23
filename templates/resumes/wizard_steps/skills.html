@@ -1,269 +1,606 @@
+{# templates/resumes/wizard_steps/skills.html #}
+
 {% extends 'resumes/wizard_base.html' %}
 {% load static %}
+{% load widget_tweaks %} {# Ensure widget_tweaks is loaded if you use it #}
 
 {% block step_title %}Skills{% endblock %}
-
 {% block step_icon %}<i class="fa-solid fa-code mr-3 text-primary opacity-80"></i>{% endblock %}
 
 {% block step_content %}
-<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">
+<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="false"> {# Using standard POST #}
     {% csrf_token %}
 
-    <!-- Header and Description Section -->
-    <div class="bg-white shadow-lg rounded-2xl overflow-hidden mb-8">
-        <div class="p-6 border-b border-gray-100 flex items-start gap-4">
-            <div class="text-primary text-xl mt-1">
-                <i class="fa-solid fa-code"></i>
-            </div>
+    {# *** RENDER MANAGEMENT FORM - ESSENTIAL *** #}
+    {{ formset.management_form }}
+
+    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">
+        <div class="flex items-start">
+             <div class="text-primary text-xl mr-4 mt-1"><i class="fa-solid fa-lightbulb"></i></div>
             <div>
-                <h3 class="text-xl font-bold text-gray-800 mb-2">Skills</h3>
-                <p class="text-gray-600">
-                    Add skills that highlight your technical abilities and professional competencies.
-                    Prioritize skills relevant to the jobs you're applying for.
-                </p>
-                <div class="mt-3 p-3 bg-primary/5 border border-primary/10 rounded-lg">
-                    <p class="text-sm flex items-start">
-                        <i class="fa-solid fa-lightbulb text-primary mr-2 mt-0.5"></i>
-                        <span><strong class="text-primary">Pro tip:</strong> For technical roles, focus on specific technologies. For managerial positions, emphasize leadership and soft skills.</span>
-                    </p>
-                </div>
+                 <p class="text-base">Add skills highlighting technical abilities and professional competencies. Prioritize relevant skills.</p>
+                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-2"><strong>Pro tip:</strong> Mix technical (e.g., Python, SQL), soft (e.g., Leadership, Communication), and tool-specific skills (e.g., AWS, Figma).</p>
             </div>
         </div>
     </div>
 
-    <!-- Hidden field to track number of skill entries -->
-    <input type="hidden" id="skill_count" name="skill_count" value="{{ skills|length }}">
-
+    {# --- Main Content Grid --- #}
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
-        <!-- Skills Form - 2 columns wide -->
+
+        {# --- Left Column: Add New Skill (for JS interaction) --- #}
         <div class="lg:col-span-2">
-            <div class="bg-white shadow-lg rounded-2xl p-6 sticky top-4 hover:shadow-xl transition-all duration-300">
-                <h3 class="text-lg font-bold text-gray-800 flex items-center mb-5">
-                    <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                        <i class="fa-solid fa-plus text-primary"></i>
+            <div class="bg-white shadow-lg rounded-2xl p-6 sticky top-4 border border-gray-100 dark:border-gray-700">
+                 <h3 class="text-lg font-bold text-gray-800 flex items-center mb-5">
+                     <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mr-3"><i class="fa-solid fa-plus text-primary"></i></div>
+                     Add Skill Manually
+                 </h3>
+                 <div class="space-y-5">
+                     {# Skill Name Input #}
+                     <div class="form-control">
+                         <label class="label py-1" for="add_skill_name"><span class="label-text font-medium">Skill Name</span><span class="label-text-alt text-error">*</span></label>
+                         <input type="text" id="add_skill_name" class="input input-sm input-bordered w-full" placeholder="e.g., Python">
+                     </div>
+                     {# Skill Type Select #}
+                      <div class="form-control">
+                         <label class="label py-1" for="add_skill_type"><span class="label-text font-medium">Skill Type</span></label>
+                         <select id="add_skill_type" class="select select-sm select-bordered w-full">
+                             {% for type_value, type_label in skill_types.items %}
+                             <option value="{{ type_value }}">{{ type_label }}</option>
+                             {% endfor %}
+                         </select>
+                     </div>
+                     {# Proficiency Slider #}
+                     <div class="form-control">
+                         <label class="label py-1" for="add_proficiency_level"><span class="label-text font-medium">Proficiency Level</span></label>
+                         <div class="flex items-center gap-3">
+                            <input type="range" id="add_proficiency_level" min="0" max="100" step="10" value="50" class="range range-xs range-primary flex-grow" oninput="this.nextElementSibling.textContent = this.value + '%'">
+                            <output class="text-xs font-medium bg-primary/10 text-primary px-1.5 py-0.5 rounded" id="proficiency_output">50%</output> {# Added ID here #}
+                         </div>
+                     </div>
+                     {# Add Button for JS #}
+                     <button type="button" id="add-skill-js-btn" class="btn btn-primary w-full btn-sm" onclick="addFormsetRowManually()">
+                         <i class="fa-solid fa-plus mr-2"></i> Add to List
+                     </button>
+                 </div>
+            </div>
+        </div>
+
+        {# --- Right Column: Display Formset Skills --- #}
+        <div class="lg:col-span-3">
+            <div class="bg-white shadow-lg rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
+                 <h3 class="text-lg font-bold text-gray-800 flex items-center mb-5">
+                     <div class="w-9 h-9 rounded-full bg-success/10 flex items-center justify-center mr-3"><i class="fa-solid fa-check text-success"></i></div>
+                     Your Skills
+                 </h3>
+
+                 {# Formset Container #}
+                 <div id="{{ formset.prefix }}-formset-container" class="space-y-3">
+                     {# Empty State Message #}
+                     {% if formset.total_form_count == 0 %}
+                     <div id="skills_empty_state" class="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg">
+                         <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-5"><i class="fa-solid fa-code text-gray-400 text-3xl"></i></div>
+                         <h4 class="font-semibold text-lg text-gray-700 mb-2">No skills added yet</h4>
+                         <p class="text-gray-500 text-sm max-w-xs mx-auto">Use the form on the left to add skills to your resume.</p>
+                     </div>
+                     {% endif %}
+
+                     {# Loop through Existing Forms (including initial data and extra forms) #}
+                     {% for form in formset %}
+                     <div class="formset-row skill-card bg-gray-50 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-lg p-3 flex flex-col md:flex-row items-start md:items-center gap-3 relative group {% if not form.initial and forloop.counter > formset.initial_form_count %}formset-extra-form{% endif %}" id="{{ formset.prefix }}-{{ forloop.counter0 }}">
+                         {# Hidden fields #}
+                         {{ form.id }}
+                         {% if formset.can_delete %}
+                             {# Checkbox will be visually hidden but functionally present #}
+                             <div class="hidden">{{ form.DELETE }}</div>
+                         {% endif %}
+
+                         {# Skill Name Input #}
+                         <div class="form-control flex-grow md:w-auto">
+                             <label class="label sr-only" for="{{ form.skill_name.id_for_label }}">Skill Name</label>
+                             {% render_field form.skill_name class+="input input-sm input-bordered w-full" placeholder="Skill Name" %}
+                             {% if form.skill_name.errors %}<div class="text-error text-xs mt-1">{{ form.skill_name.errors.0 }}</div>{% endif %}
+                         </div>
+
+                         {# Skill Type Select #}
+                         <div class="form-control w-full md:w-auto md:min-w-[120px]">
+                             <label class="label sr-only" for="{{ form.skill_type.id_for_label }}">Skill Type</label>
+                             {% render_field form.skill_type class+="select select-sm select-bordered w-full" %}
+                              {% if form.skill_type.errors %}<div class="text-error text-xs mt-1">{{ form.skill_type.errors.0 }}</div>{% endif %}
+                         </div>
+
+                         {# Proficiency Slider #}
+                         <div class="form-control w-full md:w-[150px]">
+                             <label class="label sr-only" for="{{ form.proficiency_level.id_for_label }}">Proficiency</label>
+                             <div class="flex items-center gap-2">
+                                 {# *** oninput REMOVED from render_field *** #}
+                                 {% render_field form.proficiency_level type="range" min="0" max="100" step="10" class+="range range-xs range-primary flex-grow" %}
+                                 <output class="text-xs font-medium w-10 text-right">{{ form.proficiency_level.value|default:50 }}%</output>
+                             </div>
+                              {% if form.proficiency_level.errors %}<div class="text-error text-xs mt-1">{{ form.proficiency_level.errors.0 }}</div>{% endif %}
+                         </div>
+
+                         {# Delete Button #}
+                         {% if formset.can_delete %}
+                         <div class="form-control w-full md:w-auto mt-2 md:mt-0 flex justify-end md:justify-center">
+                             <button type="button" class="btn btn-xs btn-ghost text-error formset-delete-btn" onclick="deleteForm(this, '{{ formset.prefix }}')">
+                                 <i class="fa-solid fa-trash-can"></i>
+                             </button>
+                         </div>
+                         {% endif %}
+                     </div>
+                     {% endfor %}
+                 </div> {# End #skills-formset-container #}
+
+                 {# Template for Adding New Forms via JS #}
+                 <template id="{{ formset.prefix }}-form-template">
+                    <div class="formset-row skill-card bg-gray-50 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-lg p-3 flex flex-col md:flex-row items-start md:items-center gap-3 relative group formset-extra-form" id="{{ formset.prefix }}-__prefix__">
+                        {# Hidden fields #}
+                        <input type="hidden" name="{{ formset.prefix }}-__prefix__-id" id="id_{{ formset.prefix }}-__prefix__-id">
+                        {% if formset.can_delete %}
+                        <div class="hidden"><input type="checkbox" name="{{ formset.prefix }}-__prefix__-DELETE" id="id_{{ formset.prefix }}-__prefix__-DELETE"></div>
+                        {% endif %}
+                        {# Skill Name #}
+                        <div class="form-control flex-grow md:w-auto"><input type="text" name="{{ formset.prefix }}-__prefix__-skill_name" class="input input-sm input-bordered w-full" placeholder="Skill Name" id="id_{{ formset.prefix }}-__prefix__-skill_name"></div>
+                        {# Skill Type #}
+                        <div class="form-control w-full md:w-auto md:min-w-[120px]"><select name="{{ formset.prefix }}-__prefix__-skill_type" class="select select-sm select-bordered w-full" id="id_{{ formset.prefix }}-__prefix__-skill_type">{% for type_value, type_label in skill_types.items %}<option value="{{ type_value }}">{{ type_label }}</option>{% endfor %}</select></div>
+                        {# Proficiency #}
+                        <div class="form-control w-full md:w-[150px]"><div class="flex items-center gap-2"><input type="range" name="{{ formset.prefix }}-__prefix__-proficiency_level" value="50" min="0" max="100" step="10" class="range range-xs range-primary flex-grow" id="id_{{ formset.prefix }}-__prefix__-proficiency_level"><output class="text-xs font-medium w-10 text-right">50%</output></div></div> {# Removed inline oninput here too #}
+                        {# Delete Button #}
+                        <div class="form-control w-full md:w-auto mt-2 md:mt-0 flex justify-end md:justify-center"><button type="button" class="btn btn-xs btn-ghost text-error formset-delete-btn" onclick="deleteForm(this, '{{ formset.prefix }}')"><i class="fa-solid fa-trash-can"></i></button></div>
                     </div>
-                    Add Skill
-                </h3>
+                </template>
 
-                <div class="space-y-5">
-                    <!-- Skill Name -->
-                    <div class="form-control">
-                        <label class="label py-1" for="add_skill_name">
-                            <span class="label-text font-medium text-gray-700">Skill Name</span>
-                            <span class="label-text-alt text-error">*</span>
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                                <i class="fa-solid fa-wrench"></i>
-                            </div>
-                            <input type="text" id="add_skill_name" name="add_skill_name"
-                                class="input input-bordered w-full pl-10 focus:ring-2 focus:ring-primary focus:border-primary"
-                                placeholder="e.g., Python, Leadership">
-                        </div>
-                    </div>
-
-                    <!-- Skill Type -->
-                    <div class="form-control">
-                        <label class="label py-1" for="add_skill_type">
-                            <span class="label-text font-medium text-gray-700">Skill Type</span>
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                                <i class="fa-solid fa-tag"></i>
-                            </div>
-                            <select id="add_skill_type" name="add_skill_type"
-                                class="select select-bordered w-full pl-10 focus:ring-2 focus:ring-primary focus:border-primary appearance-none">
-                                {% for type_value, type_label in skill_types.items %}
-                                <option value="{{ type_value }}">{{ type_label }}</option>
-                                {% endfor %}
-                            </select>
-                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
-                                <i class="fa-solid fa-chevron-down"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Proficiency Level -->
-                    <div class="form-control">
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="label-text font-medium text-gray-700" for="add_proficiency_level">
-                                Proficiency Level
-                            </label>
-                            <span class="bg-primary/10 text-primary px-2 py-1 rounded-full text-sm font-medium">
-                                <output id="proficiency_output">50</output>%
-                            </span>
-                        </div>
-                        <input type="range" id="add_proficiency_level" name="add_proficiency_level"
-                            min="0" max="100" step="5" value="50"
-                            class="range range-primary w-full h-2"
-                            oninput="document.getElementById('proficiency_output').textContent = this.value; updateProficiencyExplanation(this.value)">
-
-                        <div class="flex justify-between text-xs mt-3 text-gray-500">
-                            <span class="flex flex-col items-center w-1/4 text-center">
-                                <i class="fa-solid fa-seedling text-gray-400 mb-1"></i>
-                                <span>Beginner</span>
-                            </span>
-                            <span class="flex flex-col items-center w-1/4 text-center">
-                                <i class="fa-solid fa-book text-gray-400 mb-1"></i>
-                                <span>Intermediate</span>
-                            </span>
-                            <span class="flex flex-col items-center w-1/4 text-center">
-                                <i class="fa-solid fa-graduation-cap text-gray-400 mb-1"></i>
-                                <span>Advanced</span>
-                            </span>
-                            <span class="flex flex-col items-center w-1/4 text-center">
-                                <i class="fa-solid fa-trophy text-gray-400 mb-1"></i>
-                                <span>Expert</span>
-                            </span>
-                        </div>
-
-                        <div class="mt-3 p-3 bg-gray-50 rounded-lg text-sm text-gray-600" id="proficiency_explanation">
-                            <span>Intermediate: Can work independently</span>
-                        </div>
-                    </div>
-
-                    <!-- Years of Experience -->
-                    <div class="form-control">
-                        <label class="label py-1" for="add_years">
-                            <span class="label-text font-medium text-gray-700">Years Experience</span>
-                            <span class="label-text-alt text-gray-500 text-xs">(Optional)</span>
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                                <i class="fa-solid fa-calendar-check"></i>
-                            </div>
-                            <input type="number" id="add_years" name="add_years"
-                                class="input input-bordered w-full pl-10 focus:ring-2 focus:ring-primary focus:border-primary"
-                                min="0" max="50" step="0.5" placeholder="e.g., 2.5">
-                        </div>
-                    </div>
-
-                    <!-- Add Skill Button -->
-                    <button type="button" id="add_skill_btn" class="btn btn-primary w-full h-12 shadow-md hover:shadow-lg" onclick="addSkill()">
-                        <i class="fa-solid fa-plus mr-2"></i> Add Skill
+                {# Add Form Button (for JS manipulation of formset) #}
+                <div class="mt-4 flex justify-end">
+                    <button type="button" id="add-formset-row-btn" class="btn btn-sm btn-outline btn-primary">
+                        <i class="fa-solid fa-plus mr-2"></i> Add Skill Row (Formset)
                     </button>
                 </div>
-            </div>
-        </div>
 
-        <!-- Skills List Section - 3 columns wide -->
-        <div class="lg:col-span-3">
-            <!-- Skills List Container -->
-            <div class="bg-white shadow-lg rounded-2xl p-6 mb-6">
-                <h3 class="text-lg font-bold text-gray-800 flex items-center mb-5">
-                    <div class="w-9 h-9 rounded-full bg-success/10 flex items-center justify-center mr-3">
-                        <i class="fa-solid fa-check text-success"></i>
-                    </div>
-                    Your Skills
-                </h3>
+            </div> {# End of 'Your Skills' card #}
+        </div> {# End of Right Column #}
+    </div> {# End of Grid #}
 
-                <!-- Empty state when no skills added -->
-                <div id="skills_empty_state" class="text-center py-12 {% if skills %}hidden{% endif %}">
-                    <div class="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-5">
-                        <i class="fa-solid fa-code text-gray-400 text-3xl"></i>
-                    </div>
-                    <h4 class="font-bold text-xl text-gray-700 mb-3">No skills added yet</h4>
-                    <p class="text-gray-500 text-base max-w-sm mx-auto mb-6">
-                        Add skills to highlight your technical abilities and professional competencies.
-                        This helps employers quickly understand what you bring to the table.
-                    </p>
-                    <div class="inline-flex justify-center">
-                        <div class="animate-bounce bg-white p-2 w-12 h-12 ring-1 ring-primary/10 shadow-lg rounded-full flex items-center justify-center">
-                            <svg class="w-6 h-6 text-primary" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor">
-                                <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
+    {# Navigation buttons are in wizard_base.html #}
 
-                <!-- Skills list (will be populated dynamically) -->
-                <div id="skills_list" class="{% if not skills %}hidden{% endif %} space-y-4">
-                    {% for skill in skills %}
-                    <div class="skill-card relative bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
-                        id="skill_card_{{ forloop.counter0 }}">
-                        <input type="hidden" name="skill_name_{{ forloop.counter0 }}" value="{{ skill.skill_name }}">
-                        <input type="hidden" name="skill_type_{{ forloop.counter0 }}" value="{{ skill.skill_type }}">
-                        <input type="hidden" name="proficiency_level_{{ forloop.counter0 }}" value="{{ skill.proficiency_level }}">
-                        <input type="hidden" name="years_{{ forloop.counter0 }}" value="{{ skill.years|default:0 }}">
+</form>
 
-                        <div class="p-5 flex items-center gap-4">
-                            <!-- Skill icon, name and type - LEFT SIDE -->
-                            <div class="flex-shrink-0 w-48">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                        <i class="fa-solid fa-star text-primary"></i>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold text-gray-800">{{ skill.skill_name }}</div>
-                                        <div class="text-sm text-gray-500 mt-1">
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs">
-                                                {% for type_value, type_label in skill_types.items %}
-                                                    {% if skill.skill_type == type_value %}{{ type_label }}{% endif %}
-                                                {% endfor %}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+{# --- JavaScript - Ensure this is included --- #}
+<script>
+    // --- Formset Helper Functions ---
+    function addForm(button, prefix) {
+        const formContainer = document.getElementById(prefix + '-formset-container');
+        const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
+        const template = document.getElementById(prefix + '-form-template');
 
-                            <!-- Years experience - CENTER -->
-                            <div class="flex-shrink-0 w-24 text-center">
-                                <div class="text-sm text-gray-700 font-medium">
-                                    {{ skill.years|default:'0' }} year{% if skill.years != 1 %}s{% endif %}
-                                </div>
-                                <div class="text-xs text-gray-500">experience</div>
-                            </div>
+        if (!formContainer || !totalFormsInput || !template) {
+            console.error("Formset elements not found for prefix:", prefix);
+            return;
+        }
 
-                            <!-- Proficiency bar - RIGHT SIDE (fixed width) -->
-                            <div class="flex-grow flex flex-col items-end">
-                                <div class="w-full max-w-[200px]">
-                                    <div class="flex justify-between items-center mb-1">
-                                        <span class="text-xs text-gray-500">Proficiency</span>
-                                        <span class="text-sm font-medium text-gray-700">{{ skill.proficiency_level }}%</span>
-                                    </div>
-                                    <div class="h-3 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                                        <div class="h-full rounded-full"
-                                          style="background-color: {% if skill.proficiency_level < 30 %}#60a5fa{% elif skill.proficiency_level < 60 %}#4ade80{% elif skill.proficiency_level < 85 %}#818cf8{% else %}#a855f7{% endif %}; width: {{ skill.proficiency_level }}%;"></div>
-                                    </div>
-                                </div>
-                            </div>
+        const formNum = parseInt(totalFormsInput.value);
+        let newFormHtml = template.innerHTML.replace(/__prefix__/g, formNum);
 
-                            <!-- Controls -->
-                            <div class="flex-shrink-0 flex items-center gap-2 ml-4">
-                                <button type="button" class="w-8 h-8 rounded-full text-gray-400 hover:text-primary hover:bg-primary/10 transition-all duration-200"
-                                        title="Edit skill"
-                                        onclick="editSkill({{ forloop.counter0 }})">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </button>
-                                <button type="button" class="w-8 h-8 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
-                                        title="Remove skill"
-                                        onclick="removeSkill({{ forloop.counter0 }})">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </div>
-                        </div>
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = newFormHtml;
+        const newFormElement = tempDiv.firstElementChild;
 
-                        <!-- Skill type indicator bar -->
-                        <div class="absolute bottom-0 left-0 right-0 h-1"
-                          style="background-color: {% if skill.skill_type == 'technical' %}#3b82f6{% elif skill.skill_type == 'soft' %}#22c55e{% elif skill.skill_type == 'language' %}#a855f7{% else %}#f59e0b{% endif %};"></div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
+        newFormElement.style.opacity = 0;
+        newFormElement.style.transform = 'translateY(10px)';
 
-    <!-- Action buttons -->
-    <div class="flex justify-between items-center mb-10">
-        {% if previous_step %}
-            <a href="{% url 'job_portal:resume_wizard' step=previous_step %}" class="btn btn-outline px-6 gap-2">
-                <i class="fa-solid fa-arrow-left"></i>
-                Previous Step
-            </a>
-        {% else %}
-            <div></div> <!-- Empty div to maintain flex layout when no previous step -->
-        {% endif %}
+        formContainer.appendChild(newFormElement);
+        totalFormsInput.value = formNum + 1;
 
+        setTimeout(() => {
+            newFormElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            newFormElement.style.opacity = 1;
+            newFormElement.style.transform = 'translateY(0)';
+        }, 10);
+
+        const emptyState = formContainer.querySelector('#skills_empty_state');
+        if (emptyState) emptyState.classList.add('hidden');
+
+        const firstInput = newFormElement.querySelector('input:not([type=hidden]), select, textarea');
+        if (firstInput) firstInput.focus();
+
+        const rangeInput = newFormElement.querySelector('input[type="range"]');
+         if(rangeInput) {
+             // Add listener directly to the new range input
+             // This is handled by event delegation below, no need to add here explicitly
+         }
+    }
+
+    function deleteForm(button, prefix) {
+        const formRow = button.closest('.formset-row');
+        const deleteInput = formRow.querySelector('input[name$="-DELETE"]');
+        const formIdInput = formRow.querySelector('input[name$="-id"]');
+
+        if (deleteInput && formIdInput && formIdInput.value) {
+            deleteInput.checked = true;
+            formRow.style.transition = 'opacity 0.3s ease, max-height 0.3s ease, margin 0.3s ease, padding 0.3s ease, border 0.3s ease';
+            formRow.style.opacity = '0.5';
+            formRow.style.maxHeight = '50px';
+            formRow.style.borderStyle = 'dashed';
+            formRow.style.borderColor = 'red';
+             formRow.classList.add('formset-row-deleted');
+             // Keep it visible but indicate deletion
+            checkEmptyState(prefix);
+
+        } else {
+            // New, unsaved form: remove directly
+            formRow.style.transition = 'opacity 0.3s ease, max-height 0.3s ease, margin 0.3s ease, padding 0.3s ease, border 0.3s ease';
+            formRow.style.opacity = '0';
+            formRow.style.maxHeight = '0';
+            formRow.style.padding = '0';
+            formRow.style.margin = '0';
+            formRow.style.border = 'none';
+            setTimeout(() => {
+                formRow.remove();
+                const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
+                if (totalFormsInput) {
+                    totalFormsInput.value = parseInt(totalFormsInput.value) - 1;
+                }
+                checkEmptyState(prefix);
+            }, 300);
+        }
+    }
+
+    function checkEmptyState(prefix) {
+         const formContainer = document.getElementById(prefix + '-formset-container');
+         if (!formContainer) return;
+         const visibleForms = Array.from(formContainer.querySelectorAll('.formset-row')).filter(row => {
+             const deleteInput = row.querySelector('input[name$="-DELETE"]');
+             return !deleteInput || !deleteInput.checked;
+         });
+          const emptyState = document.getElementById('skills_empty_state');
+
+          if (visibleForms.length === 0 && emptyState) {
+              emptyState.classList.remove('hidden');
+          } else if (emptyState) {
+               emptyState.classList.add('hidden');
+          }
+    }
+
+    function addFormsetRowManually() {
+        const skillName = document.getElementById('add_skill_name').value.trim();
+        if (!skillName) {
+            alert('Please enter a skill name.');
+            document.getElementById('add_skill_name').focus();
+            return;
+        }
+        const skillType = document.getElementById('add_skill_type').value;
+        const proficiency = document.getElementById('add_proficiency_level').value;
+
+        const prefix = '{{ formset.prefix }}';
+        addForm(null, prefix);
+
+        setTimeout(() => {
+            const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
+            if (!totalFormsInput) return;
+
+            const totalForms = parseInt(totalFormsInput.value);
+            const newIndex = totalForms - 1;
+
+            const nameField = document.getElementById(`id_${prefix}-${newIndex}-skill_name`);
+            const typeField = document.getElementById(`id_${prefix}-${newIndex}-skill_type`);
+            const profField = document.getElementById(`id_${prefix}-${newIndex}-proficiency_level`);
+            const profOutput = profField ? profField.nextElementSibling : null;
+
+            if (nameField) nameField.value = skillName;
+            if (typeField) typeField.value = skillType;
+            if (profField) {
+                profField.value = proficiency;
+                 if(profOutput && profOutput.tagName === 'OUTPUT') profOutput.textContent = proficiency + '%';
+            }
+
+            document.getElementById('add_skill_name').value = '';
+            document.getElementById('add_skill_type').value = 'technical';
+            document.getElementById('add_proficiency_level').value = 50;
+            const manualProfOutput = document.getElementById('proficiency_output');
+            if (manualProfOutput) manualProfOutput.textContent = '50';
+
+        }, 150);
+     }
+
+    // Attach Event Listeners on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', function() {
+        const addFormsetBtn = document.getElementById('add-formset-row-btn');
+        if (addFormsetBtn) {
+            addFormsetBtn.addEventListener('click', function() {
+                addForm(this, '{{ formset.prefix }}');
+            });
+        }
+
+         const addManualBtn = document.getElementById('add-skill-js-btn');
+         if (addManualBtn) {
+             addManualBtn.addEventListener('click', addFormsetRowManually);
+         }
+
+         const formsetContainer = document.getElementById('{{ formset.prefix }}-formset-container');
+         if (formsetContainer) {
+             // Use event delegation for proficiency sliders
+             formsetContainer.addEventListener('input', function(event) {
+                if (event.target.matches('input[type="range"][name$="-proficiency_level"]')) {
+                     const output = event.target.nextElementSibling; // The <output> tag
+                     if (output && output.tagName === 'OUTPUT') {
+                         output.textContent = event.target.value + '%';
+                     }
+                 }
+             });
+         }
+
+         checkEmptyState('{{ formset.prefix }}');
+    });
+</script>
+{% endblock %}
+
+
+{#{% extends 'resumes/wizard_base.html' %}#}
+{#{% load static %}#}
+{##}
+{#{% block step_title %}Skills{% endblock %}#}
+{##}
+{#{% block step_icon %}<i class="fa-solid fa-code mr-3 text-primary opacity-80"></i>{% endblock %}#}
+{##}
+{#{% block step_content %}#}
+{#<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">#}
+{#    {% csrf_token %}#}
+{##}
+{#    <!-- Header and Description Section -->#}
+{#    <div class="bg-white shadow-lg rounded-2xl overflow-hidden mb-8">#}
+{#        <div class="p-6 border-b border-gray-100 flex items-start gap-4">#}
+{#            <div class="text-primary text-xl mt-1">#}
+{#                <i class="fa-solid fa-code"></i>#}
+{#            </div>#}
+{#            <div>#}
+{#                <h3 class="text-xl font-bold text-gray-800 mb-2">Skills</h3>#}
+{#                <p class="text-gray-600">#}
+{#                    Add skills that highlight your technical abilities and professional competencies.#}
+{#                    Prioritize skills relevant to the jobs you're applying for.#}
+{#                </p>#}
+{#                <div class="mt-3 p-3 bg-primary/5 border border-primary/10 rounded-lg">#}
+{#                    <p class="text-sm flex items-start">#}
+{#                        <i class="fa-solid fa-lightbulb text-primary mr-2 mt-0.5"></i>#}
+{#                        <span><strong class="text-primary">Pro tip:</strong> For technical roles, focus on specific technologies. For managerial positions, emphasize leadership and soft skills.</span>#}
+{#                    </p>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Hidden field to track number of skill entries -->#}
+{#    <input type="hidden" id="skill_count" name="skill_count" value="{{ skills|length }}">#}
+{##}
+{#    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">#}
+{#        <!-- Skills Form - 2 columns wide -->#}
+{#        <div class="lg:col-span-2">#}
+{#            <div class="bg-white shadow-lg rounded-2xl p-6 sticky top-4 hover:shadow-xl transition-all duration-300">#}
+{#                <h3 class="text-lg font-bold text-gray-800 flex items-center mb-5">#}
+{#                    <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mr-3">#}
+{#                        <i class="fa-solid fa-plus text-primary"></i>#}
+{#                    </div>#}
+{#                    Add Skill#}
+{#                </h3>#}
+{##}
+{#                <div class="space-y-5">#}
+{#                    <!-- Skill Name -->#}
+{#                    <div class="form-control">#}
+{#                        <label class="label py-1" for="add_skill_name">#}
+{#                            <span class="label-text font-medium text-gray-700">Skill Name</span>#}
+{#                            <span class="label-text-alt text-error">*</span>#}
+{#                        </label>#}
+{#                        <div class="relative">#}
+{#                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">#}
+{#                                <i class="fa-solid fa-wrench"></i>#}
+{#                            </div>#}
+{#                            <input type="text" id="add_skill_name" name="add_skill_name"#}
+{#                                class="input input-bordered w-full pl-10 focus:ring-2 focus:ring-primary focus:border-primary"#}
+{#                                placeholder="e.g., Python, Leadership">#}
+{#                        </div>#}
+{#                    </div>#}
+{##}
+{#                    <!-- Skill Type -->#}
+{#                    <div class="form-control">#}
+{#                        <label class="label py-1" for="add_skill_type">#}
+{#                            <span class="label-text font-medium text-gray-700">Skill Type</span>#}
+{#                        </label>#}
+{#                        <div class="relative">#}
+{#                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">#}
+{#                                <i class="fa-solid fa-tag"></i>#}
+{#                            </div>#}
+{#                            <select id="add_skill_type" name="add_skill_type"#}
+{#                                class="select select-bordered w-full pl-10 focus:ring-2 focus:ring-primary focus:border-primary appearance-none">#}
+{#                                {% for type_value, type_label in skill_types.items %}#}
+{#                                <option value="{{ type_value }}">{{ type_label }}</option>#}
+{#                                {% endfor %}#}
+{#                            </select>#}
+{#                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">#}
+{#                                <i class="fa-solid fa-chevron-down"></i>#}
+{#                            </div>#}
+{#                        </div>#}
+{#                    </div>#}
+{##}
+{#                    <!-- Proficiency Level -->#}
+{#                    <div class="form-control">#}
+{#                        <div class="flex justify-between items-center mb-2">#}
+{#                            <label class="label-text font-medium text-gray-700" for="add_proficiency_level">#}
+{#                                Proficiency Level#}
+{#                            </label>#}
+{#                            <span class="bg-primary/10 text-primary px-2 py-1 rounded-full text-sm font-medium">#}
+{#                                <output id="proficiency_output">50</output>%#}
+{#                            </span>#}
+{#                        </div>#}
+{#                        <input type="range" id="add_proficiency_level" name="add_proficiency_level"#}
+{#                            min="0" max="100" step="5" value="50"#}
+{#                            class="range range-primary w-full h-2"#}
+{#                            oninput="document.getElementById('proficiency_output').textContent = this.value; updateProficiencyExplanation(this.value)">#}
+{##}
+{#                        <div class="flex justify-between text-xs mt-3 text-gray-500">#}
+{#                            <span class="flex flex-col items-center w-1/4 text-center">#}
+{#                                <i class="fa-solid fa-seedling text-gray-400 mb-1"></i>#}
+{#                                <span>Beginner</span>#}
+{#                            </span>#}
+{#                            <span class="flex flex-col items-center w-1/4 text-center">#}
+{#                                <i class="fa-solid fa-book text-gray-400 mb-1"></i>#}
+{#                                <span>Intermediate</span>#}
+{#                            </span>#}
+{#                            <span class="flex flex-col items-center w-1/4 text-center">#}
+{#                                <i class="fa-solid fa-graduation-cap text-gray-400 mb-1"></i>#}
+{#                                <span>Advanced</span>#}
+{#                            </span>#}
+{#                            <span class="flex flex-col items-center w-1/4 text-center">#}
+{#                                <i class="fa-solid fa-trophy text-gray-400 mb-1"></i>#}
+{#                                <span>Expert</span>#}
+{#                            </span>#}
+{#                        </div>#}
+{##}
+{#                        <div class="mt-3 p-3 bg-gray-50 rounded-lg text-sm text-gray-600" id="proficiency_explanation">#}
+{#                            <span>Intermediate: Can work independently</span>#}
+{#                        </div>#}
+{#                    </div>#}
+{##}
+{#                    <!-- Years of Experience -->#}
+{#                    <div class="form-control">#}
+{#                        <label class="label py-1" for="add_years">#}
+{#                            <span class="label-text font-medium text-gray-700">Years Experience</span>#}
+{#                            <span class="label-text-alt text-gray-500 text-xs">(Optional)</span>#}
+{#                        </label>#}
+{#                        <div class="relative">#}
+{#                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">#}
+{#                                <i class="fa-solid fa-calendar-check"></i>#}
+{#                            </div>#}
+{#                            <input type="number" id="add_years" name="add_years"#}
+{#                                class="input input-bordered w-full pl-10 focus:ring-2 focus:ring-primary focus:border-primary"#}
+{#                                min="0" max="50" step="0.5" placeholder="e.g., 2.5">#}
+{#                        </div>#}
+{#                    </div>#}
+{##}
+{#                    <!-- Add Skill Button -->#}
+{#                    <button type="button" id="add_skill_btn" class="btn btn-primary w-full h-12 shadow-md hover:shadow-lg" onclick="addSkill()">#}
+{#                        <i class="fa-solid fa-plus mr-2"></i> Add Skill#}
+{#                    </button>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#        <!-- Skills List Section - 3 columns wide -->#}
+{#        <div class="lg:col-span-3">#}
+{#            <!-- Skills List Container -->#}
+{#            <div class="bg-white shadow-lg rounded-2xl p-6 mb-6">#}
+{#                <h3 class="text-lg font-bold text-gray-800 flex items-center mb-5">#}
+{#                    <div class="w-9 h-9 rounded-full bg-success/10 flex items-center justify-center mr-3">#}
+{#                        <i class="fa-solid fa-check text-success"></i>#}
+{#                    </div>#}
+{#                    Your Skills#}
+{#                </h3>#}
+{##}
+{#                <!-- Empty state when no skills added -->#}
+{#                <div id="skills_empty_state" class="text-center py-12 {% if skills %}hidden{% endif %}">#}
+{#                    <div class="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-5">#}
+{#                        <i class="fa-solid fa-code text-gray-400 text-3xl"></i>#}
+{#                    </div>#}
+{#                    <h4 class="font-bold text-xl text-gray-700 mb-3">No skills added yet</h4>#}
+{#                    <p class="text-gray-500 text-base max-w-sm mx-auto mb-6">#}
+{#                        Add skills to highlight your technical abilities and professional competencies.#}
+{#                        This helps employers quickly understand what you bring to the table.#}
+{#                    </p>#}
+{#                    <div class="inline-flex justify-center">#}
+{#                        <div class="animate-bounce bg-white p-2 w-12 h-12 ring-1 ring-primary/10 shadow-lg rounded-full flex items-center justify-center">#}
+{#                            <svg class="w-6 h-6 text-primary" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor">#}
+{#                                <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>#}
+{#                            </svg>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <!-- Skills list (will be populated dynamically) -->#}
+{#                <div id="skills_list" class="{% if not skills %}hidden{% endif %} space-y-4">#}
+{#                    {% for skill in skills %}#}
+{#                    <div class="skill-card relative bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"#}
+{#                        id="skill_card_{{ forloop.counter0 }}">#}
+{#                        <input type="hidden" name="skill_name_{{ forloop.counter0 }}" value="{{ skill.skill_name }}">#}
+{#                        <input type="hidden" name="skill_type_{{ forloop.counter0 }}" value="{{ skill.skill_type }}">#}
+{#                        <input type="hidden" name="proficiency_level_{{ forloop.counter0 }}" value="{{ skill.proficiency_level }}">#}
+{#                        <input type="hidden" name="years_{{ forloop.counter0 }}" value="{{ skill.years|default:0 }}">#}
+{##}
+{#                        <div class="p-5 flex items-center gap-4">#}
+{#                            <!-- Skill icon, name and type - LEFT SIDE -->#}
+{#                            <div class="flex-shrink-0 w-48">#}
+{#                                <div class="flex items-center gap-3">#}
+{#                                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">#}
+{#                                        <i class="fa-solid fa-star text-primary"></i>#}
+{#                                    </div>#}
+{#                                    <div>#}
+{#                                        <div class="font-bold text-gray-800">{{ skill.skill_name }}</div>#}
+{#                                        <div class="text-sm text-gray-500 mt-1">#}
+{#                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs">#}
+{#                                                {% for type_value, type_label in skill_types.items %}#}
+{#                                                    {% if skill.skill_type == type_value %}{{ type_label }}{% endif %}#}
+{#                                                {% endfor %}#}
+{#                                            </span>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                            </div>#}
+{##}
+{#                            <!-- Years experience - CENTER -->#}
+{#                            <div class="flex-shrink-0 w-24 text-center">#}
+{#                                <div class="text-sm text-gray-700 font-medium">#}
+{#                                    {{ skill.years|default:'0' }} year{% if skill.years != 1 %}s{% endif %}#}
+{#                                </div>#}
+{#                                <div class="text-xs text-gray-500">experience</div>#}
+{#                            </div>#}
+{##}
+{#                            <!-- Proficiency bar - RIGHT SIDE (fixed width) -->#}
+{#                            <div class="flex-grow flex flex-col items-end">#}
+{#                                <div class="w-full max-w-[200px]">#}
+{#                                    <div class="flex justify-between items-center mb-1">#}
+{#                                        <span class="text-xs text-gray-500">Proficiency</span>#}
+{#                                        <span class="text-sm font-medium text-gray-700">{{ skill.proficiency_level }}%</span>#}
+{#                                    </div>#}
+{#                                    <div class="h-3 bg-gray-100 rounded-full overflow-hidden shadow-inner">#}
+{#                                        <div class="h-full rounded-full"#}
+{#                                          style="background-color: {% if skill.proficiency_level < 30 %}#60a5fa{% elif skill.proficiency_level < 60 %}#4ade80{% elif skill.proficiency_level < 85 %}#818cf8{% else %}#a855f7{% endif %}; width: {{ skill.proficiency_level }}%;"></div>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                            </div>#}
+{##}
+{#                            <!-- Controls -->#}
+{#                            <div class="flex-shrink-0 flex items-center gap-2 ml-4">#}
+{#                                <button type="button" class="w-8 h-8 rounded-full text-gray-400 hover:text-primary hover:bg-primary/10 transition-all duration-200"#}
+{#                                        title="Edit skill"#}
+{#                                        onclick="editSkill({{ forloop.counter0 }})">#}
+{#                                    <i class="fa-solid fa-pen-to-square"></i>#}
+{#                                </button>#}
+{#                                <button type="button" class="w-8 h-8 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200"#}
+{#                                        title="Remove skill"#}
+{#                                        onclick="removeSkill({{ forloop.counter0 }})">#}
+{#                                    <i class="fa-solid fa-trash-can"></i>#}
+{#                                </button>#}
+{#                            </div>#}
+{#                        </div>#}
+{##}
+{#                        <!-- Skill type indicator bar -->#}
+{#                        <div class="absolute bottom-0 left-0 right-0 h-1"#}
+{#                          style="background-color: {% if skill.skill_type == 'technical' %}#3b82f6{% elif skill.skill_type == 'soft' %}#22c55e{% elif skill.skill_type == 'language' %}#a855f7{% else %}#f59e0b{% endif %};"></div>#}
+{#                    </div>#}
+{#                    {% endfor %}#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Action buttons -->#}
+{#    <div class="flex justify-between items-center mb-10">#}
+{#        {% if previous_step %}#}
+{#            <a href="{% url 'job_portal:resume_wizard' step=previous_step %}" class="btn btn-outline px-6 gap-2">#}
+{#                <i class="fa-solid fa-arrow-left"></i>#}
+{#                Previous Step#}
+{#            </a>#}
+{#        {% else %}#}
+{#            <div></div> <!-- Empty div to maintain flex layout when no previous step -->#}
+{#        {% endif %}#}
+{##}
 {#        <div class="flex gap-3">#}
 {#            <button type="button" onclick="previewResume()" class="btn btn-outline btn-primary px-6 gap-2">#}
 {#                <i class="fa-solid fa-eye"></i>#}
@@ -274,465 +611,465 @@
 {#                <i class="fa-solid fa-arrow-right"></i>#}
 {#            </button>#}
 {#        </div>#}
-    </div>
-</form>
-
-<!-- Preview modal (hidden by default) -->
-<div id="preview-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
-    <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-            <h3 class="text-xl font-bold text-gray-800">Resume Preview</h3>
-            <button onclick="closePreview()" class="btn btn-sm btn-circle">
-                <i class="fa-solid fa-times"></i>
-            </button>
-        </div>
-        <div class="overflow-y-auto p-6 flex-grow">
-            <div id="preview-content" class="bg-white shadow-md rounded-lg p-8 mx-auto max-w-3xl">
-                <!-- Preview content will be loaded here -->
-                <div class="animate-pulse">
-                    <div class="h-10 bg-gray-200 rounded mb-6 w-1/2"></div>
-                    <div class="h-4 bg-gray-200 rounded mb-2 w-full"></div>
-                    <div class="h-4 bg-gray-200 rounded mb-2 w-full"></div>
-                    <div class="h-4 bg-gray-200 rounded mb-6 w-2/3"></div>
-
-                    <div class="h-8 bg-gray-200 rounded mb-4 w-1/3"></div>
-                    <div class="flex space-x-2 mb-6">
-                        <div class="h-6 bg-gray-200 rounded w-24"></div>
-                        <div class="h-6 bg-gray-200 rounded w-24"></div>
-                        <div class="h-6 bg-gray-200 rounded w-24"></div>
-                    </div>
-
-                    <div class="h-4 bg-gray-200 rounded mb-2 w-full"></div>
-                    <div class="h-4 bg-gray-200 rounded mb-2 w-full"></div>
-                    <div class="h-4 bg-gray-200 rounded mb-2 w-3/4"></div>
-                </div>
-            </div>
-        </div>
-        <div class="p-4 border-t border-gray-100 flex justify-end">
-            <button onclick="closePreview()" class="btn btn-primary">
-                Close Preview
-            </button>
-        </div>
-    </div>
-</div>
-
-<script>
-// Function to update proficiency explanation based on value
-function updateProficiencyExplanation(value) {
-    const explanation = document.getElementById('proficiency_explanation');
-    value = parseInt(value);
-
-    if (value < 25) {
-        explanation.innerHTML = '<span>Beginner: Familiar with basic concepts</span>';
-    } else if (value < 50) {
-        explanation.innerHTML = '<span>Intermediate: Can work independently</span>';
-    } else if (value < 75) {
-        explanation.innerHTML = '<span>Advanced: Highly capable with deep knowledge</span>';
-    } else {
-        explanation.innerHTML = '<span>Expert: Mastery level with ability to teach</span>';
-    }
-}
-
-// Helper function to get skill type label from value
-function getSkillTypeLabel(skillType) {
-    const skillTypeMap = {
-        'technical': 'Technical',
-        'soft': 'Soft Skill',
-        'language': 'Language',
-        'tools': 'Tool/Software'
-        // Add other skill types as needed
-    };
-    return skillTypeMap[skillType] || skillType;
-}
-
-// Get color for proficiency bar based on value
-function getBarColor(value) {
-    value = parseInt(value);
-    if (value < 30) return "#60a5fa";
-    if (value < 60) return "#4ade80";
-    if (value < 85) return "#818cf8";
-    return "#a855f7";
-}
-
-// Get color for skill type bar
-function getTypeColor(type) {
-    if (type === 'technical') return "#3b82f6";
-    if (type === 'soft') return "#22c55e";
-    if (type === 'language') return "#a855f7";
-    return "#f59e0b";
-}
-
-// Function to add a skill
-function addSkill() {
-    const skillName = document.getElementById('add_skill_name').value.trim();
-    if (!skillName) {
-        showToast('Please enter a skill name', 'error');
-        return;
-    }
-
-    const skillType = document.getElementById('add_skill_type').value;
-    const proficiency = document.getElementById('add_proficiency_level').value;
-    const years = document.getElementById('add_years').value || '0';
-
-    // Get current skill count
-    const skillCountInput = document.getElementById('skill_count');
-    const currentIndex = parseInt(skillCountInput.value);
-
-    // Show skills container if it's empty
-    document.getElementById('skills_empty_state').classList.add('hidden');
-    document.getElementById('skills_list').classList.remove('hidden');
-
-    // Add loading animation to button
-    const addBtn = document.getElementById('add_skill_btn');
-    const originalBtnText = addBtn.innerHTML;
-    addBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding...';
-    addBtn.disabled = true;
-
-    // Create skill card with direct inline styles
-    const skillsList = document.getElementById('skills_list');
-
-    // Simple div creation with HTML string for simpler approach
-    const skillCard = document.createElement('div');
-    skillCard.className = 'skill-card relative bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden';
-    skillCard.id = `skill_card_${currentIndex}`;
-
-    // Create the HTML with inline styles for color and width
-    skillCard.innerHTML = `
-        <input type="hidden" name="skill_name_${currentIndex}" value="${skillName}">
-        <input type="hidden" name="skill_type_${currentIndex}" value="${skillType}">
-        <input type="hidden" name="proficiency_level_${currentIndex}" value="${proficiency}">
-        <input type="hidden" name="years_${currentIndex}" value="${years}">
-
-        <div class="p-5 flex items-center gap-4">
-            <!-- Skill icon, name and type - LEFT SIDE -->
-            <div class="flex-shrink-0 w-48">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <i class="fa-solid fa-star text-primary"></i>
-                    </div>
-                    <div>
-                        <div class="font-bold text-gray-800">${skillName}</div>
-                        <div class="text-sm text-gray-500 mt-1">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs">
-                                ${getSkillTypeLabel(skillType)}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Years experience - CENTER -->
-            <div class="flex-shrink-0 w-24 text-center">
-                <div class="text-sm text-gray-700 font-medium">
-                    ${years} year${years != 1 ? 's' : ''}
-                </div>
-                <div class="text-xs text-gray-500">experience</div>
-            </div>
-
-            <!-- Proficiency bar - RIGHT SIDE (fixed width) -->
-            <div class="flex-grow flex flex-col items-end">
-                <div class="w-full max-w-[200px]">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-xs text-gray-500">Proficiency</span>
-                        <span class="text-sm font-medium text-gray-700">${proficiency}%</span>
-                    </div>
-                    <div class="h-3 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                        <div class="h-full rounded-full" style="background-color: ${getBarColor(proficiency)}; width: ${proficiency}%;"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Controls -->
-            <div class="flex-shrink-0 flex items-center gap-2 ml-4">
-                <button type="button" class="w-8 h-8 rounded-full text-gray-400 hover:text-primary hover:bg-primary/10 transition-all duration-200"
-                        title="Edit skill"
-                        onclick="editSkill(${currentIndex})">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                </button>
-                <button type="button" class="w-8 h-8 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200"
-                        title="Remove skill"
-                        onclick="removeSkill(${currentIndex})">
-                    <i class="fa-solid fa-trash-can"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Skill type indicator bar -->
-        <div class="absolute bottom-0 left-0 right-0 h-1" style="background-color: ${getTypeColor(skillType)};"></div>
-    `;
-
-    // Add to DOM
-    skillsList.appendChild(skillCard);
-
-    // Update skill count
-    skillCountInput.value = currentIndex + 1;
-
-    // Reset form
-    document.getElementById('add_skill_name').value = '';
-    document.getElementById('add_skill_type').selectedIndex = 0;
-    document.getElementById('add_proficiency_level').value = 50;
-    document.getElementById('proficiency_output').textContent = '50';
-    updateProficiencyExplanation(50);
-
-    // Reset button
-    addBtn.innerHTML = originalBtnText;
-    addBtn.disabled = false;
-
-    // Scroll to the new skill with smooth behavior
-    skillCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-    // Show success toast
-    showToast(`Added ${skillName} to your skills`, 'success');
-}
-
-// Function to edit a skill
-function editSkill(index) {
-    // Get the hidden inputs
-    const nameInput = document.querySelector(`#skill_card_${index} input[name="skill_name_${index}"]`);
-    const typeInput = document.querySelector(`#skill_card_${index} input[name="skill_type_${index}"]`);
-    const proficiencyInput = document.querySelector(`#skill_card_${index} input[name="proficiency_level_${index}"]`);
-    const yearsInput = document.querySelector(`#skill_card_${index} input[name="years_${index}"]`);
-
-    // Set the values in the form
-    document.getElementById('add_skill_name').value = nameInput.value;
-
-    // Find the matching option in the select element
-    const skillTypeSelect = document.getElementById('add_skill_type');
-    const options = skillTypeSelect.options;
-
-    for (let i = 0; i < options.length; i++) {
-        if (options[i].value === typeInput.value) {
-            skillTypeSelect.selectedIndex = i;
-            break;
-        }
-    }
-
-    // Set values for other fields
-    document.getElementById('add_proficiency_level').value = proficiencyInput.value;
-    document.getElementById('proficiency_output').textContent = proficiencyInput.value;
-    document.getElementById('add_years').value = yearsInput.value;
-    updateProficiencyExplanation(proficiencyInput.value);
-
-    // Add highlight to the form
-    const form = document.querySelector('.sticky');
-    form.classList.add('ring-2', 'ring-primary', 'ring-offset-2');
-    setTimeout(() => {
-        form.classList.remove('ring-2', 'ring-primary', 'ring-offset-2');
-    }, 1500);
-
-    // Show toast for editing
-    showToast(`Editing skill: ${nameInput.value}`, 'info');
-
-    // Remove the skill card
-    removeSkill(index);
-
-    // Focus on the skill name input
-    document.getElementById('add_skill_name').focus();
-
-    // Scroll to form
-    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-// Function to remove a skill
-function removeSkill(index) {
-    // Get the skill name for the toast notification
-    const skillCard = document.getElementById(`skill_card_${index}`);
-    const skillName = skillCard.querySelector(`input[name="skill_name_${index}"]`).value;
-
-    // Add fade-out animation
-    skillCard.classList.add('opacity-0', 'scale-95', 'translate-x-4');
-    skillCard.style.transition = 'all 0.3s ease-out';
-
-    // Remove after animation
-    setTimeout(() => {
-        skillCard.remove();
-
-        // Re-order the indices
-        reorderSkillCards();
-
-        // Show empty state if no skills are left
-        const skillsList = document.getElementById('skills_list');
-        if (skillsList.children.length === 0) {
-            document.getElementById('skills_empty_state').classList.remove('hidden');
-            document.getElementById('skills_list').classList.add('hidden');
-        }
-
-        // Show toast notification
-        showToast(`Removed ${skillName} from your skills`, 'info');
-    }, 300);
-}
-
-// Function to reorder skill cards
-function reorderSkillCards() {
-    const skillCards = document.querySelectorAll('#skills_list .skill-card');
-    const skillCount = skillCards.length;
-
-    // Update the skill count
-    document.getElementById('skill_count').value = skillCount;
-
-    // Reindex all skill cards
-    skillCards.forEach((card, newIndex) => {
-        // Get the current index
-        const currentIndex = card.id.replace('skill_card_', '');
-
-        if (currentIndex != newIndex) {
-            // Update the card ID
-            card.id = `skill_card_${newIndex}`;
-
-            // Update hidden inputs
-            const inputs = card.querySelectorAll('input[type="hidden"]');
-            inputs.forEach(input => {
-                const name = input.name;
-                const newName = name.replace(`_${currentIndex}`, `_${newIndex}`);
-                input.name = newName;
-            });
-
-            // Update button onclick attributes
-            const editBtn = card.querySelector('button[onclick^="editSkill"]');
-            const removeBtn = card.querySelector('button[onclick^="removeSkill"]');
-
-            if (editBtn) {
-                editBtn.setAttribute('onclick', `editSkill(${newIndex})`);
-            }
-
-            if (removeBtn) {
-                removeBtn.setAttribute('onclick', `removeSkill(${newIndex})`);
-            }
-        }
-    });
-}
-
-// Function to show a toast notification
-function showToast(message, type = 'info') {
-    // Create toast container if it doesn't exist
-    let toastContainer = document.getElementById('toast-container');
-    if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.id = 'toast-container';
-        toastContainer.className = 'fixed bottom-4 right-4 z-50 flex flex-col gap-2';
-        document.body.appendChild(toastContainer);
-    }
-
-    // Create toast element
-    const toast = document.createElement('div');
-    toast.className = 'bg-white shadow-lg rounded-lg p-4 flex items-center gap-3 min-w-[300px] transform transition-all duration-300 opacity-0 translate-x-4';
-
-    // Set icon and color based on type
-    let icon, bgColor, textColor;
-    switch (type) {
-        case 'success':
-            icon = '<i class="fa-solid fa-check-circle"></i>';
-            bgColor = 'bg-green-50';
-            textColor = 'text-green-600';
-            break;
-        case 'error':
-            icon = '<i class="fa-solid fa-times-circle"></i>';
-            bgColor = 'bg-red-50';
-            textColor = 'text-red-600';
-            break;
-        case 'warning':
-            icon = '<i class="fa-solid fa-exclamation-triangle"></i>';
-            bgColor = 'bg-yellow-50';
-            textColor = 'text-yellow-600';
-            break;
-        default: // info
-            icon = '<i class="fa-solid fa-info-circle"></i>';
-            bgColor = 'bg-blue-50';
-            textColor = 'text-blue-600';
-    }
-
-    toast.classList.add(bgColor);
-    toast.innerHTML = `
-        <div class="${textColor} text-xl">${icon}</div>
-        <div class="flex-grow text-gray-700">${message}</div>
-        <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="this.parentElement.remove()">
-            <i class="fa-solid fa-times"></i>
-        </button>
-    `;
-
-    // Add toast to container
-    toastContainer.appendChild(toast);
-
-    // Show toast with animation
-    setTimeout(() => {
-        toast.classList.remove('opacity-0', 'translate-x-4');
-    }, 10);
-
-    // Auto-remove after 4 seconds
-    setTimeout(() => {
-        toast.classList.add('opacity-0', 'translate-x-4');
-        setTimeout(() => toast.remove(), 300);
-    }, 4000);
-}
-
-// Function to preview resume
-function previewResume() {
-    const modal = document.getElementById('preview-modal');
-    modal.classList.remove('hidden');
-
-    // Simulate loading the preview (in a real app, you'd fetch this from the server)
-    setTimeout(() => {
-        document.getElementById('preview-content').innerHTML = `
-            <h1 class="text-2xl font-bold mb-4">Jane Doe</h1>
-            <p class="text-gray-600 mb-6">Senior Software Developer | San Francisco, CA</p>
-
-            <h2 class="text-lg font-bold mb-2 border-b border-gray-200 pb-1">Skills</h2>
-            <div class="mb-6">
-                <div class="flex flex-wrap gap-2 mb-3">
-                    ${Array.from(document.querySelectorAll('#skills_list .skill-card')).map(card => {
-                        const name = card.querySelector('input[name^="skill_name_"]').value;
-                        return `<span class="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">${name}</span>`;
-                    }).join('')}
-                </div>
-            </div>
-
-            <h2 class="text-lg font-bold mb-2 border-b border-gray-200 pb-1">Work Experience</h2>
-            <div class="mb-6">
-                <p class="text-gray-600">Your work experience will appear here.</p>
-            </div>
-
-            <h2 class="text-lg font-bold mb-2 border-b border-gray-200 pb-1">Education</h2>
-            <div class="mb-6">
-                <p class="text-gray-600">Your education will appear here.</p>
-            </div>
-        `;
-    }, 800);
-}
-
-// Function to close preview modal
-function closePreview() {
-    document.getElementById('preview-modal').classList.add('hidden');
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    // Set initial explanation
-    updateProficiencyExplanation(document.getElementById('add_proficiency_level').value);
-
-    // Add enter key handler for skill name input
-    document.getElementById('add_skill_name').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            document.getElementById('add_skill_btn').click();
-        }
-    });
-
-    // Close modal when clicking outside
-    const modal = document.getElementById('preview-modal');
-    if (modal) {
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                closePreview();
-            }
-        });
-    }
-
-    // Close modal with escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
-            closePreview();
-        }
-    });
-});
-</script>
-{% endblock %}
+{#    </div>#}
+{#</form>#}
+{##}
+{#<!-- Preview modal (hidden by default) -->#}
+{#<div id="preview-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">#}
+{#    <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">#}
+{#        <div class="p-4 border-b border-gray-100 flex justify-between items-center">#}
+{#            <h3 class="text-xl font-bold text-gray-800">Resume Preview</h3>#}
+{#            <button onclick="closePreview()" class="btn btn-sm btn-circle">#}
+{#                <i class="fa-solid fa-times"></i>#}
+{#            </button>#}
+{#        </div>#}
+{#        <div class="overflow-y-auto p-6 flex-grow">#}
+{#            <div id="preview-content" class="bg-white shadow-md rounded-lg p-8 mx-auto max-w-3xl">#}
+{#                <!-- Preview content will be loaded here -->#}
+{#                <div class="animate-pulse">#}
+{#                    <div class="h-10 bg-gray-200 rounded mb-6 w-1/2"></div>#}
+{#                    <div class="h-4 bg-gray-200 rounded mb-2 w-full"></div>#}
+{#                    <div class="h-4 bg-gray-200 rounded mb-2 w-full"></div>#}
+{#                    <div class="h-4 bg-gray-200 rounded mb-6 w-2/3"></div>#}
+{##}
+{#                    <div class="h-8 bg-gray-200 rounded mb-4 w-1/3"></div>#}
+{#                    <div class="flex space-x-2 mb-6">#}
+{#                        <div class="h-6 bg-gray-200 rounded w-24"></div>#}
+{#                        <div class="h-6 bg-gray-200 rounded w-24"></div>#}
+{#                        <div class="h-6 bg-gray-200 rounded w-24"></div>#}
+{#                    </div>#}
+{##}
+{#                    <div class="h-4 bg-gray-200 rounded mb-2 w-full"></div>#}
+{#                    <div class="h-4 bg-gray-200 rounded mb-2 w-full"></div>#}
+{#                    <div class="h-4 bg-gray-200 rounded mb-2 w-3/4"></div>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#        <div class="p-4 border-t border-gray-100 flex justify-end">#}
+{#            <button onclick="closePreview()" class="btn btn-primary">#}
+{#                Close Preview#}
+{#            </button>#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
+{##}
+{#<script>#}
+{#// Function to update proficiency explanation based on value#}
+{#function updateProficiencyExplanation(value) {#}
+{#    const explanation = document.getElementById('proficiency_explanation');#}
+{#    value = parseInt(value);#}
+{##}
+{#    if (value < 25) {#}
+{#        explanation.innerHTML = '<span>Beginner: Familiar with basic concepts</span>';#}
+{#    } else if (value < 50) {#}
+{#        explanation.innerHTML = '<span>Intermediate: Can work independently</span>';#}
+{#    } else if (value < 75) {#}
+{#        explanation.innerHTML = '<span>Advanced: Highly capable with deep knowledge</span>';#}
+{#    } else {#}
+{#        explanation.innerHTML = '<span>Expert: Mastery level with ability to teach</span>';#}
+{#    }#}
+{#}#}
+{##}
+{#// Helper function to get skill type label from value#}
+{#function getSkillTypeLabel(skillType) {#}
+{#    const skillTypeMap = {#}
+{#        'technical': 'Technical',#}
+{#        'soft': 'Soft Skill',#}
+{#        'language': 'Language',#}
+{#        'tools': 'Tool/Software'#}
+{#        // Add other skill types as needed#}
+{#    };#}
+{#    return skillTypeMap[skillType] || skillType;#}
+{#}#}
+{##}
+{#// Get color for proficiency bar based on value#}
+{#function getBarColor(value) {#}
+{#    value = parseInt(value);#}
+{#    if (value < 30) return "#60a5fa";#}
+{#    if (value < 60) return "#4ade80";#}
+{#    if (value < 85) return "#818cf8";#}
+{#    return "#a855f7";#}
+{#}#}
+{##}
+{#// Get color for skill type bar#}
+{#function getTypeColor(type) {#}
+{#    if (type === 'technical') return "#3b82f6";#}
+{#    if (type === 'soft') return "#22c55e";#}
+{#    if (type === 'language') return "#a855f7";#}
+{#    return "#f59e0b";#}
+{#}#}
+{##}
+{#// Function to add a skill#}
+{#function addSkill() {#}
+{#    const skillName = document.getElementById('add_skill_name').value.trim();#}
+{#    if (!skillName) {#}
+{#        showToast('Please enter a skill name', 'error');#}
+{#        return;#}
+{#    }#}
+{##}
+{#    const skillType = document.getElementById('add_skill_type').value;#}
+{#    const proficiency = document.getElementById('add_proficiency_level').value;#}
+{#    const years = document.getElementById('add_years').value || '0';#}
+{##}
+{#    // Get current skill count#}
+{#    const skillCountInput = document.getElementById('skill_count');#}
+{#    const currentIndex = parseInt(skillCountInput.value);#}
+{##}
+{#    // Show skills container if it's empty#}
+{#    document.getElementById('skills_empty_state').classList.add('hidden');#}
+{#    document.getElementById('skills_list').classList.remove('hidden');#}
+{##}
+{#    // Add loading animation to button#}
+{#    const addBtn = document.getElementById('add_skill_btn');#}
+{#    const originalBtnText = addBtn.innerHTML;#}
+{#    addBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding...';#}
+{#    addBtn.disabled = true;#}
+{##}
+{#    // Create skill card with direct inline styles#}
+{#    const skillsList = document.getElementById('skills_list');#}
+{##}
+{#    // Simple div creation with HTML string for simpler approach#}
+{#    const skillCard = document.createElement('div');#}
+{#    skillCard.className = 'skill-card relative bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden';#}
+{#    skillCard.id = `skill_card_${currentIndex}`;#}
+{##}
+{#    // Create the HTML with inline styles for color and width#}
+{#    skillCard.innerHTML = `#}
+{#        <input type="hidden" name="skill_name_${currentIndex}" value="${skillName}">#}
+{#        <input type="hidden" name="skill_type_${currentIndex}" value="${skillType}">#}
+{#        <input type="hidden" name="proficiency_level_${currentIndex}" value="${proficiency}">#}
+{#        <input type="hidden" name="years_${currentIndex}" value="${years}">#}
+{##}
+{#        <div class="p-5 flex items-center gap-4">#}
+{#            <!-- Skill icon, name and type - LEFT SIDE -->#}
+{#            <div class="flex-shrink-0 w-48">#}
+{#                <div class="flex items-center gap-3">#}
+{#                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">#}
+{#                        <i class="fa-solid fa-star text-primary"></i>#}
+{#                    </div>#}
+{#                    <div>#}
+{#                        <div class="font-bold text-gray-800">${skillName}</div>#}
+{#                        <div class="text-sm text-gray-500 mt-1">#}
+{#                            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs">#}
+{#                                ${getSkillTypeLabel(skillType)}#}
+{#                            </span>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <!-- Years experience - CENTER -->#}
+{#            <div class="flex-shrink-0 w-24 text-center">#}
+{#                <div class="text-sm text-gray-700 font-medium">#}
+{#                    ${years} year${years != 1 ? 's' : ''}#}
+{#                </div>#}
+{#                <div class="text-xs text-gray-500">experience</div>#}
+{#            </div>#}
+{##}
+{#            <!-- Proficiency bar - RIGHT SIDE (fixed width) -->#}
+{#            <div class="flex-grow flex flex-col items-end">#}
+{#                <div class="w-full max-w-[200px]">#}
+{#                    <div class="flex justify-between items-center mb-1">#}
+{#                        <span class="text-xs text-gray-500">Proficiency</span>#}
+{#                        <span class="text-sm font-medium text-gray-700">${proficiency}%</span>#}
+{#                    </div>#}
+{#                    <div class="h-3 bg-gray-100 rounded-full overflow-hidden shadow-inner">#}
+{#                        <div class="h-full rounded-full" style="background-color: ${getBarColor(proficiency)}; width: ${proficiency}%;"></div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <!-- Controls -->#}
+{#            <div class="flex-shrink-0 flex items-center gap-2 ml-4">#}
+{#                <button type="button" class="w-8 h-8 rounded-full text-gray-400 hover:text-primary hover:bg-primary/10 transition-all duration-200"#}
+{#                        title="Edit skill"#}
+{#                        onclick="editSkill(${currentIndex})">#}
+{#                    <i class="fa-solid fa-pen-to-square"></i>#}
+{#                </button>#}
+{#                <button type="button" class="w-8 h-8 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200"#}
+{#                        title="Remove skill"#}
+{#                        onclick="removeSkill(${currentIndex})">#}
+{#                    <i class="fa-solid fa-trash-can"></i>#}
+{#                </button>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#        <!-- Skill type indicator bar -->#}
+{#        <div class="absolute bottom-0 left-0 right-0 h-1" style="background-color: ${getTypeColor(skillType)};"></div>#}
+{#    `;#}
+{##}
+{#    // Add to DOM#}
+{#    skillsList.appendChild(skillCard);#}
+{##}
+{#    // Update skill count#}
+{#    skillCountInput.value = currentIndex + 1;#}
+{##}
+{#    // Reset form#}
+{#    document.getElementById('add_skill_name').value = '';#}
+{#    document.getElementById('add_skill_type').selectedIndex = 0;#}
+{#    document.getElementById('add_proficiency_level').value = 50;#}
+{#    document.getElementById('proficiency_output').textContent = '50';#}
+{#    updateProficiencyExplanation(50);#}
+{##}
+{#    // Reset button#}
+{#    addBtn.innerHTML = originalBtnText;#}
+{#    addBtn.disabled = false;#}
+{##}
+{#    // Scroll to the new skill with smooth behavior#}
+{#    skillCard.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{##}
+{#    // Show success toast#}
+{#    showToast(`Added ${skillName} to your skills`, 'success');#}
+{#}#}
+{##}
+{#// Function to edit a skill#}
+{#function editSkill(index) {#}
+{#    // Get the hidden inputs#}
+{#    const nameInput = document.querySelector(`#skill_card_${index} input[name="skill_name_${index}"]`);#}
+{#    const typeInput = document.querySelector(`#skill_card_${index} input[name="skill_type_${index}"]`);#}
+{#    const proficiencyInput = document.querySelector(`#skill_card_${index} input[name="proficiency_level_${index}"]`);#}
+{#    const yearsInput = document.querySelector(`#skill_card_${index} input[name="years_${index}"]`);#}
+{##}
+{#    // Set the values in the form#}
+{#    document.getElementById('add_skill_name').value = nameInput.value;#}
+{##}
+{#    // Find the matching option in the select element#}
+{#    const skillTypeSelect = document.getElementById('add_skill_type');#}
+{#    const options = skillTypeSelect.options;#}
+{##}
+{#    for (let i = 0; i < options.length; i++) {#}
+{#        if (options[i].value === typeInput.value) {#}
+{#            skillTypeSelect.selectedIndex = i;#}
+{#            break;#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Set values for other fields#}
+{#    document.getElementById('add_proficiency_level').value = proficiencyInput.value;#}
+{#    document.getElementById('proficiency_output').textContent = proficiencyInput.value;#}
+{#    document.getElementById('add_years').value = yearsInput.value;#}
+{#    updateProficiencyExplanation(proficiencyInput.value);#}
+{##}
+{#    // Add highlight to the form#}
+{#    const form = document.querySelector('.sticky');#}
+{#    form.classList.add('ring-2', 'ring-primary', 'ring-offset-2');#}
+{#    setTimeout(() => {#}
+{#        form.classList.remove('ring-2', 'ring-primary', 'ring-offset-2');#}
+{#    }, 1500);#}
+{##}
+{#    // Show toast for editing#}
+{#    showToast(`Editing skill: ${nameInput.value}`, 'info');#}
+{##}
+{#    // Remove the skill card#}
+{#    removeSkill(index);#}
+{##}
+{#    // Focus on the skill name input#}
+{#    document.getElementById('add_skill_name').focus();#}
+{##}
+{#    // Scroll to form#}
+{#    form.scrollIntoView({ behavior: 'smooth', block: 'start' });#}
+{#}#}
+{##}
+{#// Function to remove a skill#}
+{#function removeSkill(index) {#}
+{#    // Get the skill name for the toast notification#}
+{#    const skillCard = document.getElementById(`skill_card_${index}`);#}
+{#    const skillName = skillCard.querySelector(`input[name="skill_name_${index}"]`).value;#}
+{##}
+{#    // Add fade-out animation#}
+{#    skillCard.classList.add('opacity-0', 'scale-95', 'translate-x-4');#}
+{#    skillCard.style.transition = 'all 0.3s ease-out';#}
+{##}
+{#    // Remove after animation#}
+{#    setTimeout(() => {#}
+{#        skillCard.remove();#}
+{##}
+{#        // Re-order the indices#}
+{#        reorderSkillCards();#}
+{##}
+{#        // Show empty state if no skills are left#}
+{#        const skillsList = document.getElementById('skills_list');#}
+{#        if (skillsList.children.length === 0) {#}
+{#            document.getElementById('skills_empty_state').classList.remove('hidden');#}
+{#            document.getElementById('skills_list').classList.add('hidden');#}
+{#        }#}
+{##}
+{#        // Show toast notification#}
+{#        showToast(`Removed ${skillName} from your skills`, 'info');#}
+{#    }, 300);#}
+{#}#}
+{##}
+{#// Function to reorder skill cards#}
+{#function reorderSkillCards() {#}
+{#    const skillCards = document.querySelectorAll('#skills_list .skill-card');#}
+{#    const skillCount = skillCards.length;#}
+{##}
+{#    // Update the skill count#}
+{#    document.getElementById('skill_count').value = skillCount;#}
+{##}
+{#    // Reindex all skill cards#}
+{#    skillCards.forEach((card, newIndex) => {#}
+{#        // Get the current index#}
+{#        const currentIndex = card.id.replace('skill_card_', '');#}
+{##}
+{#        if (currentIndex != newIndex) {#}
+{#            // Update the card ID#}
+{#            card.id = `skill_card_${newIndex}`;#}
+{##}
+{#            // Update hidden inputs#}
+{#            const inputs = card.querySelectorAll('input[type="hidden"]');#}
+{#            inputs.forEach(input => {#}
+{#                const name = input.name;#}
+{#                const newName = name.replace(`_${currentIndex}`, `_${newIndex}`);#}
+{#                input.name = newName;#}
+{#            });#}
+{##}
+{#            // Update button onclick attributes#}
+{#            const editBtn = card.querySelector('button[onclick^="editSkill"]');#}
+{#            const removeBtn = card.querySelector('button[onclick^="removeSkill"]');#}
+{##}
+{#            if (editBtn) {#}
+{#                editBtn.setAttribute('onclick', `editSkill(${newIndex})`);#}
+{#            }#}
+{##}
+{#            if (removeBtn) {#}
+{#                removeBtn.setAttribute('onclick', `removeSkill(${newIndex})`);#}
+{#            }#}
+{#        }#}
+{#    });#}
+{#}#}
+{##}
+{#// Function to show a toast notification#}
+{#function showToast(message, type = 'info') {#}
+{#    // Create toast container if it doesn't exist#}
+{#    let toastContainer = document.getElementById('toast-container');#}
+{#    if (!toastContainer) {#}
+{#        toastContainer = document.createElement('div');#}
+{#        toastContainer.id = 'toast-container';#}
+{#        toastContainer.className = 'fixed bottom-4 right-4 z-50 flex flex-col gap-2';#}
+{#        document.body.appendChild(toastContainer);#}
+{#    }#}
+{##}
+{#    // Create toast element#}
+{#    const toast = document.createElement('div');#}
+{#    toast.className = 'bg-white shadow-lg rounded-lg p-4 flex items-center gap-3 min-w-[300px] transform transition-all duration-300 opacity-0 translate-x-4';#}
+{##}
+{#    // Set icon and color based on type#}
+{#    let icon, bgColor, textColor;#}
+{#    switch (type) {#}
+{#        case 'success':#}
+{#            icon = '<i class="fa-solid fa-check-circle"></i>';#}
+{#            bgColor = 'bg-green-50';#}
+{#            textColor = 'text-green-600';#}
+{#            break;#}
+{#        case 'error':#}
+{#            icon = '<i class="fa-solid fa-times-circle"></i>';#}
+{#            bgColor = 'bg-red-50';#}
+{#            textColor = 'text-red-600';#}
+{#            break;#}
+{#        case 'warning':#}
+{#            icon = '<i class="fa-solid fa-exclamation-triangle"></i>';#}
+{#            bgColor = 'bg-yellow-50';#}
+{#            textColor = 'text-yellow-600';#}
+{#            break;#}
+{#        default: // info#}
+{#            icon = '<i class="fa-solid fa-info-circle"></i>';#}
+{#            bgColor = 'bg-blue-50';#}
+{#            textColor = 'text-blue-600';#}
+{#    }#}
+{##}
+{#    toast.classList.add(bgColor);#}
+{#    toast.innerHTML = `#}
+{#        <div class="${textColor} text-xl">${icon}</div>#}
+{#        <div class="flex-grow text-gray-700">${message}</div>#}
+{#        <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="this.parentElement.remove()">#}
+{#            <i class="fa-solid fa-times"></i>#}
+{#        </button>#}
+{#    `;#}
+{##}
+{#    // Add toast to container#}
+{#    toastContainer.appendChild(toast);#}
+{##}
+{#    // Show toast with animation#}
+{#    setTimeout(() => {#}
+{#        toast.classList.remove('opacity-0', 'translate-x-4');#}
+{#    }, 10);#}
+{##}
+{#    // Auto-remove after 4 seconds#}
+{#    setTimeout(() => {#}
+{#        toast.classList.add('opacity-0', 'translate-x-4');#}
+{#        setTimeout(() => toast.remove(), 300);#}
+{#    }, 4000);#}
+{#}#}
+{##}
+{#// Function to preview resume#}
+{#function previewResume() {#}
+{#    const modal = document.getElementById('preview-modal');#}
+{#    modal.classList.remove('hidden');#}
+{##}
+{#    // Simulate loading the preview (in a real app, you'd fetch this from the server)#}
+{#    setTimeout(() => {#}
+{#        document.getElementById('preview-content').innerHTML = `#}
+{#            <h1 class="text-2xl font-bold mb-4">Jane Doe</h1>#}
+{#            <p class="text-gray-600 mb-6">Senior Software Developer | San Francisco, CA</p>#}
+{##}
+{#            <h2 class="text-lg font-bold mb-2 border-b border-gray-200 pb-1">Skills</h2>#}
+{#            <div class="mb-6">#}
+{#                <div class="flex flex-wrap gap-2 mb-3">#}
+{#                    ${Array.from(document.querySelectorAll('#skills_list .skill-card')).map(card => {#}
+{#                        const name = card.querySelector('input[name^="skill_name_"]').value;#}
+{#                        return `<span class="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">${name}</span>`;#}
+{#                    }).join('')}#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <h2 class="text-lg font-bold mb-2 border-b border-gray-200 pb-1">Work Experience</h2>#}
+{#            <div class="mb-6">#}
+{#                <p class="text-gray-600">Your work experience will appear here.</p>#}
+{#            </div>#}
+{##}
+{#            <h2 class="text-lg font-bold mb-2 border-b border-gray-200 pb-1">Education</h2>#}
+{#            <div class="mb-6">#}
+{#                <p class="text-gray-600">Your education will appear here.</p>#}
+{#            </div>#}
+{#        `;#}
+{#    }, 800);#}
+{#}#}
+{##}
+{#// Function to close preview modal#}
+{#function closePreview() {#}
+{#    document.getElementById('preview-modal').classList.add('hidden');#}
+{#}#}
+{##}
+{#// Initialize on page load#}
+{#document.addEventListener('DOMContentLoaded', function() {#}
+{#    // Set initial explanation#}
+{#    updateProficiencyExplanation(document.getElementById('add_proficiency_level').value);#}
+{##}
+{#    // Add enter key handler for skill name input#}
+{#    document.getElementById('add_skill_name').addEventListener('keypress', function(e) {#}
+{#        if (e.key === 'Enter') {#}
+{#            e.preventDefault();#}
+{#            document.getElementById('add_skill_btn').click();#}
+{#        }#}
+{#    });#}
+{##}
+{#    // Close modal when clicking outside#}
+{#    const modal = document.getElementById('preview-modal');#}
+{#    if (modal) {#}
+{#        modal.addEventListener('click', function(e) {#}
+{#            if (e.target === modal) {#}
+{#                closePreview();#}
+{#            }#}
+{#        });#}
+{#    }#}
+{##}
+{#    // Close modal with escape key#}
+{#    document.addEventListener('keydown', function(e) {#}
+{#        if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {#}
+{#            closePreview();#}
+{#        }#}
+{#    });#}
+{#});#}
+{#</script>#}
+{#{% endblock %}#}

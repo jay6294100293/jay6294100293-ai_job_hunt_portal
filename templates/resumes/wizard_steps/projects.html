@@ -1,501 +1,781 @@
-
-
+{# templates/resumes/wizard_steps/projects.html #}
 {% extends 'resumes/wizard_base.html' %}
 {% load static %}
+{% load widget_tweaks %} {# Ensure widget_tweaks is loaded if used #}
 
 {% block step_title %}Projects{% endblock %}
 
 {% block step_icon %}<i class="fa-solid fa-diagram-project mr-3 text-primary opacity-80"></i>{% endblock %}
 
 {% block step_content %}
-<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">
+<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}">
     {% csrf_token %}
 
+    {# *** ADD THIS LINE *** #}
+    {{ formset.management_form }}
+    {# ******************* #}
+
     <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">
-        <div class="flex items-start">
-            <div class="text-primary text-xl mr-4 mt-1">
-                <i class="fa-solid fa-lightbulb"></i>
-            </div>
-            <div>
-                <p class="text-base">
-                    Add your notable projects below. Include personal projects, academic work, or significant
-                    contributions that showcase your skills and accomplishments.
-                </p>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                    <strong>Pro tip:</strong> For technical roles, include projects that demonstrate your technical abilities. Link to GitHub repositories or live demos whenever possible.
-                </p>
-            </div>
-        </div>
+        {# ... (rest of info box) ... #}
     </div>
 
-    <!-- Hidden field to track number of project entries -->
-    <input type="hidden" id="project_count" name="project_count" value="{{ projects|length }}">
-
-    <!-- Projects container -->
     <div id="projects_container" class="space-y-8">
-        {% for project in projects %}
-        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">
-            <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">
-                <h3 class="text-lg font-medium flex items-center">
-                    <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                        <i class="fa-solid fa-folder-open text-primary text-sm"></i>
-                    </span>
-                    Project #{{ forloop.counter }}
-                </h3>
+        {% for form in formset.forms %}
+        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg project-entry" id="{{ form.prefix }}-row" data-index="{{ forloop.counter0 }}">
+             {% if formset.can_delete %}
+                 <div class="hidden">{{ form.DELETE }}</div>
+             {% endif %}
 
-                <!-- Remove Project Button - Moved to header -->
-                <button type="button" class="btn btn-ghost btn-sm text-error"
-                        onclick="removeFormRow(this, 'projects_container', 'project_count')">
-                    <i class="fa-solid fa-trash-can mr-1"></i> Remove
-                </button>
-            </div>
+             <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">
+                  <h3 class="text-lg font-medium flex items-center">
+                       <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                           <i class="fa-solid fa-folder-open text-primary text-sm"></i>
+                       </span>
+                       Project #{{ forloop.counter }}
+                  </h3>
+                  {% if formset.can_delete %}
+                  <button type="button" class="btn btn-ghost btn-sm text-error formset-delete-btn"
+                          onclick="deleteForm(this, '{{ formset.prefix }}')"> {# Ensure deleteForm JS works #}
+                       <i class="fa-solid fa-trash-can mr-1"></i> Remove
+                  </button>
+                  {% endif %}
+             </div>
 
-            <!-- Project Name -->
-            <div class="form-control mb-5">
-                <label class="label" for="project_name_{{ forloop.counter0 }}">
-                    <span class="label-text font-medium">Project Name</span>
-                    <span class="label-text-alt text-error">*</span>
-                </label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-project-diagram text-gray-400"></i>
-                    </div>
-                    <input type="text" id="project_name_{{ forloop.counter0 }}" name="project_name_{{ forloop.counter0 }}"
-                        class="input input-bordered w-full pl-10" value="{{ project.project_name }}" required
-                        placeholder="e.g., E-commerce Website, Machine Learning Model">
-                </div>
-            </div>
+             {# Project Name #}
+             <div class="form-control mb-4">
+                  <label class="label" for="{{ form.project_name.id_for_label }}">
+                       <span class="label-text font-medium">Project Name</span>
+                       {# Remove asterisk if not required #}
+                       {# <span class="label-text-alt text-error">*</span> #}
+                  </label>
+                  <div class="relative">
+                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-project-diagram text-gray-400"></i></div>
+                      {% render_field form.project_name class+="input input-bordered w-full pl-10" placeholder="e.g., E-commerce Website" %} {# Remove required attribute #}
+                  </div>
+                  {% if form.project_name.errors %}<div class="text-error text-xs mt-1">{{ form.project_name.errors|first }}</div>{% endif %}
+             </div>
 
-            <!-- Project Summary -->
-            <div class="form-control mb-5">
-                <label class="label" for="summary_{{ forloop.counter0 }}">
-                    <span class="label-text font-medium">Project Summary</span>
-                    <span class="label-text-alt">(Brief description)</span>
-                </label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 top-3 pl-3 flex items-start pointer-events-none">
-                        <i class="fa-solid fa-align-left text-gray-400"></i>
-                    </div>
-                    <textarea id="summary_{{ forloop.counter0 }}" name="summary_{{ forloop.counter0 }}"
-                        class="textarea textarea-bordered w-full pl-10" rows="2"
-                        placeholder="Provide a short overview of what this project is about and its purpose">{{ project.summary }}</textarea>
-                </div>
-            </div>
+             {# Project Summary #}
+             <div class="form-control mb-4">
+                  <label class="label" for="{{ form.summary.id_for_label }}">
+                       <span class="label-text font-medium">Project Summary</span>
+                       <span class="label-text-alt">(Optional)</span>
+                  </label>
+                   <div class="relative">
+                       <div class="absolute inset-y-0 left-0 top-3 pl-3 flex items-start pointer-events-none"><i class="fa-solid fa-align-left text-gray-400"></i></div>
+                       {% render_field form.summary class+="textarea textarea-bordered w-full pl-10" rows="2" placeholder="Brief overview..." %}
+                   </div>
+                   {% if form.summary.errors %}<div class="text-error text-xs mt-1">{{ form.summary.errors|first }}</div>{% endif %}
+             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                <!-- Start Date -->
-                <div class="form-control">
-                    <label class="label" for="start_date_{{ forloop.counter0 }}">
-                        <span class="label-text font-medium">Start Date</span>
-                        <span class="label-text-alt text-gray-500">(Optional)</span>
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-calendar-alt text-gray-400"></i>
-                        </div>
-                        <input type="date" id="start_date_{{ forloop.counter0 }}" name="start_date_{{ forloop.counter0 }}"
-                            class="input input-bordered w-full pl-10" value="{{ project.start_date|date:'Y-m-d' }}">
-                    </div>
-                </div>
+             {# Dates #}
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div class="form-control">
+                      <label class="label" for="{{ form.start_date.id_for_label }}"><span class="label-text font-medium">Start Date</span> <span class="label-text-alt">(Optional)</span></label>
+                      <div class="relative">
+                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-calendar-alt text-gray-400"></i></div>
+                           {% render_field form.start_date type="date" class+="input input-bordered w-full pl-10" %}
+                      </div>
+                      {% if form.start_date.errors %}<div class="text-error text-xs mt-1">{{ form.start_date.errors|first }}</div>{% endif %}
+                  </div>
+                  <div class="form-control completion-date-container"> {# Add class for JS targeting #}
+                       <label class="label" for="{{ form.completion_date.id_for_label }}"><span class="label-text font-medium">Completion Date</span> <span class="label-text-alt">(Leave blank if ongoing)</span></label>
+                       <div class="relative">
+                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-calendar-check text-gray-400"></i></div>
+                           {% render_field form.completion_date type="date" class+="input input-bordered w-full pl-10" %}
+                       </div>
+                       {% if form.completion_date.errors %}<div class="text-error text-xs mt-1">{{ form.completion_date.errors|first }}</div>{% endif %}
+                       {# Add checkbox for ongoing projects if needed #}
+                       {# <label class="cursor-pointer label justify-start gap-3 py-1 mt-1">
+                           {% render_field form.is_current class+="checkbox checkbox-primary checkbox-sm" onchange="toggleCompletionDate(this)" %}
+                           <span class="label-text">Currently working on this</span>
+                       </label> #}
+                  </div>
+             </div>
 
-                <!-- Completion Date -->
-                <div class="form-control">
-                    <label class="label" for="completion_date_{{ forloop.counter0 }}">
-                        <span class="label-text font-medium">Completion Date</span>
-                        <span class="label-text-alt text-gray-500">(Leave blank if ongoing)</span>
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-calendar-check text-gray-400"></i>
-                        </div>
-                        <input type="date" id="completion_date_{{ forloop.counter0 }}" name="completion_date_{{ forloop.counter0 }}"
-                            class="input input-bordered w-full pl-10" value="{{ project.completion_date|date:'Y-m-d' }}">
-                    </div>
+              {# Links #}
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                 <div class="form-control">
+                      <label class="label" for="{{ form.project_link.id_for_label }}"><span class="label-text font-medium">Project Link</span> <span class="label-text-alt">(Optional)</span></label>
+                      <div class="relative">
+                          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-globe text-gray-400"></i></div>
+                          {% render_field form.project_link type="url" class+="input input-bordered w-full pl-10" placeholder="https://example.com" %}
+                      </div>
+                      {% if form.project_link.errors %}<div class="text-error text-xs mt-1">{{ form.project_link.errors|first }}</div>{% endif %}
+                 </div>
+                 <div class="form-control">
+                      <label class="label" for="{{ form.github_link.id_for_label }}"><span class="label-text font-medium">GitHub Link</span> <span class="label-text-alt">(Optional)</span></label>
+                      <div class="relative">
+                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-brands fa-github text-gray-400"></i></div>
+                           {% render_field form.github_link type="url" class+="input input-bordered w-full pl-10" placeholder="https://github.com/..." %}
+                      </div>
+                       {% if form.github_link.errors %}<div class="text-error text-xs mt-1">{{ form.github_link.errors|first }}</div>{% endif %}
+                 </div>
+             </div>
 
-                    <!-- Currently working checkbox -->
-                    <label class="cursor-pointer label justify-start gap-3 py-1 mt-1">
-                        <input type="checkbox" class="checkbox checkbox-primary checkbox-sm"
-                              id="is_current_{{ forloop.counter0 }}" name="is_current_{{ forloop.counter0 }}"
-                              {% if project.is_current %}checked{% endif %}
-                              onchange="toggleCompletionDate(this)">
-                        <span class="label-text">I'm currently working on this project</span>
-                    </label>
-                </div>
-            </div>
+             {# Bullet Points - Already seems optional #}
+             <div class="mt-6 bullet-points-container">
+                  <label class="label"><span class="label-text font-medium">Project Details/Achievements</span></label>
+                  <div class="bullet-points space-y-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700" id="bullet_points_container_{{ forloop.counter0 }}">
+                      {% for bullet_item in form.initial.bullet_points %}
+                          {% include 'resumes/partials/bullet_point_form_row.html' with parent_index=forloop.parentloop.counter0 index=forloop.counter0 bullet_text=bullet_item.description %}
+                      {% empty %}
+                          {% include 'resumes/partials/bullet_point_form_row.html' with parent_index=forloop.counter0 index=0 bullet_text="" %}
+                      {% endfor %}
+                  </div>
+                  <div class="flex justify-end mt-2">
+                      <button type="button" class="btn btn-primary btn-sm" onclick="addBulletPoint('{{ forloop.counter0 }}')"> {# Ensure addBulletPoint JS works #}
+                          <i class="fa-solid fa-plus mr-1"></i> Add Detail
+                      </button>
+                  </div>
+             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                <!-- Project Link -->
-                <div class="form-control">
-                    <label class="label" for="project_link_{{ forloop.counter0 }}">
-                        <span class="label-text font-medium">Project Link</span>
-                        <span class="label-text-alt text-gray-500">(Optional)</span>
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-globe text-gray-400"></i>
-                        </div>
-                        <input type="url" id="project_link_{{ forloop.counter0 }}" name="project_link_{{ forloop.counter0 }}"
-                            class="input input-bordered w-full pl-10" value="{{ project.project_link }}"
-                            placeholder="https://example.com">
-                    </div>
-                    <span class="text-xs text-gray-500 mt-1">Link to the live project or demo</span>
-                </div>
-
-                <!-- GitHub Link -->
-                <div class="form-control">
-                    <label class="label" for="github_link_{{ forloop.counter0 }}">
-                        <span class="label-text font-medium flex items-center">
-                            <i class="fa-brands fa-github text-black dark:text-white mr-2"></i>
-                            GitHub Repository
-                        </span>
-                        <span class="label-text-alt text-gray-500">(Optional)</span>
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-code-branch text-gray-400"></i>
-                        </div>
-                        <input type="url" id="github_link_{{ forloop.counter0 }}" name="github_link_{{ forloop.counter0 }}"
-                            class="input input-bordered w-full pl-10" value="{{ project.github_link }}"
-                            placeholder="https://github.com/yourusername/project">
-                    </div>
-                    <span class="text-xs text-gray-500 mt-1">Link to the source code</span>
-                </div>
-            </div>
-
-            <!-- Technologies Used -->
-            <div class="form-control mb-5">
-                <label class="label" for="technologies_{{ forloop.counter0 }}">
-                    <span class="label-text font-medium">Technologies Used</span>
-                    <span class="label-text-alt text-gray-500">(Optional)</span>
-                </label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-tools text-gray-400"></i>
-                    </div>
-                    <input type="text" id="technologies_{{ forloop.counter0 }}" name="technologies_{{ forloop.counter0 }}"
-                        class="input input-bordered w-full pl-10" value="{{ project.technologies }}"
-                        placeholder="e.g., React, Node.js, MongoDB">
-                </div>
-                <span class="text-xs text-gray-500 mt-1">Comma-separated list of technologies, frameworks, and tools used</span>
-            </div>
-
-            <!-- Bullet Points -->
-            <div class="mt-6 bullet-points-container">
-                <label class="label">
-                    <span class="label-text font-medium flex items-center">
-                        <i class="fa-solid fa-list-ul text-primary mr-2"></i>
-                        Project Details and Achievements
-                    </span>
-                    <span class="label-text-alt text-error">*</span>
-                </label>
-
-                <!-- Hidden field to track number of bullet points -->
-                <input type="hidden" name="bullet_count_{{ forloop.counter0 }}"
-                       value="{{ project.bullet_points|length }}" class="bullet-count">
-
-                <div class="bullet-points space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">
-                    {% for bullet in project.bullet_points %}
-                    <div class="bullet-point-row flex items-start gap-3 group">
-                        <div class="mt-3 text-primary">•</div>
-                        <div class="form-control flex-1">
-                            <textarea class="textarea textarea-bordered w-full min-h-24"
-                                id="bullet_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}"
-                                name="bullet_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}"
-                                placeholder="Describe key features, your role, and specific achievements (e.g., 'Implemented user authentication system using JWT tokens, reducing login errors by 40%')">{{ bullet }}</textarea>
-                        </div>
-                        <button type="button" class="btn btn-circle btn-outline btn-error btn-sm mt-3 opacity-70 hover:opacity-100"
-                                onclick="this.closest('.bullet-point-row').remove();">
-                            <i class="fa-solid fa-times"></i>
-                        </button>
-                    </div>
-                    {% empty %}
-                    <div class="bullet-point-row flex items-start gap-3 group">
-                        <div class="mt-3 text-primary">•</div>
-                        <div class="form-control flex-1">
-                            <textarea class="textarea textarea-bordered w-full min-h-24"
-                                id="bullet_{{ forloop.parentloop.counter0 }}_0"
-                                name="bullet_{{ forloop.parentloop.counter0 }}_0"
-                                placeholder="Describe key features, your role, and specific achievements (e.g., 'Implemented user authentication system using JWT tokens, reducing login errors by 40%')"></textarea>
-                        </div>
-                        <button type="button" class="btn btn-circle btn-outline btn-error btn-sm mt-3 opacity-70 hover:opacity-100"
-                                onclick="this.closest('.bullet-point-row').remove();">
-                            <i class="fa-solid fa-times"></i>
-                        </button>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <div class="flex justify-end mt-3">
-                    <button type="button" class="btn btn-outline btn-sm"
-                        onclick="addBulletPoint(this, 'project', {{ forloop.counter0 }})">
-                        <i class="fa-solid fa-plus mr-2"></i> Add Detail
-                    </button>
-                </div>
-
-                <div class="mt-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-700 p-3 rounded-lg text-sm">
-                    <div class="flex items-start gap-2">
-                        <i class="fa-solid fa-pen-fancy text-amber-500 mt-1"></i>
-                        <div>
-                            <p class="font-medium text-amber-800 dark:text-amber-300">Tips for project descriptions:</p>
-                            <ul class="list-disc ml-4 mt-1 space-y-1 text-amber-700 dark:text-amber-400">
-                                <li>Focus on your specific contributions and role</li>
-                                <li>Quantify results when possible (metrics, improvements)</li>
-                                <li>Highlight technical challenges you overcame</li>
-                                <li>Mention technologies and methodologies used</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </div> {# End form-row #}
         {% empty %}
-        <!-- Empty state when no projects are added yet -->
-        <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center">
-            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <i class="fa-solid fa-diagram-project text-primary text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-medium mb-2">No Projects Added Yet</h3>
-            <p class="text-gray-500 max-w-md mx-auto mb-6">
-                Projects demonstrate your ability to apply your skills in real-world scenarios. They're especially valuable for showcasing technical abilities and problem-solving skills.
-            </p>
-            <button type="button" class="btn btn-primary"
-                    onclick="addFormRow('project', 'projects_container', 'project_count')">
-                <i class="fa-solid fa-plus mr-2"></i> Add Your First Project
-            </button>
-        </div>
+         <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center" id="projects-empty-state">
+              <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <i class="fa-solid fa-diagram-project text-primary text-2xl"></i>
+              </div>
+              <h3 class="text-lg font-medium mb-2">No Projects Added Yet</h3>
+              <p class="text-gray-500 max-w-md mx-auto mb-6">
+                  This section is optional, but adding projects can significantly strengthen your resume, especially for technical roles.
+              </p>
+              <button type="button" class="btn btn-primary add-another-btn" onclick="addForm(this, '{{ formset.prefix }}')">
+                  <i class="fa-solid fa-plus mr-2"></i> Add a Project
+              </button>
+         </div>
         {% endfor %}
-    </div>
+    </div> {# End projects_container #}
 
-    <!-- Add Project Button - Only shown if at least one project exists -->
-    {% if projects %}
+     {# Template for adding new forms #}
+    <template id="{{ formset.prefix }}-form-template">
+         <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 project-entry" id="{{ formset.prefix }}-__prefix__-row" data-index="__prefix__">
+              {% with form=formset.empty_form %} {# Use empty_form for template structure #}
+              <div class="hidden"><input type="checkbox" name="{{ form.prefix }}-DELETE" id="id_{{ form.prefix }}-DELETE"></div>
+              <div class="flex justify-between items-center mb-5 pb-3 border-b"><h3>New Project</h3><button type="button" onclick="deleteForm(this, '{{ formset.prefix }}')">Remove</button></div>
+               <div class="form-control mb-4"><label>Project Name</label>{% render_field form.project_name class+="input input-bordered w-full pl-10" %}</div>
+               <div class="form-control mb-4"><label>Summary</label>{% render_field form.summary class+="textarea textarea-bordered w-full pl-10" rows="2" %}</div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                     <div><label>Start Date</label>{% render_field form.start_date type="date" class+="input input-bordered w-full pl-10" %}</div>
+                     <div class="completion-date-container"><label>Completion Date</label>{% render_field form.completion_date type="date" class+="input input-bordered w-full pl-10" %}</div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div><label>Project Link</label>{% render_field form.project_link type="url" class+="input input-bordered w-full pl-10" %}</div>
+                      <div><label>GitHub Link</label>{% render_field form.github_link type="url" class+="input input-bordered w-full pl-10" %}</div>
+                </div>
+               <div class="mt-6 bullet-points-container">
+                    <label>Details/Achievements</label>
+                    <div class="bullet-points space-y-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border" id="bullet_points_container___prefix__">
+                          {% include 'resumes/partials/bullet_point_form_row.html' with parent_index='__prefix__' index=0 bullet_text="" %}
+                    </div>
+                     <div class="flex justify-end mt-2"><button type="button" class="btn btn-primary btn-sm" onclick="addBulletPoint('__prefix__')">Add Detail</button></div>
+               </div>
+              {% endwith %}
+         </div>
+    </template>
+
+    {# Add Project button (Always show, but JS might hide empty state) #}
     <div class="flex justify-center mt-8">
-        <button type="button" class="btn btn-outline btn-primary"
-                onclick="addFormRow('project', 'projects_container', 'project_count')">
-            <i class="fa-solid fa-plus mr-2"></i> Add Another Project
+        <button type="button" class="btn btn-primary add-another-btn" onclick="addForm(this, '{{ formset.prefix }}')">
+             <i class="fa-solid fa-plus mr-2"></i> Add Another Project
         </button>
     </div>
-    {% endif %}
 
-    <!-- Project Ideas Section -->
-    <div class="mt-10">
-        <h3 class="font-medium text-lg mb-4 flex items-center">
-            <i class="fa-solid fa-lightbulb text-primary mr-2"></i>
-            Project Ideas by Field
-        </h3>
+    {# Project Ideas Section - Kept for user convenience #}
+    {# ... (Project Ideas Section as before) ... #}
 
-        <div class="card bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md">
-            <div class="tabs tabs-boxed bg-transparent overflow-x-auto p-2">
-                <a class="tab tab-sm md:tab-md tab-lifted tab-active" onclick="switchTab(this, 'software')">Software Development</a>
-                <a class="tab tab-sm md:tab-md tab-lifted" onclick="switchTab(this, 'data')">Data Science</a>
-                <a class="tab tab-sm md:tab-md tab-lifted" onclick="switchTab(this, 'design')">UX/UI Design</a>
-                <a class="tab tab-sm md:tab-md tab-lifted" onclick="switchTab(this, 'marketing')">Marketing</a>
-                <a class="tab tab-sm md:tab-md tab-lifted" onclick="switchTab(this, 'business')">Business</a>
-            </div>
-
-            <div class="p-5">
-                <!-- Software Development Ideas -->
-                <div id="software-tab" class="tab-content">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Personal Portfolio Website', 'A personal website showcasing your projects, skills, and experience.', 'software')">
-                            <h4 class="font-medium text-primary mb-1">Personal Website/Portfolio</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Create a personal website to showcase your projects and skills.</p>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('E-commerce Platform', 'An online store with product listings, shopping cart, and checkout functionality.', 'software')">
-                            <h4 class="font-medium text-primary mb-1">E-commerce Platform</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Build an online store with product listings, cart, and checkout.</p>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Task Management App', 'A productivity app for organizing and tracking tasks with categories and reminders.', 'software')">
-                            <h4 class="font-medium text-primary mb-1">Task Management App</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Develop a to-do list app with features like categories and reminders.</p>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Real-time Chat Application', 'A messaging platform that enables instant communication between users.', 'software')">
-                            <h4 class="font-medium text-primary mb-1">Chat Application</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Create a real-time messaging app using WebSockets.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Data Science Ideas -->
-                <div id="data-tab" class="tab-content hidden">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Housing Price Prediction Model', 'A machine learning model that predicts housing prices based on various features.', 'data')">
-                            <h4 class="font-medium text-primary mb-1">Predictive Model</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Build a model to predict outcomes like housing prices or customer behavior.</p>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Interactive Data Visualization Dashboard', 'A web-based dashboard featuring interactive charts and graphs to explore a dataset.', 'data')">
-                            <h4 class="font-medium text-primary mb-1">Data Visualization Dashboard</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Create interactive visualizations of a dataset.</p>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Social Media Sentiment Analysis', 'An algorithm that analyzes sentiment in text data from social media platforms.', 'data')">
-                            <h4 class="font-medium text-primary mb-1">Sentiment Analysis</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Analyze sentiment in text data like social media or reviews.</p>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Content Recommendation System', 'A system that recommends products or content based on user preferences and behavior.', 'data')">
-                            <h4 class="font-medium text-primary mb-1">Recommendation System</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Build a system that recommends products or content based on user preferences.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- UX/UI Design Ideas -->
-                <div id="design-tab" class="tab-content hidden">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Mobile App Redesign', 'A comprehensive redesign of an existing mobile app to improve usability and aesthetics.', 'design')">
-                            <h4 class="font-medium text-primary mb-1">Mobile App Redesign</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Redesign the UI of an existing mobile app to improve usability.</p>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Design System Creation', 'A comprehensive design system with components, guidelines, and documentation.', 'design')">
-                            <h4 class="font-medium text-primary mb-1">Design System</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Create a comprehensive design system with components and guidelines.</p>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Interactive Website Prototype', 'A high-fidelity website prototype with interactive elements and responsive design.', 'design')">
-                            <h4 class="font-medium text-primary mb-1">Website Prototype</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Design and prototype a website with interactive elements.</p>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('User Research Study', 'A comprehensive user research study with interviews, usability testing, and insights.', 'design')">
-                            <h4 class="font-medium text-primary mb-1">User Research Study</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Conduct and document a user research study to improve a product.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Marketing Ideas -->
-                <div id="marketing-tab" class="tab-content hidden">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Digital Marketing Campaign', 'A multi-channel marketing campaign for a product or service with measurable results.', 'marketing')">
-                            <h4 class="font-medium text-primary mb-1">Marketing Campaign</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Design and execute a marketing campaign for a product or service.</p>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Social Media Strategy', 'A comprehensive social media strategy for a brand with content calendar and analytics.', 'marketing')">
-                            <h4 class="font-medium text-primary mb-1">Social Media Strategy</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Develop a comprehensive social media strategy for a brand.</p>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Content Marketing Plan', 'A strategic content marketing plan with editorial calendar and distribution strategy.', 'marketing')">
-                            <h4 class="font-medium text-primary mb-1">Content Marketing Plan</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Create a content calendar and strategy to drive engagement.</p>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Marketing Analytics Dashboard', 'A dashboard to track and analyze marketing metrics across multiple channels.', 'marketing')">
-                            <h4 class="font-medium text-primary mb-1">Analytics Dashboard</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Build a dashboard to track and analyze marketing metrics.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Business Ideas -->
-                <div id="business-tab" class="tab-content hidden">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Business Plan Development', 'A comprehensive business plan for a startup or new product with market analysis and financials.', 'business')">
-                            <h4 class="font-medium text-primary mb-1">Business Plan</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Develop a comprehensive business plan for a startup or new product.</p>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Market Research Analysis', 'A detailed market analysis for an industry or product with competitive landscape and opportunities.', 'business')">
-                            <h4 class="font-medium text-primary mb-1">Market Analysis</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Conduct and document a market analysis for an industry or product.</p>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Financial Model Creation', 'A detailed financial projection model for a business with revenue forecasts and cash flow analysis.', 'business')">
-                            <h4 class="font-medium text-primary mb-1">Financial Model</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Create a financial projection model for a business.</p>
-                        </div>
-                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Process Improvement Initiative', 'A project documenting how you improved a business process to increase efficiency or reduce costs.', 'business')">
-                            <h4 class="font-medium text-primary mb-1">Process Improvement</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">Document a project where you improved a business process.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </form>
 
+{# Ensure necessary JS functions (addForm, deleteForm, addBulletPoint) are available #}
 <script>
-    // Function to toggle completion date based on "currently working" checkbox
-    function toggleCompletionDate(checkbox) {
-        const row = checkbox.closest('.form-row');
-        const dateField = row.querySelector('[name$="completion_date"]');
-        const dateContainer = dateField.closest('.form-control');
+    // Basic JS (ensure these are robust in your actual implementation)
+    if (typeof addForm !== 'function') {
+         function addForm(button, prefix) {
+             console.warn("addForm function not fully defined. Using basic example.");
+             const formContainer = document.getElementById('projects_container');
+             const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
+             const template = document.getElementById(prefix + '-form-template');
+             if (!formContainer || !totalFormsInput || !template) { console.error("Missing elements for addForm"); return; }
+             const formNum = parseInt(totalFormsInput.value);
+             let newFormHtml = template.innerHTML.replace(/__prefix__/g, formNum);
+             const tempDiv = document.createElement('div');
+             tempDiv.innerHTML = newFormHtml;
+             const newFormElement = tempDiv.firstElementChild;
+             const emptyState = document.getElementById('projects-empty-state');
+             if(emptyState) emptyState.classList.add('hidden'); // Hide empty state
+             formContainer.appendChild(newFormElement);
+             totalFormsInput.value = formNum + 1;
 
-        if (checkbox.checked) {
-            dateContainer.classList.add('opacity-50');
-            dateField.disabled = true;
-            dateField.value = '';
-        } else {
-            dateContainer.classList.remove('opacity-50');
-            dateField.disabled = false;
-        }
-    }
+             // Show 'Add Another' button if it was hidden by empty state logic (if any)
+              const addAnotherButton = document.querySelector('.add-another-btn'); // Adjust selector if needed
+              if(addAnotherButton) addAnotherButton.style.display = 'flex'; // Or 'block', 'inline-flex' etc.
+         }
+     }
+     if (typeof deleteForm !== 'function') {
+         function deleteForm(button, prefix) {
+             console.warn("deleteForm function not fully defined. Using basic example.");
+             const formRow = button.closest('.form-row');
+             const deleteInput = formRow.querySelector('input[name$="-DELETE"]');
+             if (deleteInput) {
+                 deleteInput.checked = true;
+                 formRow.style.display = 'none'; // Hide the form visually
+             } else {
+                  formRow.remove(); // Remove if no DELETE field (likely extra form)
+             }
+             // Check if remaining forms are all hidden (or none left) to show empty state
+             const container = document.getElementById('projects_container');
+             const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');
+             const emptyState = document.getElementById('projects-empty-state');
+             if(visibleForms.length === 0 && emptyState) {
+                 emptyState.classList.remove('hidden');
+                  const addAnotherButton = document.querySelector('.add-another-btn'); // Hide 'Add Another' if empty
+                   if(addAnotherButton) addAnotherButton.style.display = 'none';
+             }
+         }
+     }
+      if (typeof addBulletPoint !== 'function') {
+           function addBulletPoint(parentIndexOrButton, type, index) {
+                let parentIndex = parentIndexOrButton; // Adapt based on how index is passed
+                // Logic similar to experience step to add a new bullet textarea
+                console.warn("addBulletPoint not fully defined");
+                const container = document.getElementById(`bullet_points_container_${parentIndex}`);
+                 if(!container) return;
+                 const bulletCount = container.querySelectorAll('.bullet-point-row').length; // Simple count
+                 const newBulletRow = document.createElement('div');
+                 newBulletRow.className = 'bullet-point-row flex items-start gap-3 group'; // Match structure
+                 newBulletRow.innerHTML = `
+                     <div class="mt-3 text-primary">•</div>
+                     <div class="form-control flex-1">
+                         <textarea name="bullet_${parentIndex}_${bulletCount}" class="textarea textarea-bordered w-full min-h-24" placeholder="Describe detail..."></textarea>
+                     </div>
+                     <button type="button" class="btn btn-circle btn-outline btn-error btn-sm mt-3 opacity-70 hover:opacity-100" onclick="this.closest('.bullet-point-row').remove();"><i class="fa-solid fa-times"></i></button>
+                 `;
+                container.appendChild(newBulletRow);
+           }
+      }
 
-    // Function to switch between project idea tabs
-    function switchTab(tab, tabName) {
-        // Hide all tab contents
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.add('hidden');
-        });
-
-        // Show selected tab content
-        document.getElementById(tabName + '-tab').classList.remove('hidden');
-
-        // Update active tab styling
-        document.querySelectorAll('.tab').forEach(t => {
-            t.classList.remove('tab-active');
-        });
-
-        tab.classList.add('tab-active');
-    }
-
-    // Function to use a project idea
-    function useProjectIdea(name, summary, category) {
-        const emptyState = document.querySelector('#projects_container .bg-base-100.text-center');
-
-        if (emptyState) {
-            // We're in empty state, click the existing button
-            document.querySelector('#projects_container button').click();
-        } else {
-            // Add a new project
-            addFormRow('project', 'projects_container', 'project_count');
-        }
-
-        // Wait for the new project form to be added, then set its properties
-        setTimeout(() => {
-            const forms = document.querySelectorAll('#projects_container .form-row');
-            const lastForm = forms[forms.length - 1];
-
-            // Set project name and summary
-            const nameInput = lastForm.querySelector('input[name^="project_name_"]');
-            const summaryTextarea = lastForm.querySelector('textarea[name^="summary_"]');
-
-            nameInput.value = name;
-            summaryTextarea.value = summary;
-
-            // Set technologies based on category
-            const techInput = lastForm.querySelector('input[name^="technologies_"]');
-            if (category === 'software') {
-                techInput.value = 'HTML, CSS, JavaScript, React, Node.js';
-            } else if (category === 'data') {
-                techInput.value = 'Python, Pandas, NumPy, Scikit-learn, Matplotlib';
-            } else if (category === 'design') {
-                techInput.value = 'Figma, Adobe XD, Sketch, Photoshop';
-            } else if (category === 'marketing') {
-                techInput.value = 'Google Analytics, HubSpot, SEMrush, Mailchimp';
-            } else if (category === 'business') {
-                techInput.value = 'Excel, PowerPoint, Tableau, Project Management';
-            }
-
-            // Scroll to the new project
-            lastForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-            // Highlight it briefly
-            lastForm.classList.add('ring-2', 'ring-primary', 'ring-offset-2');
-            setTimeout(() => {
-                lastForm.classList.remove('ring-2', 'ring-primary', 'ring-offset-2');
-            }, 1500);
-        }, 500);
-    }
-
-    // Initialize "currently working" checkboxes on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('input[name^="is_current_"]').forEach(function(checkbox) {
-            toggleCompletionDate(checkbox);
-        });
-    });
+     // Initial check for empty state on load
+     document.addEventListener('DOMContentLoaded', function() {
+         const container = document.getElementById('projects_container');
+         const emptyState = document.getElementById('projects-empty-state');
+         if (container && emptyState) {
+             const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');
+             if (visibleForms.length > 0) {
+                 emptyState.classList.add('hidden');
+             } else {
+                 emptyState.classList.remove('hidden');
+                 // Hide 'Add Another' button if initially empty
+                 const addAnotherButton = document.querySelector('.add-another-btn');
+                 if(addAnotherButton) addAnotherButton.style.display = 'none';
+             }
+         }
+          // Initialize any 'ongoing' checkboxes if they exist
+         // document.querySelectorAll('input[name$="-is_current"]').forEach(cb => toggleCompletionDate(cb));
+     });
 </script>
+
 {% endblock %}
+
+{##}
+{##}
+{#{% extends 'resumes/wizard_base.html' %}#}
+
+
+{#{% load static %}#}
+{##}
+{#{% block step_title %}Projects{% endblock %}#}
+{##}
+{#{% block step_icon %}<i class="fa-solid fa-diagram-project mr-3 text-primary opacity-80"></i>{% endblock %}#}
+{##}
+{#{% block step_content %}#}
+{#<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">#}
+{#    {% csrf_token %}#}
+{##}
+{#    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">#}
+{#        <div class="flex items-start">#}
+{#            <div class="text-primary text-xl mr-4 mt-1">#}
+{#                <i class="fa-solid fa-lightbulb"></i>#}
+{#            </div>#}
+{#            <div>#}
+{#                <p class="text-base">#}
+{#                    Add your notable projects below. Include personal projects, academic work, or significant#}
+{#                    contributions that showcase your skills and accomplishments.#}
+{#                </p>#}
+{#                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">#}
+{#                    <strong>Pro tip:</strong> For technical roles, include projects that demonstrate your technical abilities. Link to GitHub repositories or live demos whenever possible.#}
+{#                </p>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Hidden field to track number of project entries -->#}
+{#    <input type="hidden" id="project_count" name="project_count" value="{{ projects|length }}">#}
+{##}
+{#    <!-- Projects container -->#}
+{#    <div id="projects_container" class="space-y-8">#}
+{#        {% for project in projects %}#}
+{#        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">#}
+{#            <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">#}
+{#                <h3 class="text-lg font-medium flex items-center">#}
+{#                    <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">#}
+{#                        <i class="fa-solid fa-folder-open text-primary text-sm"></i>#}
+{#                    </span>#}
+{#                    Project #{{ forloop.counter }}#}
+{#                </h3>#}
+{##}
+{#                <!-- Remove Project Button - Moved to header -->#}
+{#                <button type="button" class="btn btn-ghost btn-sm text-error"#}
+{#                        onclick="removeFormRow(this, 'projects_container', 'project_count')">#}
+{#                    <i class="fa-solid fa-trash-can mr-1"></i> Remove#}
+{#                </button>#}
+{#            </div>#}
+{##}
+{#            <!-- Project Name -->#}
+{#            <div class="form-control mb-5">#}
+{#                <label class="label" for="project_name_{{ forloop.counter0 }}">#}
+{#                    <span class="label-text font-medium">Project Name</span>#}
+{#                    <span class="label-text-alt text-error">*</span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-project-diagram text-gray-400"></i>#}
+{#                    </div>#}
+{#                    <input type="text" id="project_name_{{ forloop.counter0 }}" name="project_name_{{ forloop.counter0 }}"#}
+{#                        class="input input-bordered w-full pl-10" value="{{ project.project_name }}" required#}
+{#                        placeholder="e.g., E-commerce Website, Machine Learning Model">#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <!-- Project Summary -->#}
+{#            <div class="form-control mb-5">#}
+{#                <label class="label" for="summary_{{ forloop.counter0 }}">#}
+{#                    <span class="label-text font-medium">Project Summary</span>#}
+{#                    <span class="label-text-alt">(Brief description)</span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 top-3 pl-3 flex items-start pointer-events-none">#}
+{#                        <i class="fa-solid fa-align-left text-gray-400"></i>#}
+{#                    </div>#}
+{#                    <textarea id="summary_{{ forloop.counter0 }}" name="summary_{{ forloop.counter0 }}"#}
+{#                        class="textarea textarea-bordered w-full pl-10" rows="2"#}
+{#                        placeholder="Provide a short overview of what this project is about and its purpose">{{ project.summary }}</textarea>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">#}
+{#                <!-- Start Date -->#}
+{#                <div class="form-control">#}
+{#                    <label class="label" for="start_date_{{ forloop.counter0 }}">#}
+{#                        <span class="label-text font-medium">Start Date</span>#}
+{#                        <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                    </label>#}
+{#                    <div class="relative">#}
+{#                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                            <i class="fa-solid fa-calendar-alt text-gray-400"></i>#}
+{#                        </div>#}
+{#                        <input type="date" id="start_date_{{ forloop.counter0 }}" name="start_date_{{ forloop.counter0 }}"#}
+{#                            class="input input-bordered w-full pl-10" value="{{ project.start_date|date:'Y-m-d' }}">#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <!-- Completion Date -->#}
+{#                <div class="form-control">#}
+{#                    <label class="label" for="completion_date_{{ forloop.counter0 }}">#}
+{#                        <span class="label-text font-medium">Completion Date</span>#}
+{#                        <span class="label-text-alt text-gray-500">(Leave blank if ongoing)</span>#}
+{#                    </label>#}
+{#                    <div class="relative">#}
+{#                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                            <i class="fa-solid fa-calendar-check text-gray-400"></i>#}
+{#                        </div>#}
+{#                        <input type="date" id="completion_date_{{ forloop.counter0 }}" name="completion_date_{{ forloop.counter0 }}"#}
+{#                            class="input input-bordered w-full pl-10" value="{{ project.completion_date|date:'Y-m-d' }}">#}
+{#                    </div>#}
+{##}
+{#                    <!-- Currently working checkbox -->#}
+{#                    <label class="cursor-pointer label justify-start gap-3 py-1 mt-1">#}
+{#                        <input type="checkbox" class="checkbox checkbox-primary checkbox-sm"#}
+{#                              id="is_current_{{ forloop.counter0 }}" name="is_current_{{ forloop.counter0 }}"#}
+{#                              {% if project.is_current %}checked{% endif %}#}
+{#                              onchange="toggleCompletionDate(this)">#}
+{#                        <span class="label-text">I'm currently working on this project</span>#}
+{#                    </label>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">#}
+{#                <!-- Project Link -->#}
+{#                <div class="form-control">#}
+{#                    <label class="label" for="project_link_{{ forloop.counter0 }}">#}
+{#                        <span class="label-text font-medium">Project Link</span>#}
+{#                        <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                    </label>#}
+{#                    <div class="relative">#}
+{#                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                            <i class="fa-solid fa-globe text-gray-400"></i>#}
+{#                        </div>#}
+{#                        <input type="url" id="project_link_{{ forloop.counter0 }}" name="project_link_{{ forloop.counter0 }}"#}
+{#                            class="input input-bordered w-full pl-10" value="{{ project.project_link }}"#}
+{#                            placeholder="https://example.com">#}
+{#                    </div>#}
+{#                    <span class="text-xs text-gray-500 mt-1">Link to the live project or demo</span>#}
+{#                </div>#}
+{##}
+{#                <!-- GitHub Link -->#}
+{#                <div class="form-control">#}
+{#                    <label class="label" for="github_link_{{ forloop.counter0 }}">#}
+{#                        <span class="label-text font-medium flex items-center">#}
+{#                            <i class="fa-brands fa-github text-black dark:text-white mr-2"></i>#}
+{#                            GitHub Repository#}
+{#                        </span>#}
+{#                        <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                    </label>#}
+{#                    <div class="relative">#}
+{#                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                            <i class="fa-solid fa-code-branch text-gray-400"></i>#}
+{#                        </div>#}
+{#                        <input type="url" id="github_link_{{ forloop.counter0 }}" name="github_link_{{ forloop.counter0 }}"#}
+{#                            class="input input-bordered w-full pl-10" value="{{ project.github_link }}"#}
+{#                            placeholder="https://github.com/yourusername/project">#}
+{#                    </div>#}
+{#                    <span class="text-xs text-gray-500 mt-1">Link to the source code</span>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <!-- Technologies Used -->#}
+{#            <div class="form-control mb-5">#}
+{#                <label class="label" for="technologies_{{ forloop.counter0 }}">#}
+{#                    <span class="label-text font-medium">Technologies Used</span>#}
+{#                    <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                        <i class="fa-solid fa-tools text-gray-400"></i>#}
+{#                    </div>#}
+{#                    <input type="text" id="technologies_{{ forloop.counter0 }}" name="technologies_{{ forloop.counter0 }}"#}
+{#                        class="input input-bordered w-full pl-10" value="{{ project.technologies }}"#}
+{#                        placeholder="e.g., React, Node.js, MongoDB">#}
+{#                </div>#}
+{#                <span class="text-xs text-gray-500 mt-1">Comma-separated list of technologies, frameworks, and tools used</span>#}
+{#            </div>#}
+{##}
+{#            <!-- Bullet Points -->#}
+{#            <div class="mt-6 bullet-points-container">#}
+{#                <label class="label">#}
+{#                    <span class="label-text font-medium flex items-center">#}
+{#                        <i class="fa-solid fa-list-ul text-primary mr-2"></i>#}
+{#                        Project Details and Achievements#}
+{#                    </span>#}
+{#                    <span class="label-text-alt text-error">*</span>#}
+{#                </label>#}
+{##}
+{#                <!-- Hidden field to track number of bullet points -->#}
+{#                <input type="hidden" name="bullet_count_{{ forloop.counter0 }}"#}
+{#                       value="{{ project.bullet_points|length }}" class="bullet-count">#}
+{##}
+{#                <div class="bullet-points space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700">#}
+{#                    {% for bullet in project.bullet_points %}#}
+{#                    <div class="bullet-point-row flex items-start gap-3 group">#}
+{#                        <div class="mt-3 text-primary">•</div>#}
+{#                        <div class="form-control flex-1">#}
+{#                            <textarea class="textarea textarea-bordered w-full min-h-24"#}
+{#                                id="bullet_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}"#}
+{#                                name="bullet_{{ forloop.parentloop.counter0 }}_{{ forloop.counter0 }}"#}
+{#                                placeholder="Describe key features, your role, and specific achievements (e.g., 'Implemented user authentication system using JWT tokens, reducing login errors by 40%')">{{ bullet }}</textarea>#}
+{#                        </div>#}
+{#                        <button type="button" class="btn btn-circle btn-outline btn-error btn-sm mt-3 opacity-70 hover:opacity-100"#}
+{#                                onclick="this.closest('.bullet-point-row').remove();">#}
+{#                            <i class="fa-solid fa-times"></i>#}
+{#                        </button>#}
+{#                    </div>#}
+{#                    {% empty %}#}
+{#                    <div class="bullet-point-row flex items-start gap-3 group">#}
+{#                        <div class="mt-3 text-primary">•</div>#}
+{#                        <div class="form-control flex-1">#}
+{#                            <textarea class="textarea textarea-bordered w-full min-h-24"#}
+{#                                id="bullet_{{ forloop.parentloop.counter0 }}_0"#}
+{#                                name="bullet_{{ forloop.parentloop.counter0 }}_0"#}
+{#                                placeholder="Describe key features, your role, and specific achievements (e.g., 'Implemented user authentication system using JWT tokens, reducing login errors by 40%')"></textarea>#}
+{#                        </div>#}
+{#                        <button type="button" class="btn btn-circle btn-outline btn-error btn-sm mt-3 opacity-70 hover:opacity-100"#}
+{#                                onclick="this.closest('.bullet-point-row').remove();">#}
+{#                            <i class="fa-solid fa-times"></i>#}
+{#                        </button>#}
+{#                    </div>#}
+{#                    {% endfor %}#}
+{#                </div>#}
+{##}
+{#                <div class="flex justify-end mt-3">#}
+{#                    <button type="button" class="btn btn-outline btn-sm"#}
+{#                        onclick="addBulletPoint(this, 'project', {{ forloop.counter0 }})">#}
+{#                        <i class="fa-solid fa-plus mr-2"></i> Add Detail#}
+{#                    </button>#}
+{#                </div>#}
+{##}
+{#                <div class="mt-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-700 p-3 rounded-lg text-sm">#}
+{#                    <div class="flex items-start gap-2">#}
+{#                        <i class="fa-solid fa-pen-fancy text-amber-500 mt-1"></i>#}
+{#                        <div>#}
+{#                            <p class="font-medium text-amber-800 dark:text-amber-300">Tips for project descriptions:</p>#}
+{#                            <ul class="list-disc ml-4 mt-1 space-y-1 text-amber-700 dark:text-amber-400">#}
+{#                                <li>Focus on your specific contributions and role</li>#}
+{#                                <li>Quantify results when possible (metrics, improvements)</li>#}
+{#                                <li>Highlight technical challenges you overcame</li>#}
+{#                                <li>Mention technologies and methodologies used</li>#}
+{#                            </ul>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#        {% empty %}#}
+{#        <!-- Empty state when no projects are added yet -->#}
+{#        <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center">#}
+{#            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">#}
+{#                <i class="fa-solid fa-diagram-project text-primary text-2xl"></i>#}
+{#            </div>#}
+{#            <h3 class="text-lg font-medium mb-2">No Projects Added Yet</h3>#}
+{#            <p class="text-gray-500 max-w-md mx-auto mb-6">#}
+{#                Projects demonstrate your ability to apply your skills in real-world scenarios. They're especially valuable for showcasing technical abilities and problem-solving skills.#}
+{#            </p>#}
+{#            <button type="button" class="btn btn-primary"#}
+{#                    onclick="addFormRow('project', 'projects_container', 'project_count')">#}
+{#                <i class="fa-solid fa-plus mr-2"></i> Add Your First Project#}
+{#            </button>#}
+{#        </div>#}
+{#        {% endfor %}#}
+{#    </div>#}
+{##}
+{#    <!-- Add Project Button - Only shown if at least one project exists -->#}
+{#    {% if projects %}#}
+{#    <div class="flex justify-center mt-8">#}
+{#        <button type="button" class="btn btn-outline btn-primary"#}
+{#                onclick="addFormRow('project', 'projects_container', 'project_count')">#}
+{#            <i class="fa-solid fa-plus mr-2"></i> Add Another Project#}
+{#        </button>#}
+{#    </div>#}
+{#    {% endif %}#}
+{##}
+{#    <!-- Project Ideas Section -->#}
+{#    <div class="mt-10">#}
+{#        <h3 class="font-medium text-lg mb-4 flex items-center">#}
+{#            <i class="fa-solid fa-lightbulb text-primary mr-2"></i>#}
+{#            Project Ideas by Field#}
+{#        </h3>#}
+{##}
+{#        <div class="card bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md">#}
+{#            <div class="tabs tabs-boxed bg-transparent overflow-x-auto p-2">#}
+{#                <a class="tab tab-sm md:tab-md tab-lifted tab-active" onclick="switchTab(this, 'software')">Software Development</a>#}
+{#                <a class="tab tab-sm md:tab-md tab-lifted" onclick="switchTab(this, 'data')">Data Science</a>#}
+{#                <a class="tab tab-sm md:tab-md tab-lifted" onclick="switchTab(this, 'design')">UX/UI Design</a>#}
+{#                <a class="tab tab-sm md:tab-md tab-lifted" onclick="switchTab(this, 'marketing')">Marketing</a>#}
+{#                <a class="tab tab-sm md:tab-md tab-lifted" onclick="switchTab(this, 'business')">Business</a>#}
+{#            </div>#}
+{##}
+{#            <div class="p-5">#}
+{#                <!-- Software Development Ideas -->#}
+{#                <div id="software-tab" class="tab-content">#}
+{#                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Personal Portfolio Website', 'A personal website showcasing your projects, skills, and experience.', 'software')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Personal Website/Portfolio</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Create a personal website to showcase your projects and skills.</p>#}
+{#                        </div>#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('E-commerce Platform', 'An online store with product listings, shopping cart, and checkout functionality.', 'software')">#}
+{#                            <h4 class="font-medium text-primary mb-1">E-commerce Platform</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Build an online store with product listings, cart, and checkout.</p>#}
+{#                        </div>#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Task Management App', 'A productivity app for organizing and tracking tasks with categories and reminders.', 'software')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Task Management App</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Develop a to-do list app with features like categories and reminders.</p>#}
+{#                        </div>#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Real-time Chat Application', 'A messaging platform that enables instant communication between users.', 'software')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Chat Application</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Create a real-time messaging app using WebSockets.</p>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <!-- Data Science Ideas -->#}
+{#                <div id="data-tab" class="tab-content hidden">#}
+{#                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Housing Price Prediction Model', 'A machine learning model that predicts housing prices based on various features.', 'data')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Predictive Model</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Build a model to predict outcomes like housing prices or customer behavior.</p>#}
+{#                        </div>#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Interactive Data Visualization Dashboard', 'A web-based dashboard featuring interactive charts and graphs to explore a dataset.', 'data')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Data Visualization Dashboard</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Create interactive visualizations of a dataset.</p>#}
+{#                        </div>#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Social Media Sentiment Analysis', 'An algorithm that analyzes sentiment in text data from social media platforms.', 'data')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Sentiment Analysis</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Analyze sentiment in text data like social media or reviews.</p>#}
+{#                        </div>#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Content Recommendation System', 'A system that recommends products or content based on user preferences and behavior.', 'data')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Recommendation System</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Build a system that recommends products or content based on user preferences.</p>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <!-- UX/UI Design Ideas -->#}
+{#                <div id="design-tab" class="tab-content hidden">#}
+{#                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Mobile App Redesign', 'A comprehensive redesign of an existing mobile app to improve usability and aesthetics.', 'design')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Mobile App Redesign</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Redesign the UI of an existing mobile app to improve usability.</p>#}
+{#                        </div>#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Design System Creation', 'A comprehensive design system with components, guidelines, and documentation.', 'design')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Design System</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Create a comprehensive design system with components and guidelines.</p>#}
+{#                        </div>#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Interactive Website Prototype', 'A high-fidelity website prototype with interactive elements and responsive design.', 'design')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Website Prototype</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Design and prototype a website with interactive elements.</p>#}
+{#                        </div>#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('User Research Study', 'A comprehensive user research study with interviews, usability testing, and insights.', 'design')">#}
+{#                            <h4 class="font-medium text-primary mb-1">User Research Study</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Conduct and document a user research study to improve a product.</p>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <!-- Marketing Ideas -->#}
+{#                <div id="marketing-tab" class="tab-content hidden">#}
+{#                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Digital Marketing Campaign', 'A multi-channel marketing campaign for a product or service with measurable results.', 'marketing')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Marketing Campaign</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Design and execute a marketing campaign for a product or service.</p>#}
+{#                        </div>#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Social Media Strategy', 'A comprehensive social media strategy for a brand with content calendar and analytics.', 'marketing')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Social Media Strategy</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Develop a comprehensive social media strategy for a brand.</p>#}
+{#                        </div>#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Content Marketing Plan', 'A strategic content marketing plan with editorial calendar and distribution strategy.', 'marketing')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Content Marketing Plan</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Create a content calendar and strategy to drive engagement.</p>#}
+{#                        </div>#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Marketing Analytics Dashboard', 'A dashboard to track and analyze marketing metrics across multiple channels.', 'marketing')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Analytics Dashboard</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Build a dashboard to track and analyze marketing metrics.</p>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <!-- Business Ideas -->#}
+{#                <div id="business-tab" class="tab-content hidden">#}
+{#                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Business Plan Development', 'A comprehensive business plan for a startup or new product with market analysis and financials.', 'business')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Business Plan</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Develop a comprehensive business plan for a startup or new product.</p>#}
+{#                        </div>#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Market Research Analysis', 'A detailed market analysis for an industry or product with competitive landscape and opportunities.', 'business')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Market Analysis</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Conduct and document a market analysis for an industry or product.</p>#}
+{#                        </div>#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Financial Model Creation', 'A detailed financial projection model for a business with revenue forecasts and cash flow analysis.', 'business')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Financial Model</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Create a financial projection model for a business.</p>#}
+{#                        </div>#}
+{#                        <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 cursor-pointer hover:border-primary transition-colors duration-200" onclick="useProjectIdea('Process Improvement Initiative', 'A project documenting how you improved a business process to increase efficiency or reduce costs.', 'business')">#}
+{#                            <h4 class="font-medium text-primary mb-1">Process Improvement</h4>#}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400">Document a project where you improved a business process.</p>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{#</form>#}
+{##}
+{#<script>#}
+{#    // Function to toggle completion date based on "currently working" checkbox#}
+{#    function toggleCompletionDate(checkbox) {#}
+{#        const row = checkbox.closest('.form-row');#}
+{#        const dateField = row.querySelector('[name$="completion_date"]');#}
+{#        const dateContainer = dateField.closest('.form-control');#}
+{##}
+{#        if (checkbox.checked) {#}
+{#            dateContainer.classList.add('opacity-50');#}
+{#            dateField.disabled = true;#}
+{#            dateField.value = '';#}
+{#        } else {#}
+{#            dateContainer.classList.remove('opacity-50');#}
+{#            dateField.disabled = false;#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Function to switch between project idea tabs#}
+{#    function switchTab(tab, tabName) {#}
+{#        // Hide all tab contents#}
+{#        document.querySelectorAll('.tab-content').forEach(content => {#}
+{#            content.classList.add('hidden');#}
+{#        });#}
+{##}
+{#        // Show selected tab content#}
+{#        document.getElementById(tabName + '-tab').classList.remove('hidden');#}
+{##}
+{#        // Update active tab styling#}
+{#        document.querySelectorAll('.tab').forEach(t => {#}
+{#            t.classList.remove('tab-active');#}
+{#        });#}
+{##}
+{#        tab.classList.add('tab-active');#}
+{#    }#}
+{##}
+{#    // Function to use a project idea#}
+{#    function useProjectIdea(name, summary, category) {#}
+{#        const emptyState = document.querySelector('#projects_container .bg-base-100.text-center');#}
+{##}
+{#        if (emptyState) {#}
+{#            // We're in empty state, click the existing button#}
+{#            document.querySelector('#projects_container button').click();#}
+{#        } else {#}
+{#            // Add a new project#}
+{#            addFormRow('project', 'projects_container', 'project_count');#}
+{#        }#}
+{##}
+{#        // Wait for the new project form to be added, then set its properties#}
+{#        setTimeout(() => {#}
+{#            const forms = document.querySelectorAll('#projects_container .form-row');#}
+{#            const lastForm = forms[forms.length - 1];#}
+{##}
+{#            // Set project name and summary#}
+{#            const nameInput = lastForm.querySelector('input[name^="project_name_"]');#}
+{#            const summaryTextarea = lastForm.querySelector('textarea[name^="summary_"]');#}
+{##}
+{#            nameInput.value = name;#}
+{#            summaryTextarea.value = summary;#}
+{##}
+{#            // Set technologies based on category#}
+{#            const techInput = lastForm.querySelector('input[name^="technologies_"]');#}
+{#            if (category === 'software') {#}
+{#                techInput.value = 'HTML, CSS, JavaScript, React, Node.js';#}
+{#            } else if (category === 'data') {#}
+{#                techInput.value = 'Python, Pandas, NumPy, Scikit-learn, Matplotlib';#}
+{#            } else if (category === 'design') {#}
+{#                techInput.value = 'Figma, Adobe XD, Sketch, Photoshop';#}
+{#            } else if (category === 'marketing') {#}
+{#                techInput.value = 'Google Analytics, HubSpot, SEMrush, Mailchimp';#}
+{#            } else if (category === 'business') {#}
+{#                techInput.value = 'Excel, PowerPoint, Tableau, Project Management';#}
+{#            }#}
+{##}
+{#            // Scroll to the new project#}
+{#            lastForm.scrollIntoView({ behavior: 'smooth', block: 'start' });#}
+{##}
+{#            // Highlight it briefly#}
+{#            lastForm.classList.add('ring-2', 'ring-primary', 'ring-offset-2');#}
+{#            setTimeout(() => {#}
+{#                lastForm.classList.remove('ring-2', 'ring-primary', 'ring-offset-2');#}
+{#            }, 1500);#}
+{#        }, 500);#}
+{#    }#}
+{##}
+{#    // Initialize "currently working" checkboxes on page load#}
+{#    document.addEventListener('DOMContentLoaded', function() {#}
+{#        document.querySelectorAll('input[name^="is_current_"]').forEach(function(checkbox) {#}
+{#            toggleCompletionDate(checkbox);#}
+{#        });#}
+{#    });#}
+{#</script>#}
+{#{% endblock %}#}

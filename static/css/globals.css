@@ -1,90 +1,103 @@
+/* static/css/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
     body {
-        @apply bg-gray-50 dark:bg-gray-900;
+        /* Apply default body font from config, plus other base styles */
+        @apply font-sans bg-gray-50 dark:bg-gray-900 antialiased;
+    }
+    /* Apply heading font automatically to heading tags */
+    h1, h2, h3, h4, h5, h6 {
+         @apply font-heading;
+    }
+    /* Ensure links have a sensible default */
+    a {
+        @apply text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition-colors duration-150;
     }
 }
 
 @layer components {
-    /* Form Components */
+    /* Refined Form Components */
     .form-input {
-        @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
-               focus:outline-none focus:ring-primary-500 focus:border-primary-500
-               dark:bg-gray-700 dark:border-gray-600 dark:text-white;
+        @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
+               focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+               dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-500 text-sm; /* Added text-sm */
     }
 
     .form-label {
         @apply block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1;
     }
 
-    /* Button Components */
+    /* Refined Button Components */
     .btn-primary {
-        @apply px-4 py-2 bg-primary-600 text-white rounded-lg
-               hover:bg-primary-700
-               focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+        @apply inline-flex items-center justify-center px-4 py-2.5 /* Adjusted padding */
+               bg-primary-700 border border-transparent rounded-lg /* Use darker indigo */
+               font-semibold text-sm text-white /* Use font-semibold, text-sm */
+               hover:bg-primary-800 /* Darker hover */
+               focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 /* Adjusted dark offset */
                disabled:opacity-50 disabled:cursor-not-allowed
-               transition-colors duration-200;
+               transition-all duration-150 ease-in-out /* Use transition-all */
+               shadow-sm hover:shadow-md; /* Added shadows */
     }
 
-    .btn-secondary {
-        @apply px-4 py-2 bg-secondary-600 text-white rounded-lg
+    .btn-secondary { /* Example refinement */
+         @apply inline-flex items-center justify-center px-4 py-2.5
+               bg-secondary-600 border border-transparent rounded-lg
+               font-semibold text-sm text-white
                hover:bg-secondary-700
-               focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2
+               focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900
                disabled:opacity-50 disabled:cursor-not-allowed
-               transition-colors duration-200;
+               transition-all duration-150 ease-in-out
+               shadow-sm hover:shadow-md;
     }
 
-    /* Card Components */
+    /* Refined Card Components */
     .card {
-        @apply bg-white dark:bg-secondary-800 rounded-xl shadow-card
-               hover:shadow-card-hover transition-all duration-300 p-6;
+        @apply bg-white dark:bg-gray-800 rounded-xl /* Kept rounded-xl */
+               shadow-lg dark:shadow-md /* More pronounced shadow, slightly less in dark mode */
+               hover:shadow-xl hover:-translate-y-1 /* Refined hover effect */
+               transition-all duration-300
+               p-6 border border-gray-100 dark:border-gray-700 /* Adjusted border */
+               flex flex-col; /* Ensure consistent internal layout */
     }
 
-    /* Navigation Components */
-    .nav-link {
-        @apply text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium
-               dark:text-gray-200 dark:hover:text-primary-400;
+    /* You can add other reusable components here */
+    /* Example: Accent Button Style (if used frequently) */
+    .btn-accent {
+        @apply inline-flex items-center justify-center px-4 py-2.5
+               bg-accent-500 border border-transparent rounded-lg
+               font-semibold text-sm text-white
+               hover:bg-accent-600
+               focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900
+               disabled:opacity-50 disabled:cursor-not-allowed
+               transition-all duration-150 ease-in-out
+               shadow-sm hover:shadow-md;
+    }
+     /* Example: Outline/Ghost Button Style */
+    .btn-outline {
+         @apply inline-flex items-center justify-center px-4 py-2.5
+               bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg
+               font-semibold text-sm text-gray-700 dark:text-gray-200
+               hover:bg-gray-50 dark:hover:bg-gray-700
+               focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900
+               disabled:opacity-50 transition ease-in-out duration-150 shadow-sm;
+    }
+     /* Example: Error/Delete Button Style */
+    .btn-error {
+         @apply inline-flex items-center justify-center px-4 py-2.5
+               bg-red-600 border border-transparent rounded-lg
+               font-semibold text-sm text-white
+               hover:bg-red-700 active:bg-red-800
+               focus:outline-none focus:border-red-800 focus:ring ring-red-300
+               disabled:opacity-50 transition ease-in-out duration-150 shadow-sm hover:shadow-md;
     }
 
-    /* Table Components */
-    .table-header {
-        @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
-               dark:text-gray-400;
-    }
-
-    .table-cell {
-        @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200;
-    }
 }
 
 @layer utilities {
-    /* Custom Scrollbar */
-    .scrollbar-custom {
-        scrollbar-width: thin;
-        scrollbar-color: theme('colors.primary.500') theme('colors.secondary.200');
-    }
-
-    .scrollbar-custom::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .scrollbar-custom::-webkit-scrollbar-track {
-        @apply bg-secondary-200 dark:bg-secondary-700 rounded;
-    }
-
-    .scrollbar-custom::-webkit-scrollbar-thumb {
-        @apply bg-primary-500 rounded;
-    }
-
-    /* Animation Utilities */
-    .animate-fade-in {
-        animation: fadeIn 0.5s ease-in;
-    }
-
-    .animate-slide-in {
-        animation: slideIn 0.5s ease-out;
-    }
+    /* Keep custom utilities if needed */
+    /* Example: Custom Scrollbar (check if still needed/desired) */
+    /* .scrollbar-custom { ... } */
 }

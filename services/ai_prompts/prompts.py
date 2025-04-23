@@ -1,5 +1,6 @@
 # prompts.py
 
+
 # Bullet Generation Prompt
 BULLET_GENERATION_PROMPT = """Generate 4 professional resume bullet points for a {job_title} position at {employer}. 
 Each bullet point should:

@@ -1,109 +1,395 @@
-{% extends 'base.html' %}
+{% extends 'base_authenticated.html' %} {# Or 'theme/templates/...' #}
 {% load static %}
+{% load tz %} {# Load timezone filters if not already loaded globally #}
 
 {% block title %}My Resumes{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="flex flex-col md:flex-row justify-between items-center mb-10">
+<div class="container mx-auto px-4 py-8 md:py-12"> {# Added vertical padding #}
+    {# Header Section #}
+    <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
         <div class="flex items-center">
-            <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mr-4">
-                <i class="fa-solid fa-file-lines text-primary text-xl"></i>
+             <div class="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 ring-1 ring-primary-200 dark:ring-primary-700/50 flex items-center justify-center mr-4 flex-shrink-0">
+                <i class="fa-solid fa-file-lines text-primary-600 dark:text-primary-300 text-xl"></i>
             </div>
-            <h1 class="text-2xl md:text-3xl font-bold">My Resumes</h1>
+            {# Font applied via globals.css #}
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">My Resumes</h1>
         </div>
-        <a href="{% url 'job_portal:template_selection' %}" class="btn btn-primary mt-4 md:mt-0 px-6">
+        <a href="{% url 'job_portal:template_selection' %}" class="inline-flex items-center justify-center px-5 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-600"> {# Use refined .btn-primary with inline styles #}
             <i class="fa-solid fa-plus mr-2"></i> Create New Resume
         </a>
     </div>
 
+    {# Resume Grid #}
     {% if resumes %}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {% for resume in resumes %}
-        <div class="card bg-base-100 shadow-xl h-full transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
-            <div class="card-body p-6">
-                <!-- Status indicator -->
-                <div class="absolute -top-2 -right-2">
-                    <div class="badge badge-primary py-3 px-4 shadow-md">{{ resume.get_status_display }}</div>
-                </div>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 relative flex flex-col h-full"> {# Use refined .card from globals.css. Added relative and flex-col h-full #}
+             <div class="absolute top-0 right-0 -mt-2 -mr-2 z-10">
+                 {# Simple badge using Tailwind #}
+                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary-700 text-white shadow-md">{{ resume.get_status_display|default:"Draft" }}</span>
+             </div>
 
-                <h2 class="card-title text-xl mb-2">{{ resume.full_name }}</h2>
+             {# Card Content #}
+             <div class="flex flex-col h-full p-6"> {# Added padding #}
+                 {# Font applied via globals.css #}
+                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ resume.full_name }}</h2>
 
-                <div class="my-3 flex flex-wrap gap-2">
-                    <span class="badge badge-ghost bg-gray-100 dark:bg-gray-700">
-                        <i class="fa-solid fa-calendar-alt mr-1 opacity-70"></i>
-                        Created {{ resume.created_at|date:"M d, Y" }}
-                    </span>
-                    {% if resume.updated_at != resume.created_at %}
-                    <span class="badge badge-ghost bg-gray-100 dark:bg-gray-700">
-                        <i class="fa-solid fa-clock-rotate-left mr-1 opacity-70"></i>
-                        Updated {{ resume.updated_at|date:"M d, Y" }}
-                    </span>
-                    {% endif %}
-                </div>
+                 <div class="my-3 flex flex-wrap gap-2">
+                     {# Simple badges using Tailwind #}
+                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                         <i class="fa-solid fa-calendar-alt mr-1 opacity-70"></i>
+                         Created {{ resume.created_at|date:"M d, Y" }}
+                     </span>
+                     {# Use timezone 'localtime' filter if USE_TZ=True #}
+                     {% localtime on %}
+                     {% if resume.updated_at|timesince != "0 minutes" %}
+                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                         <i class="fa-solid fa-clock-rotate-left mr-1 opacity-70"></i>
+                         Updated {{ resume.updated_at|timesince }} ago
+                     </span>
+                     {% endif %}
+                     {% endlocaltime %}
+                 </div>
 
-                {% if resume.summary %}
-                <div class="mt-3 mb-5">
-                    <p class="text-sm opacity-75 line-clamp-3 border-l-4 border-gray-200 pl-3 py-1 italic">{{ resume.summary }}</p>
-                </div>
-                {% endif %}
+                 {% if resume.summary %}
+                 <div class="mt-3 mb-5 flex-grow">
+                     {# Enhanced Summary Styling #}
+                     <p class="text-sm text-gray-700 dark:text-gray-300 line-clamp-4 border-l-4 border-primary-500 dark:border-primary-600 pl-4 py-2 italic bg-gray-50 dark:bg-gray-700/50 rounded-r-md">
+                         {{ resume.summary }}
+                     </p>
+                 </div>
+                 {% else %}
+                 {# Add placeholder to maintain height consistency #}
+                 <div class="flex-grow min-h-[4rem] mt-3 mb-5">
+                     <p class="text-sm text-gray-500 dark:text-gray-500 italic pl-4 py-2">No summary provided yet.</p>
+                 </div>
+                 {% endif %}
 
-                <div class="flex flex-wrap gap-2 mb-5">
-                    {% for skill in resume.skills.all|slice:":5" %}
-                    <span class="badge badge-outline badge-sm px-3 py-3">{{ skill.skill_name }}</span>
-                    {% endfor %}
-                    {% if resume.skills.count > 5 %}
-                    <span class="badge badge-sm bg-gray-100 dark:bg-gray-700">+{{ resume.skills.count|add:"-5" }} more</span>
-                    {% endif %}
-                </div>
+                 <div class="flex flex-wrap gap-1.5 mb-5"> {# Adjusted gap #}
+                     {% for skill in resume.skills.all|slice:":5" %}
+                     {# Simple badge using Tailwind #}
+                     <span class="inline-block bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ skill.skill_name }}</span>
+                     {% endfor %}
+                     {% if resume.skills.count > 5 %}
+                     <span class="inline-block bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-medium px-2.5 py-0.5 rounded-full">+{{ resume.skills.count|add:"-5" }} more</span>
+                     {% endif %}
+                 </div>
 
-                <div class="card-actions justify-between mt-auto pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" class="btn btn-primary flex-1">
-                        <i class="fa-solid fa-eye mr-2"></i> View
+                 {# Card Actions - replacing DaisyUI dropdown with Alpine.js #}
+                 <div class="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center gap-2"> {# Adjusted border color #}
+                    <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" class="inline-flex items-center justify-center flex-grow text-center text-sm py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"> {# Refined secondary button style #}
+                        <i class="fa-solid fa-eye mr-1"></i> View
                     </a>
-                    <div class="dropdown dropdown-end">
-                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+                    {# Dropdown using Alpine.js (loaded in base_authenticated.html) #}
+                    <div x-data="{ open: false }" class="relative flex-shrink-0">
+                        <button @click="open = !open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 dark:text-gray-400 dark:hover:text-gray-200"> {# Adjusted text/hover colors #}
+                            <span class="sr-only">Open options</span>
                             <i class="fa-solid fa-ellipsis-vertical"></i>
+                        </button>
+                        {# Dropdown Panel #}
+                        <div x-show="open"
+                             @click.outside="open = false"
+                             x-transition:enter="transition ease-out duration-100"
+                             x-transition:enter-start="transform opacity-0 scale-95"
+                             x-transition:enter-end="transform opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-75"
+                             x-transition:leave-start="transform opacity-100 scale-100"
+                             x-transition:leave-end="transform opacity-0 scale-95"
+                             style="display: none;" {# Hide initially #}
+                             class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                            {# Dropdown Items #}
+                            <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" role="menuitem"
+                               class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fa-solid fa-eye fa-fw mr-3 text-gray-400"></i> View Resume {# Added fa-fw for fixed width #}
+                            </a>
+                            <a href="{% url 'job_portal:edit_resume' resume_id=resume.id %}" role="menuitem"
+                               class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fa-solid fa-edit fa-fw mr-3 text-gray-400"></i> Edit Resume
+                            </a>
+                            <a href="{% url 'job_portal:download_resume' resume_id=resume.id %}" role="menuitem"
+                               class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fa-solid fa-download fa-fw mr-3 text-gray-400"></i> Download PDF
+                            </a>
+                            {# Divider #}
+                            <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                            {# Delete Item #}
+                            <a href="{% url 'job_portal:delete_resume' resume_id=resume.id %}" role="menuitem"
+                               class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                 <i class="fa-solid fa-trash-can fa-fw mr-3 text-red-400"></i> Delete Resume
+                            </a>
                         </div>
-                        <ul tabindex="0" class="dropdown-content z-[1] menu p-3 shadow-lg bg-base-100 rounded-xl w-56 border border-gray-100 dark:border-gray-700">
-                            <li>
-                                <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" class="py-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-                                    <i class="fa-solid fa-eye opacity-70 mr-1 w-5"></i> View Resume
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{% url 'job_portal:edit_resume' resume_id=resume.id %}" class="py-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-                                    <i class="fa-solid fa-edit opacity-70 mr-1 w-5"></i> Edit Resume
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{% url 'job_portal:download_resume' resume_id=resume.id %}" class="py-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
-                                    <i class="fa-solid fa-download opacity-70 mr-1 w-5"></i> Download PDF
-                                </a>
-                            </li>
-                            <li class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                                <a href="{% url 'job_portal:delete_resume' resume_id=resume.id %}" class="text-error py-3 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
-                                    <i class="fa-solid fa-trash-can mr-1 w-5"></i> Delete Resume
-                                </a>
-                            </li>
-                        </ul>
                     </div>
-                </div>
-            </div>
-        </div>
+                 </div>
+             </div>{# End Card Content Flex Col #}
+        </div>{# End Card #}
         {% endfor %}
     </div>
     {% else %}
-    <div class="flex flex-col items-center justify-center p-12 bg-base-200 rounded-2xl text-center border border-gray-100 dark:border-gray-700 shadow-lg">
+    {# Empty State #}
+    <div class="flex flex-col items-center justify-center p-12 bg-white dark:bg-gray-800 rounded-2xl text-center border border-gray-200 dark:border-gray-700 shadow-lg mt-10">
         <div class="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-6">
-            <i class="fa-solid fa-file-alt text-4xl text-gray-400"></i>
+            <i class="fa-solid fa-file-circle-xmark text-4xl text-gray-400 dark:text-gray-500"></i> {# Changed Icon #}
         </div>
-        <h3 class="text-2xl font-bold mb-3">No Resumes Yet</h3>
-        <p class="text-gray-500 mb-8 max-w-md">You haven't created any resumes yet. Get started by creating your first resume to kickstart your job search journey!</p>
-        <a href="{% url 'job_portal:template_selection' %}" class="btn btn-primary btn-lg">
+        {# Font applied via globals.css #}
+        <h3 class="text-2xl font-bold mb-3 text-gray-800 dark:text-white">No Resumes Yet</h3>
+        {# Font applied via globals.css #}
+        <p class="text-gray-500 dark:text-gray-400 mb-8 max-w-md">You haven't created any resumes yet. Get started by creating your first resume to kickstart your job search journey!</p>
+        <a href="{% url 'job_portal:template_selection' %}" class="inline-flex items-center justify-center px-6 py-3 text-base font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-600"> {# Use refined .btn-primary #}
             <i class="fa-solid fa-plus mr-2"></i> Create Your First Resume
         </a>
     </div>
     {% endif %}
 </div>
 {% endblock %}
+
+{#{% extends 'base_authenticated.html' %} {# Or 'theme/templates/...' #}
+{#{% load static %}#}
+{#{% load tz %} {# Load timezone filters if not already loaded globally #}
+{##}
+{#{% block title %}My Resumes{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#<div class="container mx-auto px-4 py-8 md:py-12"> {# Added vertical padding #}
+    {# Header Section #}
+{#    <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">#}
+{#        <div class="flex items-center">#}
+{#             <div class="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 ring-1 ring-primary-200 dark:ring-primary-700/50 flex items-center justify-center mr-4 flex-shrink-0">#}
+{#                <i class="fa-solid fa-file-lines text-primary-600 dark:text-primary-300 text-xl"></i>#}
+{#            </div>#}
+            {# Font applied via globals.css #}
+{#            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">My Resumes</h1>#}
+{#        </div>#}
+{#        <a href="{% url 'job_portal:template_selection' %}" class="btn-primary px-5"> {# Use refined .btn-primary #}
+{#            <i class="fa-solid fa-plus mr-2"></i> Create New Resume#}
+{#        </a>#}
+{#    </div>#}
+{##}
+    {# Resume Grid #}
+{#    {% if resumes %}#}
+{#    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">#}
+{#        {% for resume in resumes %}#}
+{#        <div class="card relative"> {# Use refined .card from globals.css. Added relative #}
+{#             <div class="absolute top-0 right-0 -mt-2 -mr-2 z-10">#}
+                 {# Simple badge using Tailwind #}
+{#                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary-700 text-white shadow-md">{{ resume.get_status_display|default:"Draft" }}</span>#}
+{#             </div>#}
+{##}
+             {# Card Content #}
+{#             <div class="flex flex-col h-full">#}
+                 {# Font applied via globals.css #}
+{#                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ resume.full_name }}</h2>#}
+{##}
+{#                 <div class="my-3 flex flex-wrap gap-2">#}
+                     {# Simple badges using Tailwind #}
+{#                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">#}
+{#                         <i class="fa-solid fa-calendar-alt mr-1 opacity-70"></i>#}
+{#                         Created {{ resume.created_at|date:"M d, Y" }}#}
+{#                     </span>#}
+                     {# Use timezone 'localtime' filter if USE_TZ=True #}
+{#                     {% localtime on %}#}
+{#                     {% if resume.updated_at|timesince != "0 minutes" %}#}
+{#                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">#}
+{#                         <i class="fa-solid fa-clock-rotate-left mr-1 opacity-70"></i>#}
+{#                         Updated {{ resume.updated_at|timesince }} ago#}
+{#                     </span>#}
+{#                     {% endif %}#}
+{#                     {% endlocaltime %}#}
+{#                 </div>#}
+{##}
+{#                 {% if resume.summary %}#}
+{#                 <div class="mt-3 mb-5 flex-grow">#}
+                     {# Font applied via globals.css #}
+{#                     <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 border-l-4 border-gray-200 dark:border-gray-600 pl-3 py-1 italic">{{ resume.summary }}</p>#}
+{#                 </div>#}
+{#                 {% else %}#}
+                 {# Add placeholder to maintain height consistency #}
+{#                 <div class="flex-grow min-h-[4rem]"></div>#}
+{#                 {% endif %}#}
+{##}
+{#                 <div class="flex flex-wrap gap-1.5 mb-5"> {# Adjusted gap #}
+{#                     {% for skill in resume.skills.all|slice:":5" %}#}
+                     {# Simple badge using Tailwind #}
+{#                     <span class="inline-block bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 text-xs font-medium px-2.5 py-0.5 rounded-full">{{ skill.skill_name }}</span>#}
+{#                     {% endfor %}#}
+{#                     {% if resume.skills.count > 5 %}#}
+{#                     <span class="inline-block bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-medium px-2.5 py-0.5 rounded-full">+{{ resume.skills.count|add:"-5" }} more</span>#}
+{#                     {% endif %}#}
+{#                 </div>#}
+{##}
+                 {# Card Actions - replacing DaisyUI dropdown with Alpine.js #}
+{#                 <div class="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center gap-2">#}
+{#                    <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" class="btn-primary flex-grow text-center text-sm py-2"> {# Use refined .btn-primary #}
+{#                        <i class="fa-solid fa-eye mr-1"></i> View#}
+{#                    </a>#}
+                    {# Dropdown using Alpine.js (loaded in base_authenticated.html) #}
+{#                    <div x-data="{ open: false }" class="relative flex-shrink-0">#}
+{#                        <button @click="open = !open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500">#}
+{#                            <span class="sr-only">Open options</span>#}
+{#                            <i class="fa-solid fa-ellipsis-vertical"></i>#}
+{#                        </button>#}
+                        {# Dropdown Panel #}
+{#                        <div x-show="open"#}
+{#                             @click.outside="open = false"#}
+{#                             x-transition:enter="transition ease-out duration-100"#}
+{#                             x-transition:enter-start="transform opacity-0 scale-95"#}
+{#                             x-transition:enter-end="transform opacity-100 scale-100"#}
+{#                             x-transition:leave="transition ease-in duration-75"#}
+{#                             x-transition:leave-start="transform opacity-100 scale-100"#}
+{#                             x-transition:leave-end="transform opacity-0 scale-95"#}
+{#                             style="display: none;" {# Hide initially #}
+{#                             class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-10">#}
+                            {# Dropdown Items #}
+{#                            <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" role="menuitem"#}
+{#                               class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">#}
+{#                                <i class="fa-solid fa-eye fa-fw mr-3 text-gray-400"></i> View Resume {# Added fa-fw for fixed width #}
+{#                            </a>#}
+{#                            <a href="{% url 'job_portal:edit_resume' resume_id=resume.id %}" role="menuitem"#}
+{#                               class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">#}
+{#                                <i class="fa-solid fa-edit fa-fw mr-3 text-gray-400"></i> Edit Resume#}
+{#                            </a>#}
+{#                            <a href="{% url 'job_portal:download_resume' resume_id=resume.id %}" role="menuitem"#}
+{#                               class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">#}
+{#                                <i class="fa-solid fa-download fa-fw mr-3 text-gray-400"></i> Download PDF#}
+{#                            </a>#}
+                            {# Divider #}
+{#                            <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>#}
+                            {# Delete Item #}
+{#                            <a href="{% url 'job_portal:delete_resume' resume_id=resume.id %}" role="menuitem"#}
+{#                               class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">#}
+{#                                 <i class="fa-solid fa-trash-can fa-fw mr-3 text-red-400"></i> Delete Resume#}
+{#                            </a>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                 </div>#}
+{#             </div>{# End Card Content Flex Col #}
+{#        </div>{# End Card #}
+{#        {% endfor %}#}
+{#    </div>#}
+{#    {% else %}#}
+    {# Empty State #}
+{#    <div class="flex flex-col items-center justify-center p-12 bg-white dark:bg-gray-800 rounded-2xl text-center border border-gray-200 dark:border-gray-700 shadow-lg mt-10">#}
+{#        <div class="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-6">#}
+{#            <i class="fa-solid fa-file-circle-xmark text-4xl text-gray-400 dark:text-gray-500"></i> {# Changed Icon #}
+{#        </div>#}
+        {# Font applied via globals.css #}
+{#        <h3 class="text-2xl font-bold mb-3 text-gray-800 dark:text-white">No Resumes Yet</h3>#}
+        {# Font applied via globals.css #}
+{#        <p class="text-gray-500 dark:text-gray-400 mb-8 max-w-md">You haven't created any resumes yet. Get started by creating your first resume to kickstart your job search journey!</p>#}
+{#        <a href="{% url 'job_portal:template_selection' %}" class="btn-primary px-6 py-3 text-base"> {# Use refined .btn-primary #}
+{#            <i class="fa-solid fa-plus mr-2"></i> Create Your First Resume#}
+{#        </a>#}
+{#    </div>#}
+{#    {% endif %}#}
+{#</div>#}
+{#{% endblock %}#}
+{##}
+{#{% extends 'base_authenticated.html' %}#}
+{#{% load static %}#}
+{##}
+{#{% block title %}My Resumes{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#<div class="container mx-auto px-4 py-8">#}
+{#    <div class="flex flex-col md:flex-row justify-between items-center mb-10">#}
+{#        <div class="flex items-center">#}
+{#            <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mr-4">#}
+{#                <i class="fa-solid fa-file-lines text-primary text-xl"></i>#}
+{#            </div>#}
+{#            <h1 class="text-2xl md:text-3xl font-bold">My Resumes</h1>#}
+{#        </div>#}
+{#        <a href="{% url 'job_portal:template_selection' %}" class="btn btn-primary mt-4 md:mt-0 px-6">#}
+{#            <i class="fa-solid fa-plus mr-2"></i> Create New Resume#}
+{#        </a>#}
+{#    </div>#}
+{##}
+{#    {% if resumes %}#}
+{#    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">#}
+{#        {% for resume in resumes %}#}
+{#        <div class="card bg-base-100 shadow-xl h-full transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">#}
+{#            <div class="card-body p-6">#}
+{#                <!-- Status indicator -->#}
+{#                <div class="absolute -top-2 -right-2">#}
+{#                    <div class="badge badge-primary py-3 px-4 shadow-md">{{ resume.get_status_display }}</div>#}
+{#                </div>#}
+{##}
+{#                <h2 class="card-title text-xl mb-2">{{ resume.full_name }}</h2>#}
+{##}
+{#                <div class="my-3 flex flex-wrap gap-2">#}
+{#                    <span class="badge badge-ghost bg-gray-100 dark:bg-gray-700">#}
+{#                        <i class="fa-solid fa-calendar-alt mr-1 opacity-70"></i>#}
+{#                        Created {{ resume.created_at|date:"M d, Y" }}#}
+{#                    </span>#}
+{#                    {% if resume.updated_at != resume.created_at %}#}
+{#                    <span class="badge badge-ghost bg-gray-100 dark:bg-gray-700">#}
+{#                        <i class="fa-solid fa-clock-rotate-left mr-1 opacity-70"></i>#}
+{#                        Updated {{ resume.updated_at|date:"M d, Y" }}#}
+{#                    </span>#}
+{#                    {% endif %}#}
+{#                </div>#}
+{##}
+{#                {% if resume.summary %}#}
+{#                <div class="mt-3 mb-5">#}
+{#                    <p class="text-sm opacity-75 line-clamp-3 border-l-4 border-gray-200 pl-3 py-1 italic">{{ resume.summary }}</p>#}
+{#                </div>#}
+{#                {% endif %}#}
+{##}
+{#                <div class="flex flex-wrap gap-2 mb-5">#}
+{#                    {% for skill in resume.skills.all|slice:":5" %}#}
+{#                    <span class="badge badge-outline badge-sm px-3 py-3">{{ skill.skill_name }}</span>#}
+{#                    {% endfor %}#}
+{#                    {% if resume.skills.count > 5 %}#}
+{#                    <span class="badge badge-sm bg-gray-100 dark:bg-gray-700">+{{ resume.skills.count|add:"-5" }} more</span>#}
+{#                    {% endif %}#}
+{#                </div>#}
+{##}
+{#                <div class="card-actions justify-between mt-auto pt-4 border-t border-gray-100 dark:border-gray-700">#}
+{#                    <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" class="btn btn-primary flex-1">#}
+{#                        <i class="fa-solid fa-eye mr-2"></i> View#}
+{#                    </a>#}
+{#                    <div class="dropdown dropdown-end">#}
+{#                        <div tabindex="0" role="button" class="btn btn-ghost btn-circle">#}
+{#                            <i class="fa-solid fa-ellipsis-vertical"></i>#}
+{#                        </div>#}
+{#                        <ul tabindex="0" class="dropdown-content z-[1] menu p-3 shadow-lg bg-base-100 rounded-xl w-56 border border-gray-100 dark:border-gray-700">#}
+{#                            <li>#}
+{#                                <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" class="py-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">#}
+{#                                    <i class="fa-solid fa-eye opacity-70 mr-1 w-5"></i> View Resume#}
+{#                                </a>#}
+{#                            </li>#}
+{#                            <li>#}
+{#                                <a href="{% url 'job_portal:edit_resume' resume_id=resume.id %}" class="py-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">#}
+{#                                    <i class="fa-solid fa-edit opacity-70 mr-1 w-5"></i> Edit Resume#}
+{#                                </a>#}
+{#                            </li>#}
+{#                            <li>#}
+{#                                <a href="{% url 'job_portal:download_resume' resume_id=resume.id %}" class="py-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">#}
+{#                                    <i class="fa-solid fa-download opacity-70 mr-1 w-5"></i> Download PDF#}
+{#                                </a>#}
+{#                            </li>#}
+{#                            <li class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">#}
+{#                                <a href="{% url 'job_portal:delete_resume' resume_id=resume.id %}" class="text-error py-3 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">#}
+{#                                    <i class="fa-solid fa-trash-can mr-1 w-5"></i> Delete Resume#}
+{#                                </a>#}
+{#                            </li>#}
+{#                        </ul>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#        {% endfor %}#}
+{#    </div>#}
+{#    {% else %}#}
+{#    <div class="flex flex-col items-center justify-center p-12 bg-base-200 rounded-2xl text-center border border-gray-100 dark:border-gray-700 shadow-lg">#}
+{#        <div class="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-6">#}
+{#            <i class="fa-solid fa-file-alt text-4xl text-gray-400"></i>#}
+{#        </div>#}
+{#        <h3 class="text-2xl font-bold mb-3">No Resumes Yet</h3>#}
+{#        <p class="text-gray-500 mb-8 max-w-md">You haven't created any resumes yet. Get started by creating your first resume to kickstart your job search journey!</p>#}
+{#        <a href="{% url 'job_portal:template_selection' %}" class="btn btn-primary btn-lg">#}
+{#            <i class="fa-solid fa-plus mr-2"></i> Create Your First Resume#}
+{#        </a>#}
+{#    </div>#}
+{#    {% endif %}#}
+{#</div>#}
+{#{% endblock %}#}

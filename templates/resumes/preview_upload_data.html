@@ -1,0 +1,158 @@
+<!-- resumes/preview_upload_data.html -->
+{% extends 'base_authenticated.html' %}
+{% load static %}
+
+{% block title %}Resume Data Preview{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-10">
+    <div class="mb-8">
+        <h1 class="text-2xl md:text-3xl font-bold text-center">Review Extracted Resume Data</h1>
+        <p class="text-gray-600 mt-2 text-center max-w-2xl mx-auto">
+            Below is the information extracted from your resume. You can edit any section after creating your resume.
+        </p>
+    </div>
+
+    <div class="card bg-base-100 shadow-xl border border-gray-100 overflow-hidden">
+        <div class="card-body p-0">
+            <!-- Personal Information -->
+            <div class="bg-primary/5 p-6 border-b border-gray-100">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fa-solid fa-user-circle mr-2 text-primary"></i> Personal Information
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="font-semibold">Name:</p>
+                        <p>{{ data.personalInfo.firstName }} {{ data.personalInfo.middleName }} {{ data.personalInfo.lastName }}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold">Email:</p>
+                        <p>{{ data.personalInfo.email }}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold">Phone:</p>
+                        <p>{{ data.personalInfo.phone }}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold">Address:</p>
+                        <p>{{ data.personalInfo.address }}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold">LinkedIn:</p>
+                        <p>{{ data.personalInfo.linkedin }}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold">GitHub:</p>
+                        <p>{{ data.personalInfo.github }}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold">Portfolio:</p>
+                        <p>{{ data.personalInfo.portfolio }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fa-solid fa-file-alt mr-2 text-primary"></i> Professional Summary
+                </h2>
+                <p>{{ data.summary }}</p>
+            </div>
+
+            <!-- Skills -->
+            <div class="bg-primary/5 p-6 border-b border-gray-100">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fa-solid fa-code mr-2 text-primary"></i> Skills
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {% for skill in data.skills %}
+                    <div class="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                        <div class="flex justify-between">
+                            <p class="font-medium">{{ skill.skillName }}</p>
+                            <span class="text-xs px-2 py-1 rounded-full {% if skill.skillType == 'technical' %}bg-blue-100 text-blue-800{% elif skill.skillType == 'soft' %}bg-green-100 text-green-800{% elif skill.skillType == 'language' %}bg-purple-100 text-purple-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ skill.skillType }}
+                            </span>
+                        </div>
+                        <div class="mt-2">
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-primary h-2 rounded-full" style="width: {{ skill.proficiencyLevel }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 col-span-3">No skills were extracted from your resume.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Work Experience -->
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fa-solid fa-briefcase mr-2 text-primary"></i> Work Experience
+                </h2>
+                {% for job in data.workExperience %}
+                <div class="mb-6 {% if not forloop.last %}pb-6 border-b border-gray-100{% endif %}">
+                    <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-2">
+                        <div>
+                            <h3 class="font-semibold text-lg">{{ job.jobTitle }}</h3>
+                            <p class="text-gray-700">{{ job.employer }} • {{ job.location }}</p>
+                        </div>
+                        <p class="text-gray-500 mt-1 md:mt-0">
+                            {{ job.startDate }} - {% if job.isCurrent %}Present{% else %}{{ job.endDate }}{% endif %}
+                        </p>
+                    </div>
+                    <ul class="list-disc pl-5 mt-2 space-y-1">
+                        {% for bullet in job.bulletPoints %}
+                        <li>{{ bullet }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% empty %}
+                <p class="text-gray-500">No work experience was extracted from your resume.</p>
+                {% endfor %}
+            </div>
+
+            <!-- Education -->
+            <div class="bg-primary/5 p-6 border-b border-gray-100">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fa-solid fa-graduation-cap mr-2 text-primary"></i> Education
+                </h2>
+                {% for edu in data.education %}
+                <div class="mb-4 {% if not forloop.last %}pb-4 border-b border-gray-100{% endif %}">
+                    <div class="flex flex-col md:flex-row md:justify-between md:items-start">
+                        <div>
+                            <h3 class="font-semibold text-lg">{{ edu.degree }} in {{ edu.fieldOfStudy }}</h3>
+                            <p class="text-gray-700">{{ edu.schoolName }} • {{ edu.location }}</p>
+                            {% if edu.gpa %}<p class="text-gray-600 text-sm">GPA: {{ edu.gpa }}</p>{% endif %}
+                        </div>
+                        <p class="text-gray-500 mt-1 md:mt-0">
+                            {{ edu.graduationDate }}
+                        </p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500">No education was extracted from your resume.</p>
+                {% endfor %}
+            </div>
+
+            <!-- Projects, Certifications, Languages -->
+            <!-- Similar sections for projects, certifications, languages, etc. -->
+            <!-- ... -->
+
+            <!-- Continue button -->
+            <div class="p-6 bg-gray-50">
+                <div class="flex justify-end">
+                    <form method="post" action="{% url 'job_portal:create_resume_from_upload' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="template_id" value="{{ request.session.resume_template_id }}">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-check mr-2"></i> Create Resume
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

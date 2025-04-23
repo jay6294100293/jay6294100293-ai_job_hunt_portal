@@ -1,3 +1,249 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom CSS Rules Copied from Previous Base Template */
+
+/* Global Styles */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Plus Jakarta Sans', sans-serif; /* Make sure this font is loaded */
+    background-color: #f9fafb; /* Equivalent to Tailwind's bg-slate-50 or bg-gray-50 */
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', sans-serif; /* Make sure this font is loaded */
+}
+
+main {
+    flex: 1;
+}
+
+/* Form Styles */
+.form-row:not(:last-child) {
+    margin-bottom: 1.75rem; /* Equivalent to Tailwind mb-7 */
+}
+
+/* This focus style might conflict/duplicate Tailwind's default focus rings, review if needed */
+/* .form-control:focus {
+    box-shadow: 0 0 0 2px rgba(67, 56, 202, 0.3);
+} */
+
+/* Resume Template Preview Styles */
+.template-preview {
+    position: relative;
+    border-radius: 1rem; /* Tailwind rounded-2xl */
+    overflow: hidden;
+    /* Tailwind shadow-md */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease; /* Tailwind transition-all duration-300 ease-linear (or other easing) */
+}
+
+.template-preview img {
+    transition: transform 0.4s ease, filter 0.4s ease;
+    width: 100%; /* Tailwind w-full */
+    height: auto;
+}
+
+.template-preview:hover {
+     /* Tailwind shadow-lg */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.template-preview:hover img {
+    transform: scale(1.05); /* Tailwind hover:scale-105 */
+}
+
+.template-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+    padding: 1.5rem; /* Tailwind p-6 */
+    transform: translateY(100%);
+    transition: transform 0.3s ease; /* Tailwind transition-transform duration-300 ease-linear */
+    display: flex; /* Tailwind flex */
+    justify-content: center; /* Tailwind justify-center */
+}
+
+.template-preview:hover .template-overlay {
+    transform: translateY(0); /* Tailwind group-hover:translate-y-0 (requires group class on parent) */
+}
+
+/* Enhanced Buttons (Consider if these override DaisyUI/Tailwind too much) */
+/* .btn {
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0.01em;
+    transition: all 0.3s ease;
+} */
+
+/* .btn-primary {
+    background-color: #4338ca;
+    border-color: #4338ca;
+} */
+
+/* .btn-primary:hover {
+    background-color: #3730a3;
+    border-color: #3730a3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(67, 56, 202, 0.25);
+} */
+
+/* .btn-accent {
+    background-color: #06b6d4;
+    border-color: #06b6d4;
+} */
+
+/* .btn-accent:hover {
+    background-color: #0891b2;
+    border-color: #0891b2;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);
+} */
+
+/* .btn-ghost:hover {
+    background-color: rgba(67, 56, 202, 0.1);
+} */
+
+/* Enhanced Navbar (Likely redundant if using DaisyUI navbar component) */
+/* .navbar {
+    background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
+    padding: 0.75rem 1.5rem;
+} */
+
+/* Enhanced Dropdown (Likely redundant if using DaisyUI dropdown component) */
+/* .dropdown-content {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+} */
+
+/* Enhanced Footer (Likely redundant if using DaisyUI footer component) */
+/* footer {
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+    padding: 3rem 0;
+} */
+
+/* .footer-title {
+    opacity: 1;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    font-family: 'Outfit', sans-serif;
+} */
+
+.link-hover:hover {
+    text-decoration: none;
+    opacity: 0.8;
+}
+
+/* Enhanced Alerts (Likely redundant if using DaisyUI alert component) */
+/* .alert {
+    border-radius: 0.75rem;
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06);
+} */
+
+/* .alert-success {
+    background-color: rgba(16, 185, 129, 0.15);
+    border-left: 4px solid #10b981;
+    color: #065f46;
+} */
+
+/* .alert-error {
+    background-color: rgba(239, 68, 68, 0.15);
+    border-left: 4px solid #ef4444;
+    color: #b91c1c;
+} */
+
+/* .alert-warning {
+    background-color: rgba(245, 158, 11, 0.15);
+    border-left: 4px solid #f59e0b;
+    color: #92400e;
+} */
+
+/* .alert-info {
+    background-color: rgba(59, 130, 246, 0.15);
+    border-left: 4px solid #3b82f6;
+    color: #1e40af;
+} */
+
+/* Card styles (Likely redundant if using DaisyUI card component) */
+/* .card {
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+} */
+
+/* .card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transform: translateY(-5px);
+} */
+
+/* Progress Bar (Likely redundant if using DaisyUI progress component) */
+/* progress {
+    height: 0.5rem;
+    border-radius: 999px;
+} */
+
+/* progress::-webkit-progress-bar {
+    background-color: #e2e8f0;
+    border-radius: 999px;
+} */
+
+/* progress::-webkit-progress-value {
+    background: linear-gradient(90deg, #4338ca 0%, #3730a3 100%);
+    border-radius: 999px;
+} */
+
+/* Social Icons */
+.social-icon {
+    transition: all 0.3s ease; /* Tailwind transition-all duration-300 ease-linear */
+    opacity: 0.8; /* Tailwind opacity-80 */
+}
+
+.social-icon:hover {
+    opacity: 1; /* Tailwind hover:opacity-100 */
+    transform: translateY(-3px); /* Tailwind hover:-translate-y-1 (adjust value if needed) */
+}
+
+/* Navbar Brand (May conflict with DaisyUI) */
+/* .navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 1.25rem;
+} */
+
+/* .navbar-brand .icon {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 0.75rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+} */
+
+/* .navbar-brand:hover .icon {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(5deg);
+} */
+
+/* Add any other custom styles from your old <style> block here */

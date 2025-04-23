@@ -1,15 +1,21 @@
 {% extends 'resumes/wizard_base.html' %}
 {% load static %}
+{% load widget_tweaks %} {# Ensure widget_tweaks is loaded if used #}
 
 {% block step_title %}Certifications & Credentials{% endblock %}
 
 {% block step_icon %}<i class="fa-solid fa-certificate mr-3 text-primary opacity-80"></i>{% endblock %}
 
 {% block step_content %}
-<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">
+<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}">
     {% csrf_token %}
 
+    {# *** Management Form Tag Added *** #}
+    {{ formset.management_form }}
+    {# ******************************** #}
+
     <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">
+        {# *** Original Info Box Content Restored *** #}
         <div class="flex items-start">
             <div class="text-primary text-xl mr-4 mt-1">
                 <i class="fa-solid fa-lightbulb"></i>
@@ -24,160 +30,402 @@
                 </p>
             </div>
         </div>
+        {# *************************************** #}
     </div>
 
-    <!-- Hidden field to track number of certification entries -->
-    <input type="hidden" id="certification_count" name="certification_count" value="{{ certifications|length }}">
-
-    <!-- Certifications container -->
     <div id="certifications_container" class="space-y-8">
-        {% for certification in certifications %}
-        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">
-            <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">
-                <h3 class="text-lg font-medium flex items-center">
-                    <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                        <i class="fa-solid fa-award text-primary text-sm"></i>
-                    </span>
-                    Certification #{{ forloop.counter }}
-                </h3>
+        {% for form in formset.forms %}
+        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg" id="{{ form.prefix }}-row">
+             {% if formset.can_delete %}
+                 <div class="hidden">{{ form.DELETE }}</div>
+             {% endif %}
 
-                <!-- Remove Certification Button - Moved to header -->
-                <button type="button" class="btn btn-ghost btn-sm text-error"
-                        onclick="removeFormRow(this, 'certifications_container', 'certification_count')">
-                    <i class="fa-solid fa-trash-can mr-1"></i> Remove
-                </button>
-            </div>
+             <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">
+                  <h3 class="text-lg font-medium flex items-center">
+                       <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                           <i class="fa-solid fa-award text-primary text-sm"></i>
+                       </span>
+                       Certification #{{ forloop.counter }}
+                  </h3>
+                   {% if formset.can_delete %}
+                  <button type="button" class="btn btn-ghost btn-sm text-error formset-delete-btn"
+                          onclick="deleteForm(this, '{{ formset.prefix }}')"> {# Ensure deleteForm JS works #}
+                       <i class="fa-solid fa-trash-can mr-1"></i> Remove
+                  </button>
+                   {% endif %}
+             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <!-- Certification Name -->
-                <div class="form-control">
-                    <label class="label" for="name_{{ forloop.counter0 }}">
-                        <span class="label-text font-medium">Certification Name</span>
-                        <span class="label-text-alt text-error">*</span>
-                    </label>
-                    <input type="text" id="name_{{ forloop.counter0 }}" name="name_{{ forloop.counter0 }}"
-                        class="input input-bordered w-full" value="{{ certification.name }}" required
-                        placeholder="e.g., AWS Certified Solutions Architect">
-                </div>
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                 <div class="form-control">
+                      <label class="label" for="{{ form.name.id_for_label }}">
+                           <span class="label-text font-medium">Certification Name</span>
+                           {# *** Asterisk Removed *** #}
+                           {# <span class="label-text-alt text-error">*</span> #}
+                      </label>
+                      <div class="relative">
+                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-award text-gray-400"></i></div>
+                           {# *** required Attribute Removed *** #}
+                           {% render_field form.name class+="input input-bordered w-full pl-10" placeholder="e.g., AWS Certified Solutions Architect" %}
+                      </div>
+                      {% if form.name.errors %}<div class="text-error text-xs mt-1">{{ form.name.errors|first }}</div>{% endif %}
+                 </div>
 
-                <!-- Issuing Institute -->
-                <div class="form-control">
-                    <label class="label" for="institute_{{ forloop.counter0 }}">
-                        <span class="label-text font-medium">Issuing Organization</span>
-                        <span class="label-text-alt text-gray-500">(Optional)</span>
-                    </label>
-                    <input type="text" id="institute_{{ forloop.counter0 }}" name="institute_{{ forloop.counter0 }}"
-                        class="input input-bordered w-full" value="{{ certification.institute }}"
-                        placeholder="e.g., Amazon Web Services">
-                </div>
-            </div>
+                 <div class="form-control">
+                      <label class="label" for="{{ form.institute.id_for_label }}">
+                           <span class="label-text font-medium">Issuing Organization</span>
+                           <span class="label-text-alt text-gray-500">(Optional)</span>
+                      </label>
+                      <div class="relative">
+                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-building-columns text-gray-400"></i></div>
+                           {% render_field form.institute class+="input input-bordered w-full pl-10" placeholder="e.g., Amazon Web Services" %}
+                      </div>
+                      {% if form.institute.errors %}<div class="text-error text-xs mt-1">{{ form.institute.errors|first }}</div>{% endif %}
+                 </div>
+             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-                <!-- Completion Date -->
-                <div class="form-control">
-                    <label class="label" for="completion_date_{{ forloop.counter0 }}">
-                        <span class="label-text font-medium">Date Earned</span>
-                        <span class="label-text-alt text-gray-500">(Optional)</span>
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-calendar-alt text-gray-400"></i>
+             {# Dates, Score, Link, Description fields... #}
+             {# Ensure these fields also don't have unnecessary 'required' attributes #}
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+                 <div class="form-control">
+                     <label class="label" for="{{ form.completion_date.id_for_label }}"><span class="label-text font-medium">Date Earned</span> <span class="label-text-alt">(Optional)</span></label>
+                     <div class="relative">
+                          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-calendar-alt text-gray-400"></i></div>
+                          {% render_field form.completion_date type="date" class+="input input-bordered w-full pl-10" %}
+                     </div>
+                     {% if form.completion_date.errors %}<div class="text-error text-xs mt-1">{{ form.completion_date.errors|first }}</div>{% endif %}
+                 </div>
+                 <div class="form-control">
+                     <label class="label" for="{{ form.expiration_date.id_for_label }}"><span class="label-text font-medium">Expiration Date</span> <span class="label-text-alt">(Optional)</span></label>
+                      <div class="relative">
+                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-hourglass-end text-gray-400"></i></div>
+                           {% render_field form.expiration_date type="date" class+="input input-bordered w-full pl-10" %}
+                      </div>
+                     {% if form.expiration_date.errors %}<div class="text-error text-xs mt-1">{{ form.expiration_date.errors|first }}</div>{% endif %}
+                 </div>
+             </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+                  <div class="form-control">
+                      <label class="label" for="{{ form.score.id_for_label }}"><span class="label-text font-medium">Score/Grade</span> <span class="label-text-alt">(Optional)</span></label>
+                       <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-star text-gray-400"></i></div>
+                            {% render_field form.score class+="input input-bordered w-full pl-10" placeholder="e.g., 95%" %}
+                       </div>
+                      {% if form.score.errors %}<div class="text-error text-xs mt-1">{{ form.score.errors|first }}</div>{% endif %}
+                  </div>
+                   <div class="form-control">
+                       <label class="label" for="{{ form.link.id_for_label }}"><span class="label-text font-medium">Credential URL</span> <span class="label-text-alt">(Optional)</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-link text-gray-400"></i></div>
+                            {% render_field form.link type="url" class+="input input-bordered w-full pl-10" placeholder="https://credential.example.com" %}
                         </div>
-                        <input type="date" id="completion_date_{{ forloop.counter0 }}" name="completion_date_{{ forloop.counter0 }}"
-                            class="input input-bordered w-full pl-10" value="{{ certification.completion_date|date:'Y-m-d' }}">
-                    </div>
-                </div>
-
-                <!-- Expiration Date -->
-                <div class="form-control">
-                    <label class="label" for="expiration_date_{{ forloop.counter0 }}">
-                        <span class="label-text font-medium">Expiration Date</span>
-                        <span class="label-text-alt text-gray-500">(Optional)</span>
-                    </label>
+                       {% if form.link.errors %}<div class="text-error text-xs mt-1">{{ form.link.errors|first }}</div>{% endif %}
+                   </div>
+              </div>
+               <div class="form-control mt-5">
+                   <label class="label" for="{{ form.description.id_for_label }}"><span class="label-text font-medium">Description</span> <span class="label-text-alt">(Optional)</span></label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-hourglass-end text-gray-400"></i>
-                        </div>
-                        <input type="date" id="expiration_date_{{ forloop.counter0 }}" name="expiration_date_{{ forloop.counter0 }}"
-                            class="input input-bordered w-full pl-10" value="{{ certification.expiration_date|date:'Y-m-d' }}">
+                         {% render_field form.description class+="textarea textarea-bordered w-full min-h-24" placeholder="Brief description..." %}
                     </div>
-                </div>
-            </div>
+                   {% if form.description.errors %}<div class="text-error text-xs mt-1">{{ form.description.errors|first }}</div>{% endif %}
+               </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-                <!-- Score/Grade -->
-                <div class="form-control">
-                    <label class="label" for="score_{{ forloop.counter0 }}">
-                        <span class="label-text font-medium">Score/Grade</span>
-                        <span class="label-text-alt text-gray-500">(Optional)</span>
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-star text-gray-400"></i>
-                        </div>
-                        <input type="text" id="score_{{ forloop.counter0 }}" name="score_{{ forloop.counter0 }}"
-                            class="input input-bordered w-full pl-10" value="{{ certification.score }}"
-                            placeholder="e.g., 95%, A+, 750/900">
-                    </div>
-                </div>
-
-                <!-- Credential Link -->
-                <div class="form-control">
-                    <label class="label" for="link_{{ forloop.counter0 }}">
-                        <span class="label-text font-medium">Credential URL</span>
-                        <span class="label-text-alt text-gray-500">(Optional)</span>
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-link text-gray-400"></i>
-                        </div>
-                        <input type="url" id="link_{{ forloop.counter0 }}" name="link_{{ forloop.counter0 }}"
-                            class="input input-bordered w-full pl-10" value="{{ certification.link }}"
-                            placeholder="https://credential.example.com/verify/12345">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Description -->
-            <div class="form-control mt-5">
-                <label class="label" for="description_{{ forloop.counter0 }}">
-                    <span class="label-text font-medium">Description</span>
-                    <span class="label-text-alt text-gray-500">(Optional)</span>
-                </label>
-                <div class="relative">
-                    <textarea id="description_{{ forloop.counter0 }}" name="description_{{ forloop.counter0 }}"
-                        class="textarea textarea-bordered w-full min-h-24"
-                        placeholder="Describe what the certification covered and how it relates to your skills or career goals.">{{ certification.description }}</textarea>
-                </div>
-                <span class="text-xs text-gray-500 mt-1">Briefly describe skills acquired or topics covered in this certification.</span>
-            </div>
-        </div>
+        </div> {# End form-row #}
         {% empty %}
-        <!-- Empty state when no certifications are added yet -->
-        <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center">
-            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <i class="fa-solid fa-award text-primary text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-medium mb-2">No Certifications Added Yet</h3>
-            <p class="text-gray-500 max-w-md mx-auto mb-6">
-                Highlight your professional certifications and credentials to demonstrate your expertise and commitment to continuous learning.
-            </p>
-            <button type="button" class="btn btn-primary"
-                    onclick="addFormRow('certification', 'certifications_container', 'certification_count')">
-                <i class="fa-solid fa-plus mr-2"></i> Add Your First Certification
-            </button>
-        </div>
+         <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center" id="certs-empty-state">
+              <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <i class="fa-solid fa-award text-primary text-2xl"></i>
+              </div>
+              <h3 class="text-lg font-medium mb-2">No Certifications Added Yet</h3>
+              <p class="text-gray-500 max-w-md mx-auto mb-6">
+                   This section is optional. Add relevant certifications to showcase your qualifications.
+              </p>
+              <button type="button" class="btn btn-primary add-another-btn" onclick="addForm(this, '{{ formset.prefix }}')">
+                  <i class="fa-solid fa-plus mr-2"></i> Add a Certification
+              </button>
+         </div>
         {% endfor %}
-    </div>
+    </div> {# End certifications_container #}
 
-    <!-- Add Certification Button - Only shown if at least one certification exists -->
-    {% if certifications %}
+    {# Template for adding new forms #}
+    <template id="{{ formset.prefix }}-form-template">
+         <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6" id="{{ formset.prefix }}-__prefix__-row">
+              {% with form=formset.empty_form %} {# Use empty_form for template structure #}
+              <div class="hidden"><input type="checkbox" name="{{ form.prefix }}-DELETE" id="id_{{ form.prefix }}-DELETE"></div>
+              <div class="flex justify-between items-center mb-5 pb-3 border-b"><h3>New Certification</h3><button type="button" onclick="deleteForm(this, '{{ formset.prefix }}')">Remove</button></div>
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                   <div><label>Name</label>{% render_field form.name class+="input input-bordered w-full" %}</div>
+                   <div><label>Institute</label>{% render_field form.institute class+="input input-bordered w-full" %}</div>
+               </div>
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+                   <div><label>Date Earned</label>{% render_field form.completion_date type="date" class+="input input-bordered w-full" %}</div>
+                   <div><label>Expiration Date</label>{% render_field form.expiration_date type="date" class+="input input-bordered w-full" %}</div>
+                </div>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+                     <div><label>Score</label>{% render_field form.score class+="input input-bordered w-full" %}</div>
+                     <div><label>Link</label>{% render_field form.link type="url" class+="input input-bordered w-full" %}</div>
+                 </div>
+                <div class="mt-5"><label>Description</label>{% render_field form.description class+="textarea textarea-bordered w-full" %}</div>
+              {% endwith %}
+         </div>
+    </template>
+
+    {# Add Certification button (Always show, but JS might hide empty state) #}
     <div class="flex justify-center mt-8">
-        <button type="button" class="btn btn-outline btn-primary"
-                onclick="addFormRow('certification', 'certifications_container', 'certification_count')">
-            <i class="fa-solid fa-plus mr-2"></i> Add Another Certification
+        <button type="button" class="btn btn-primary add-another-btn" onclick="addForm(this, '{{ formset.prefix }}')">
+             <i class="fa-solid fa-plus mr-2"></i> Add Another Certification
         </button>
     </div>
-    {% endif %}
+
 </form>
+
+{# Ensure necessary JS functions (addForm, deleteForm) are available #}
+<script>
+    // Basic JS (ensure these are robust in your actual implementation)
+    if (typeof addForm !== 'function') {
+         function addForm(button, prefix) {
+             console.warn("addForm function not fully defined. Using basic example.");
+             const formContainer = document.getElementById('certifications_container'); // Target specific container
+             const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
+             const template = document.getElementById(prefix + '-form-template');
+             if (!formContainer || !totalFormsInput || !template) { console.error("Missing elements for addForm"); return; }
+             const formNum = parseInt(totalFormsInput.value);
+             let newFormHtml = template.innerHTML.replace(/__prefix__/g, formNum);
+             const tempDiv = document.createElement('div');
+             tempDiv.innerHTML = newFormHtml;
+             const newFormElement = tempDiv.firstElementChild;
+             const emptyState = document.getElementById('certs-empty-state');
+             if(emptyState) emptyState.classList.add('hidden'); // Hide empty state
+             formContainer.appendChild(newFormElement);
+             totalFormsInput.value = formNum + 1;
+
+             // Show 'Add Another' button if it was hidden by empty state logic (if any)
+             const addAnotherButton = document.querySelector('.add-another-btn'); // Adjust selector if needed
+              if(addAnotherButton) addAnotherButton.style.display = 'flex'; // Or 'block', 'inline-flex' etc.
+         }
+     }
+     if (typeof deleteForm !== 'function') {
+         function deleteForm(button, prefix) {
+             console.warn("deleteForm function not fully defined. Using basic example.");
+             const formRow = button.closest('.form-row');
+             const deleteInput = formRow.querySelector('input[name$="-DELETE"]');
+             if (deleteInput) {
+                 deleteInput.checked = true;
+                 formRow.style.display = 'none'; // Hide the form visually
+             } else {
+                  formRow.remove(); // Remove if no DELETE field (likely extra form)
+             }
+             // Check if remaining forms are all hidden (or none left) to show empty state
+             const container = document.getElementById('certifications_container');
+             const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');
+             const emptyState = document.getElementById('certs-empty-state');
+             if(visibleForms.length === 0 && emptyState) {
+                 emptyState.classList.remove('hidden');
+                 const addAnotherButton = document.querySelector('.add-another-btn'); // Hide 'Add Another' if empty
+                  if(addAnotherButton) addAnotherButton.style.display = 'none';
+             }
+         }
+     }
+
+     // Initial check for empty state on load
+     document.addEventListener('DOMContentLoaded', function() {
+         const container = document.getElementById('certifications_container');
+         const emptyState = document.getElementById('certs-empty-state');
+         if (container && emptyState) {
+             const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');
+             if (visibleForms.length > 0) {
+                 emptyState.classList.add('hidden');
+             } else {
+                 emptyState.classList.remove('hidden');
+                 // Hide 'Add Another' button if initially empty
+                  const addAnotherButton = document.querySelector('.add-another-btn');
+                  if(addAnotherButton) addAnotherButton.style.display = 'none';
+             }
+         }
+     });
+</script>
 {% endblock %}
+
+
+{#{% extends 'resumes/wizard_base.html' %}#}
+{#{% load static %}#}
+{##}
+{#{% block step_title %}Certifications & Credentials{% endblock %}#}
+{##}
+{#{% block step_icon %}<i class="fa-solid fa-certificate mr-3 text-primary opacity-80"></i>{% endblock %}#}
+{##}
+{#{% block step_content %}#}
+{#<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">#}
+{#    {% csrf_token %}#}
+{##}
+{#    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">#}
+{#        <div class="flex items-start">#}
+{#            <div class="text-primary text-xl mr-4 mt-1">#}
+{#                <i class="fa-solid fa-lightbulb"></i>#}
+{#            </div>#}
+{#            <div>#}
+{#                <p class="text-base">#}
+{#                    Add professional certifications, licenses, or training programs you've completed.#}
+{#                    These help demonstrate your specialized knowledge and commitment to professional development.#}
+{#                </p>#}
+{#                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">#}
+{#                    <strong>Pro tip:</strong> Include expiration dates for time-limited certifications and credential links when available to allow verification.#}
+{#                </p>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Hidden field to track number of certification entries -->#}
+{#    <input type="hidden" id="certification_count" name="certification_count" value="{{ certifications|length }}">#}
+{##}
+{#    <!-- Certifications container -->#}
+{#    <div id="certifications_container" class="space-y-8">#}
+{#        {% for certification in certifications %}#}
+{#        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">#}
+{#            <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">#}
+{#                <h3 class="text-lg font-medium flex items-center">#}
+{#                    <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">#}
+{#                        <i class="fa-solid fa-award text-primary text-sm"></i>#}
+{#                    </span>#}
+{#                    Certification #{{ forloop.counter }}#}
+{#                </h3>#}
+{##}
+{#                <!-- Remove Certification Button - Moved to header -->#}
+{#                <button type="button" class="btn btn-ghost btn-sm text-error"#}
+{#                        onclick="removeFormRow(this, 'certifications_container', 'certification_count')">#}
+{#                    <i class="fa-solid fa-trash-can mr-1"></i> Remove#}
+{#                </button>#}
+{#            </div>#}
+{##}
+{#            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">#}
+{#                <!-- Certification Name -->#}
+{#                <div class="form-control">#}
+{#                    <label class="label" for="name_{{ forloop.counter0 }}">#}
+{#                        <span class="label-text font-medium">Certification Name</span>#}
+{#                        <span class="label-text-alt text-error">*</span>#}
+{#                    </label>#}
+{#                    <input type="text" id="name_{{ forloop.counter0 }}" name="name_{{ forloop.counter0 }}"#}
+{#                        class="input input-bordered w-full" value="{{ certification.name }}" required#}
+{#                        placeholder="e.g., AWS Certified Solutions Architect">#}
+{#                </div>#}
+{##}
+{#                <!-- Issuing Institute -->#}
+{#                <div class="form-control">#}
+{#                    <label class="label" for="institute_{{ forloop.counter0 }}">#}
+{#                        <span class="label-text font-medium">Issuing Organization</span>#}
+{#                        <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                    </label>#}
+{#                    <input type="text" id="institute_{{ forloop.counter0 }}" name="institute_{{ forloop.counter0 }}"#}
+{#                        class="input input-bordered w-full" value="{{ certification.institute }}"#}
+{#                        placeholder="e.g., Amazon Web Services">#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">#}
+{#                <!-- Completion Date -->#}
+{#                <div class="form-control">#}
+{#                    <label class="label" for="completion_date_{{ forloop.counter0 }}">#}
+{#                        <span class="label-text font-medium">Date Earned</span>#}
+{#                        <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                    </label>#}
+{#                    <div class="relative">#}
+{#                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                            <i class="fa-solid fa-calendar-alt text-gray-400"></i>#}
+{#                        </div>#}
+{#                        <input type="date" id="completion_date_{{ forloop.counter0 }}" name="completion_date_{{ forloop.counter0 }}"#}
+{#                            class="input input-bordered w-full pl-10" value="{{ certification.completion_date|date:'Y-m-d' }}">#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <!-- Expiration Date -->#}
+{#                <div class="form-control">#}
+{#                    <label class="label" for="expiration_date_{{ forloop.counter0 }}">#}
+{#                        <span class="label-text font-medium">Expiration Date</span>#}
+{#                        <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                    </label>#}
+{#                    <div class="relative">#}
+{#                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                            <i class="fa-solid fa-hourglass-end text-gray-400"></i>#}
+{#                        </div>#}
+{#                        <input type="date" id="expiration_date_{{ forloop.counter0 }}" name="expiration_date_{{ forloop.counter0 }}"#}
+{#                            class="input input-bordered w-full pl-10" value="{{ certification.expiration_date|date:'Y-m-d' }}">#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">#}
+{#                <!-- Score/Grade -->#}
+{#                <div class="form-control">#}
+{#                    <label class="label" for="score_{{ forloop.counter0 }}">#}
+{#                        <span class="label-text font-medium">Score/Grade</span>#}
+{#                        <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                    </label>#}
+{#                    <div class="relative">#}
+{#                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                            <i class="fa-solid fa-star text-gray-400"></i>#}
+{#                        </div>#}
+{#                        <input type="text" id="score_{{ forloop.counter0 }}" name="score_{{ forloop.counter0 }}"#}
+{#                            class="input input-bordered w-full pl-10" value="{{ certification.score }}"#}
+{#                            placeholder="e.g., 95%, A+, 750/900">#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <!-- Credential Link -->#}
+{#                <div class="form-control">#}
+{#                    <label class="label" for="link_{{ forloop.counter0 }}">#}
+{#                        <span class="label-text font-medium">Credential URL</span>#}
+{#                        <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                    </label>#}
+{#                    <div class="relative">#}
+{#                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                            <i class="fa-solid fa-link text-gray-400"></i>#}
+{#                        </div>#}
+{#                        <input type="url" id="link_{{ forloop.counter0 }}" name="link_{{ forloop.counter0 }}"#}
+{#                            class="input input-bordered w-full pl-10" value="{{ certification.link }}"#}
+{#                            placeholder="https://credential.example.com/verify/12345">#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <!-- Description -->#}
+{#            <div class="form-control mt-5">#}
+{#                <label class="label" for="description_{{ forloop.counter0 }}">#}
+{#                    <span class="label-text font-medium">Description</span>#}
+{#                    <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                </label>#}
+{#                <div class="relative">#}
+{#                    <textarea id="description_{{ forloop.counter0 }}" name="description_{{ forloop.counter0 }}"#}
+{#                        class="textarea textarea-bordered w-full min-h-24"#}
+{#                        placeholder="Describe what the certification covered and how it relates to your skills or career goals.">{{ certification.description }}</textarea>#}
+{#                </div>#}
+{#                <span class="text-xs text-gray-500 mt-1">Briefly describe skills acquired or topics covered in this certification.</span>#}
+{#            </div>#}
+{#        </div>#}
+{#        {% empty %}#}
+{#        <!-- Empty state when no certifications are added yet -->#}
+{#        <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center">#}
+{#            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">#}
+{#                <i class="fa-solid fa-award text-primary text-2xl"></i>#}
+{#            </div>#}
+{#            <h3 class="text-lg font-medium mb-2">No Certifications Added Yet</h3>#}
+{#            <p class="text-gray-500 max-w-md mx-auto mb-6">#}
+{#                Highlight your professional certifications and credentials to demonstrate your expertise and commitment to continuous learning.#}
+{#            </p>#}
+{#            <button type="button" class="btn btn-primary"#}
+{#                    onclick="addFormRow('certification', 'certifications_container', 'certification_count')">#}
+{#                <i class="fa-solid fa-plus mr-2"></i> Add Your First Certification#}
+{#            </button>#}
+{#        </div>#}
+{#        {% endfor %}#}
+{#    </div>#}
+{##}
+{#    <!-- Add Certification Button - Only shown if at least one certification exists -->#}
+{#    {% if certifications %}#}
+{#    <div class="flex justify-center mt-8">#}
+{#        <button type="button" class="btn btn-outline btn-primary"#}
+{#                onclick="addFormRow('certification', 'certifications_container', 'certification_count')">#}
+{#            <i class="fa-solid fa-plus mr-2"></i> Add Another Certification#}
+{#        </button>#}
+{#    </div>#}
+{#    {% endif %}#}
+{#</form>#}
+{#{% endblock %}#}
