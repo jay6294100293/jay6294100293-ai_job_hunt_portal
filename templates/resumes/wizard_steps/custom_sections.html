@@ -4,7 +4,7 @@
 {% load widget_tweaks %}
 
 {% block step_title %}Additional Sections{% endblock %}
-{% block step_icon %}<i class="fa-solid fa-puzzle-piece mr-3 text-primary opacity-80"></i>{% endblock %}
+{% block step_icon %}<i class="fa-solid fa-puzzle-piece mr-3 text-primary-600 dark:text-primary-400 text-2xl"></i>{% endblock %} {# Adjusted icon color and size #}
 
 {% block step_content %}
 <form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}">
@@ -13,13 +13,14 @@
     {# *** RENDER MANAGEMENT FORM - ESSENTIAL *** #}
     {{ formset.management_form }}
 
-    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">
+    {# *** Info Box Styling *** #}
+    <div class="bg-primary-50 dark:bg-primary-950/20 border-2 border-primary-200 dark:border-primary-600 rounded-lg p-5 mb-8"> {# Replaced bg-primary/5, border border-primary/10, added border-2 and specific primary shades #}
          <div class="flex items-start">
-            <div class="text-primary text-xl mr-4 mt-1">
+            <div class="text-primary-600 dark:text-primary-400 text-xl mr-4 mt-1 flex-shrink-0"> {# Adjusted text-primary to specific primary color, added flex-shrink-0 #}
                 <i class="fa-solid fa-lightbulb"></i>
             </div>
             <div>
-                <p class="text-base">
+                <p class="text-base text-gray-800 dark:text-gray-200"> {# Adjusted text color #}
                     Add custom sections that highlight your unique qualifications, such as
                     awards, publications, volunteer work, or special achievements.
                 </p>
@@ -29,11 +30,12 @@
             </div>
         </div>
          {# Section Ideas (moved outside form, uses JS to interact) #}
-         <div class="mt-4 border-t border-primary/10 pt-4">
-             <p class="text-sm font-medium mb-2">Section Ideas:</p>
+         <div class="mt-4 border-t border-primary-200 dark:border-primary-700 pt-4"> {# Adjusted border color #}
+             <p class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">Section Ideas:</p> {# Adjusted text color #}
              <div class="flex flex-wrap gap-2">
                  {% for idea in default_ideas %} {# Assuming default_ideas passed in context #}
-                 <button type="button" class="btn btn-xs btn-outline btn-primary" onclick="addCustomSectionFromIdea(this, '{{ formset.prefix }}')">
+                 {# *** Styled Idea Button with Tailwind Classes *** #}
+                 <button type="button" class="inline-flex items-center px-3 py-1.5 border border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400 rounded-md text-xs font-medium bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500" onclick="addCustomSectionFromIdea(this, '{{ formset.prefix }}')"> {# Replaced btn btn-xs btn-outline btn-primary with Tailwind classes #}
                      {% if idea.icon %}<i class="fa-solid {{ idea.icon }} mr-1"></i>{% endif %}
                      <span>{{ idea.name }}</span>
                  </button>
@@ -43,91 +45,109 @@
     </div>
 
 
-    <div id="custom_sections_container" class="space-y-8">
+    <div id="custom_sections_container" class="space-y-6"> {# Adjusted space-y #}
 
         {# *** CORRECTED LOOP: Iterate over formset.forms *** #}
         {% for form in formset.forms %}
-        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg" id="{{ form.prefix }}-row">
+        <div class="form-row bg-white dark:bg-gray-800 border-2 border-primary-200 dark:border-primary-700 rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-lg" id="{{ form.prefix }}-row"> {# Replaced bg-base-100, border border-gray-100, rounded-xl with Tailwind classes, added border-2 and primary shades #}
              {% if form.instance.pk %}{{ form.id }}{% endif %}
              {% if formset.can_delete %}
+                 {# The delete input is hidden, JS handles marking for deletion #}
                  <div class="hidden">{{ form.DELETE }}</div>
              {% endif %}
 
-            <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">
-                <h3 class="text-lg font-medium flex items-center flex-grow mr-4">
-                    <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                        <i class="fa-solid fa-puzzle-piece text-primary text-sm"></i>
+            <div class="flex justify-between items-center mb-5 pb-4 border-b border-gray-200 dark:border-gray-700"> {# Adjusted padding-bottom and border color #}
+                <h3 class="text-lg font-semibold flex items-center flex-grow mr-4">
+                    <span class="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mr-3 flex-shrink-0"> {# Replaced bg-primary/10 with bg-primary-100 #}
+                        <i class="fa-solid fa-puzzle-piece text-primary-600 dark:text-primary-400 text-sm"></i> {# Adjusted text-primary to specific primary color #}
                     </span>
-                    {# Render Section Name Field Directly for Header #}
-                    {% render_field form.name class+="input input-sm input-ghost flex-grow !border-none focus:!outline-none focus:!border-none focus:!ring-0 font-medium text-lg p-0" placeholder="Section Title (e.g., Volunteer Experience)" %}
+                    {# Render Section Name Field Directly for Header - Styled with Tailwind #}
+                    {# Use Tailwind classes to style the input field like a title #}
+                    {% render_field form.name class="block w-full text-lg font-semibold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 border-none focus:ring-0 focus:border-none p-0 bg-transparent" placeholder="Section Title (e.g., Volunteer Experience)" %} {# Styled input like a title #}
                 </h3>
                 {% if formset.can_delete %}
-                <button type="button" class="btn btn-ghost btn-sm text-error formset-delete-btn"
+                {# *** Styled Remove Button with Tailwind Classes *** #}
+                <button type="button" class="inline-flex items-center text-sm text-red-600 hover:text-red-800 dark:text-red-500 dark:hover:text-red-400 font-medium formset-delete-btn"
                         onclick="deleteForm(this, '{{ formset.prefix }}')">
                     <i class="fa-solid fa-trash-can mr-1"></i> Remove
                 </button>
                 {% endif %}
             </div>
-             {% if form.name.errors %}<div class="text-error text-xs mb-2 -mt-4">{{ form.name.errors|first }}</div>{% endif %}
+             {# Moved error below the input field #}
+             {% if form.name.errors %}<div class="text-red-600 dark:text-red-500 text-xs mb-4 -mt-4">{{ form.name.errors|first }}</div>{% endif %}
 
-            {# *** CORRECTED FIELDS: Render form fields *** #}
+            {# *** CORRECTED FIELDS: Render form fields and style with Tailwind *** #}
              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                 <div class="form-control">
-                    <label class="label" for="{{ form.institution_name.id_for_label }}">
-                        <span class="label-text font-medium">Institution/Organization</span>
-                        <span class="label-text-alt text-gray-500">(Optional)</span>
-                    </label>
-                    {% render_field form.institution_name class+="input input-bordered w-full" placeholder="e.g., Code for Good, PMI" %}
-                    {% if form.institution_name.errors %}<div class="text-error text-xs mt-1">{{ form.institution_name.errors|first }}</div>{% endif %}
+                 <div class="form-field"> {# Use a generic class for form field container #}
+                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.institution_name.id_for_label }}"> {# Styled label #}
+                           Institution/Organization <span class="text-gray-500 dark:text-gray-400 font-normal">(Optional)</span> {# Styled optional text #}
+                      </label>
+                      <div class="relative">
+                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-building text-gray-400 dark:text-gray-500"></i></div> {# Adjusted icon color #}
+                           {# Apply Tailwind Classes to Input using widget_tweaks #}
+                           {% render_field form.institution_name class="block w-full border-gray-300 rounded-md shadow-sm pl-10 pr-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-primary-600 dark:focus:border-primary-600" placeholder="e.g., Code for Good, PMI" %}
+                      </div>
+                      {% if form.institution_name.errors %}<div class="text-red-600 dark:text-red-500 text-xs mt-1">{{ form.institution_name.errors|first }}</div>{% endif %} {# Styled error text #}
                  </div>
-                  <div class="form-control">
-                    <label class="label" for="{{ form.completion_date.id_for_label }}">
-                        <span class="label-text font-medium">Date Completed/Received</span>
-                        <span class="label-text-alt text-gray-500">(Optional)</span>
+                  <div class="form-field"> {# Use a generic class for form field container #}
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.completion_date.id_for_label }}">
+                        Date Completed/Received <span class="text-gray-500 dark:text-gray-400 font-normal">(Optional)</span>
                     </label>
-                    {% render_field form.completion_date type="date" class+="input input-bordered w-full" %}
-                    {% if form.completion_date.errors %}<div class="text-error text-xs mt-1">{{ form.completion_date.errors|first }}</div>{% endif %}
+                     <div class="relative">
+                          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-calendar-alt text-gray-400 dark:text-gray-500"></i></div>
+                           {% render_field form.completion_date type="date" class="block w-full border-gray-300 rounded-md shadow-sm pl-10 pr-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-primary-600 dark:focus:border-primary-600" %}
+                      </div>
+                    {% if form.completion_date.errors %}<div class="text-red-600 dark:text-red-500 text-xs mt-1">{{ form.completion_date.errors|first }}</div>{% endif %}
                  </div>
              </div>
 
-             <div class="form-control mt-5">
-                <label class="label" for="{{ form.description.id_for_label }}">
-                    <span class="label-text font-medium">Description</span>
-                     <span class="label-text-alt text-gray-500">(Optional)</span>
+             <div class="form-field mt-5"> {# Use a generic class for form field container #}
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.description.id_for_label }}">
+                    Description <span class="text-gray-500 dark:text-gray-400 font-normal">(Optional)</span>
                 </label>
-                {% render_field form.description class+="textarea textarea-bordered w-full" rows="2" placeholder="Brief description if needed" %}
-                 {% if form.description.errors %}<div class="text-error text-xs mt-1">{{ form.description.errors|first }}</div>{% endif %}
+                 <div class="relative">
+                    {# Apply Tailwind Classes to Textarea using widget_tweaks #}
+                    {% render_field form.description class="block w-full border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm min-h-[6rem] dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-primary-600 dark:focus:border-primary-600" rows="2" placeholder="Brief description if needed" %} {# Adjusted min-height #}
+                 </div>
+                 {% if form.description.errors %}<div class="text-red-600 dark:text-red-500 text-xs mt-1">{{ form.description.errors|first }}</div>{% endif %}
             </div>
 
-             <div class="form-control mt-5">
-                <label class="label" for="{{ form.bullet_points.id_for_label }}">
-                    <span class="label-text font-medium">Details / Bullet Points</span>
-                     <span class="label-text-alt text-gray-500">(Optional)</span>
+             <div class="form-field mt-5"> {# Use a generic class for form field container #}
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.bullet_points.id_for_label }}">
+                    Details / Bullet Points <span class="text-gray-500 dark:text-gray-400 font-normal">(Optional)</span>
                 </label>
-                 {# Assuming bullet_points is a TextField in the form #}
-                {% render_field form.bullet_points class+="textarea textarea-bordered w-full min-h-24" placeholder="• Detail 1...\n• Detail 2..." %}
-                 {% if form.bullet_points.errors %}<div class="text-error text-xs mt-1">{{ form.bullet_points.errors|first }}</div>{% endif %}
+                 <div class="relative">
+                    {# Apply Tailwind Classes to Textarea using widget_tweaks #}
+                    {% render_field form.bullet_points class="block w-full border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm min-h-24 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-primary-600 dark:focus:border-primary-600" placeholder="• Detail 1...\n• Detail 2..." %}
+                 </div>
+                 {% if form.bullet_points.errors %}<div class="text-red-600 dark:text-red-500 text-xs mt-1">{{ form.bullet_points.errors|first }}</div>{% endif %}
             </div>
 
-             <div class="form-control mt-5">
-                <label class="label" for="{{ form.link.id_for_label }}">
-                    <span class="label-text font-medium">Relevant Link</span>
-                    <span class="label-text-alt text-gray-500">(Optional)</span>
+             <div class="form-field mt-5"> {# Use a generic class for form field container #}
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.link.id_for_label }}">
+                    Relevant Link <span class="text-gray-500 dark:text-gray-400 font-normal">(Optional)</span>
                 </label>
-                 {% render_field form.link type="url" class+="input input-bordered w-full" placeholder="https://..." %}
-                 {% if form.link.errors %}<div class="text-error text-xs mt-1">{{ form.link.errors|first }}</div>{% endif %}
+                 <div class="relative">
+                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-link text-gray-400 dark:text-gray-500"></i></div>
+                      {% render_field form.link type="url" class="block w-full border-gray-300 rounded-md shadow-sm pl-10 pr-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-primary-600 dark:focus:border-primary-600" placeholder="https://..." %}
+                 </div>
+                 {% if form.link.errors %}<div class="text-red-600 dark:text-red-500 text-xs mt-1">{{ form.link.errors|first }}</div>{% endif %}
             </div>
 
         </div> {# End form-row #}
         {% empty %}
          {% if formset.total_form_count == 0 %}
-             <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center" id="custom-empty-state">
-                  <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                     <i class="fa-solid fa-puzzle-piece text-primary text-2xl"></i>
+             {# *** Empty State Styling *** #}
+             <div id="custom-empty-state" class="bg-white dark:bg-gray-800 border-2 border-primary-200 dark:border-primary-700 rounded-lg shadow p-8 text-center"> {# Replaced bg-base-100, border border-gray-100, rounded-xl with Tailwind classes, added border-2 and primary shades #}
+                  <div class="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mx-auto mb-4 flex-shrink-0"> {# Replaced bg-primary/10 with bg-primary-100 #}
+                     <i class="fa-solid fa-puzzle-piece text-primary-600 dark:text-primary-400 text-2xl"></i> {# Adjusted text-primary to specific primary color #}
                  </div>
-                 <h3 class="text-lg font-medium mb-2">No Additional Sections Added Yet</h3>
-                 <p class="text-gray-500 max-w-md mx-auto mb-6">Add sections like Volunteer Work, Awards, Publications etc.</p>
-                 <button type="button" class="btn btn-primary" onclick="addForm(this, '{{ formset.prefix }}')">
+                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Additional Sections Added Yet</h3> {# Adjusted font-medium to font-semibold, adjusted text color #}
+                 <p class="text-gray-600 dark:text-gray-400 max-w-md mx-auto mb-6"> {# Adjusted text color #}
+                     Add sections like Volunteer Work, Awards, Publications etc.
+                 </p>
+                 {# *** Styled Add Button with Tailwind Classes *** #}
+                 <button type="button" class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 text-base font-medium dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-600 add-another-btn" onclick="addForm(this, '{{ formset.prefix }}')"> {# Added add-another-btn class #}
                      <i class="fa-solid fa-plus mr-2"></i> Add Custom Section
                  </button>
              </div>
@@ -136,30 +156,70 @@
     </div>
 
     {# Template for adding new forms via JS #}
+    {# *** Updated Template Styling to Match Live Forms *** #}
     <template id="{{ formset.prefix }}-form-template">
-        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6" id="{{ formset.prefix }}-__prefix__-row">
+        <div class="form-row bg-white dark:bg-gray-800 border-2 border-primary-200 dark:border-primary-700 rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-lg" id="{{ formset.prefix }}-__prefix__-row">
             {% with form=formset.empty_form %}
             {% if formset.can_delete %}<div class="hidden"><input type="checkbox" name="{{ form.prefix }}-DELETE" id="id_{{ form.prefix }}-DELETE"></div>{% endif %}
-             <div class="flex justify-between items-center mb-5 pb-3 border-b">
-                 {% render_field form.name class+="input input-sm input-ghost flex-grow !border-none font-medium text-lg p-0" placeholder="Section Title*" required="required" %}
-                 <button type="button" onclick="deleteForm(this, '{{ formset.prefix }}')">Remove</button>
+             <div class="flex justify-between items-center mb-5 pb-4 border-b border-gray-200 dark:border-gray-700">
+                 {# Styled input like a title in the template #}
+                 <h3 class="text-lg font-semibold flex items-center flex-grow mr-4">
+                    <span class="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mr-3 flex-shrink-0">
+                        <i class="fa-solid fa-puzzle-piece text-primary-600 dark:text-primary-400 text-sm"></i>
+                    </span>
+                    {% render_field form.name class="block w-full text-lg font-semibold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 border-none focus:ring-0 focus:border-none p-0 bg-transparent" placeholder="Section Title*" required="required" %}
+                 </h3>
+                 {# Styled Remove Button in the template #}
+                 <button type="button" class="inline-flex items-center text-sm text-red-600 hover:text-red-800 dark:text-red-500 dark:hover:text-red-400 font-medium" onclick="deleteForm(this, '{{ formset.prefix }}')">Remove</button>
              </div>
-             {% render_field form.institution_name class+="input input-bordered w-full mb-2" placeholder="Institution (Optional)" %}
-             {% render_field form.completion_date type="date" class+="input input-bordered w-full mb-2" %}
-             {% render_field form.description class+="textarea textarea-bordered w-full mb-2" placeholder="Description (Optional)" %}
-             {% render_field form.bullet_points class+="textarea textarea-bordered w-full mb-2" placeholder="Bullet Points (Optional)" %}
-             {% render_field form.link type="url" class+="input input-bordered w-full" placeholder="Link (Optional)" %}
-            {% endwith %}
-        </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                   <div class="form-field">
+                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.institution_name.id_for_label }}">Institution/Organization <span class="text-gray-500 dark:text-gray-400 font-normal">(Optional)</span></label>
+                       <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-building text-gray-400 dark:text-gray-500"></i></div>
+                            {% render_field form.institution_name class="block w-full border-gray-300 rounded-md shadow-sm pl-10 pr-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-primary-600 dark:focus:border-primary-600" placeholder="e.g., Code for Good, PMI" %}
+                       </div>
+                   </div>
+                   <div class="form-field">
+                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.completion_date.id_for_label }}">Date Completed/Received <span class="text-gray-500 dark:text-gray-400 font-normal">(Optional)</span></label>
+                        <div class="relative">
+                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-calendar-alt text-gray-400 dark:text-gray-500"></i></div>
+                             {% render_field form.completion_date type="date" class="block w-full border-gray-300 rounded-md shadow-sm pl-10 pr-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-primary-600 dark:focus:border-primary-600" %}
+                         </div>
+                   </div>
+                </div>
+                 <div class="form-field mt-5">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.description.id_for_label }}">Description <span class="text-gray-500 dark:text-gray-400 font-normal">(Optional)</span></label>
+                     <div class="relative">
+                         {% render_field form.description class="block w-full border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm min-h-[6rem] dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-primary-600 dark:focus:border-primary-600" rows="2" placeholder="Brief description if needed" %}
+                      </div>
+                 </div>
+                <div class="form-field mt-5">
+                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.bullet_points.id_for_label }}">Details / Bullet Points <span class="text-gray-500 dark:text-gray-400 font-normal">(Optional)</span></label>
+                    <div class="relative">
+                         {% render_field form.bullet_points class="block w-full border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm min-h-24 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-primary-600 dark:focus:border-primary-600" placeholder="• Detail 1...\n• Detail 2..." %}
+                    </div>
+                 </div>
+                 <div class="form-field mt-5">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.link.id_for_label }}">Relevant Link <span class="text-gray-500 dark:text-gray-400 font-normal">(Optional)</span></label>
+                    <div class="relative">
+                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-link text-gray-400 dark:text-gray-500"></i></div>
+                         {% render_field form.link type="url" class="block w-full border-gray-300 rounded-md shadow-sm pl-10 pr-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-primary-600 dark:focus:border-primary-600" placeholder="https://..." %}
+                    </div>
+                 </div>
+              {% endwith %}
+         </div>
     </template>
 
+    {# Add Certification button (Always show, but JS might hide empty state) #}
+    {# *** Styled Add Another Button with Tailwind Classes *** #}
     <div class="flex justify-center mt-8">
-        <button type="button" class="btn btn-primary" onclick="addForm(this, '{{ formset.prefix }}')">
-            <i class="fa-solid fa-plus mr-2"></i> Add Another Section
+        <button type="button" class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 text-base font-medium dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-600 add-another-btn" onclick="addForm(this, '{{ formset.prefix }}')">
+             <i class="fa-solid fa-plus mr-2"></i> Add Another Section
         </button>
     </div>
 
-    {# Navigation buttons are in wizard_base.html #}
 </form>
 
 {# JS for this step if needed #}
@@ -170,18 +230,20 @@
         const sectionTitle = button.querySelector('span').innerText;
 
         // Create a new form row using the existing addForm function
-        addForm(null, prefix); // We pass null for the button argument
+        // We pass null for the button argument as it's not needed by addForm
+        addForm(null, prefix);
 
         // Wait a short moment for the form to be added to the DOM
         setTimeout(() => {
-            const formContainer = document.getElementById('custom_sections_container');
+            const formContainer = document.getElementById(prefix + '_container');
             const forms = formContainer.querySelectorAll('.form-row');
             if (forms.length > 0) {
                 const newFormRow = forms[forms.length - 1]; // Get the last added form
                 const nameInput = newFormRow.querySelector('input[name$="-name"]');
                 if (nameInput) {
                     nameInput.value = sectionTitle; // Set the title
-                    nameInput.focus(); // Focus the input
+                    // Focus the input without causing the keyboard to appear immediately on mobile
+                    nameInput.focus({ preventScroll: true });
                 }
                  // Scroll to the new section
                 newFormRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -189,64 +251,351 @@
         }, 100); // Adjust delay if needed
 
         // Optional: Highlight the button briefly
-        button.classList.add('ring-2', 'ring-offset-2', 'ring-primary');
-        setTimeout(() => { button.classList.remove('ring-2', 'ring-offset-2', 'ring-primary'); }, 1500);
+        button.classList.add('ring-2', 'ring-offset-2', 'ring-primary-500'); // Use primary color for ring
+        setTimeout(() => { button.classList.remove('ring-2', 'ring-offset-2', 'ring-primary-500'); }, 1500);
     }
 
+    // Basic JS functions for addForm and deleteForm (ensure these are robust in your actual implementation)
      if (typeof addForm !== 'function') {
          function addForm(button, prefix) {
              console.warn("addForm function not fully defined. Using basic example.");
-             const formContainer = document.getElementById('custom_sections_container'); // Target specific container
+             const formContainer = document.getElementById(prefix + '_container'); // Use correct container ID
              const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
              const template = document.getElementById(prefix + '-form-template');
              if (!formContainer || !totalFormsInput || !template) { console.error("Missing elements for addForm"); return; }
              const formNum = parseInt(totalFormsInput.value);
              let newFormHtml = template.innerHTML.replace(/__prefix__/g, formNum);
              const tempDiv = document.createElement('div');
-             tempDiv.innerHTML = newFormHtml;
+             tempDiv.innerHTML = newFormHtml.trim(); // Use trim() to remove potential whitespace
              const newFormElement = tempDiv.firstElementChild;
-             const emptyState = document.getElementById('custom-empty-state');
-             if(emptyState) emptyState.classList.add('hidden');
+             newFormElement.id = prefix + '-' + formNum + '-row'; // Assign correct ID to new form row
+
+             const emptyState = document.getElementById(prefix + '-empty-state'); // Use correct empty state ID
+             if(emptyState) emptyState.classList.add('hidden'); // Hide empty state
              formContainer.appendChild(newFormElement);
              totalFormsInput.value = formNum + 1;
+
+             // Ensure 'Add Another' button is visible
+             const addAnotherButton = document.querySelector('.add-another-btn'); // Adjust selector if needed
+              if(addAnotherButton) addAnotherButton.style.display = 'inline-flex'; // Use appropriate display style
          }
      }
      if (typeof deleteForm !== 'function') {
          function deleteForm(button, prefix) {
              console.warn("deleteForm function not fully defined. Using basic example.");
              const formRow = button.closest('.form-row');
+             if (!formRow) { console.error("Could not find form-row"); return; }
+
              const deleteInput = formRow.querySelector('input[name$="-DELETE"]');
              if (deleteInput) {
                  deleteInput.checked = true;
-                 formRow.style.display = 'none';
+                 formRow.style.display = 'none'; // Hide the form visually
              } else {
-                 formRow.remove();
+                  // If no DELETE input, assume it's an extra form from the template
+                  formRow.remove();
              }
-             const container = document.getElementById('custom_sections_container');
+
+             // Check if any forms are still visible (not hidden by display: none)
+             const container = document.getElementById(prefix + '_container'); // Use correct container ID
+             if (!container) { console.error("Could not find form container"); return; }
+
              const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');
-             const emptyState = document.getElementById('custom-empty-state');
+             const emptyState = document.getElementById(prefix + '-empty-state'); // Use correct empty state ID
+
              if(visibleForms.length === 0 && emptyState) {
                  emptyState.classList.remove('hidden');
+                 // Hide 'Add Another' button if empty
+                  const addAnotherButton = document.querySelector('.add-another-btn');
+                  if(addAnotherButton) addAnotherButton.style.display = 'none';
+             } else {
+                  if(emptyState) emptyState.classList.add('hidden'); // Ensure empty state is hidden if forms exist
+                  // Ensure 'Add Another' button is visible if forms exist
+                  const addAnotherButton = document.querySelector('.add-another-btn');
+                   if(addAnotherButton) addAnotherButton.style.display = 'inline-flex'; // Use appropriate display style
              }
          }
      }
+
+      // Initial check for empty state on load
       document.addEventListener('DOMContentLoaded', function() {
-          const container = document.getElementById('custom_sections_container');
-          const emptyState = document.getElementById('custom-empty-state');
+          const prefix = '{{ formset.prefix }}'; // Get the formset prefix
+          const container = document.getElementById(prefix + '_container');
+          const emptyState = document.getElementById(prefix + '-empty-state');
           if (container && emptyState) {
-              const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');
-              if(visibleForms.length === 0 && container.querySelector('.form-row')) {
-                 emptyState.classList.add('hidden');
-              } else if (visibleForms.length === 0) {
-                  emptyState.classList.remove('hidden');
+              // Count forms that are NOT the empty form template and are NOT marked for deletion
+              let undeletedForms = 0;
+               container.querySelectorAll('.form-row').forEach(row => {
+                   const deleteCheckbox = row.querySelector('input[name$="-DELETE"]');
+                   if (!deleteCheckbox || !deleteCheckbox.checked) {
+                       undeletedForms++;
+                   }
+               });
+
+              if (undeletedForms > 0) {
+                  emptyState.classList.add('hidden');
+                  // Ensure 'Add Another' button is visible if forms exist on load
+                  const addAnotherButton = document.querySelector('.add-another-btn');
+                  if(addAnotherButton) addAnotherButton.style.display = 'inline-flex'; // Use appropriate display style
               } else {
-                   emptyState.classList.add('hidden');
+                  emptyState.classList.remove('hidden');
+                   // Hide 'Add Another' button if initially empty
+                   const addAnotherButton = document.querySelector('.add-another-btn');
+                   if(addAnotherButton) addAnotherButton.style.display = 'none';
               }
           }
-    });
+     });
 </script>
 {% endblock %}
 
+{# templates/resumes/wizard_steps/custom_sections.html #}
+{#{% extends 'resumes/wizard_base.html' %}#}
+{#{% load static %}#}
+{#{% load widget_tweaks %}#}
+{##}
+{#{% block step_title %}Additional Sections{% endblock %}#}
+{#{% block step_icon %}<i class="fa-solid fa-puzzle-piece mr-3 text-primary opacity-80"></i>{% endblock %}#}
+{##}
+{#{% block step_content %}#}
+{#<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}">#}
+{#    {% csrf_token %}#}
+{##}
+    {# *** RENDER MANAGEMENT FORM - ESSENTIAL *** #}
+{#    {{ formset.management_form }}#}
+{##}
+{#    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">#}
+{#         <div class="flex items-start">#}
+{#            <div class="text-primary text-xl mr-4 mt-1">#}
+{#                <i class="fa-solid fa-lightbulb"></i>#}
+{#            </div>#}
+{#            <div>#}
+{#                <p class="text-base">#}
+{#                    Add custom sections that highlight your unique qualifications, such as#}
+{#                    awards, publications, volunteer work, or special achievements.#}
+{#                </p>#}
+{#                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">#}
+{#                    <strong>Pro tip:</strong> Including specialized sections can help your resume stand out. Click an idea below to start a new section.#}
+{#                </p>#}
+{#            </div>#}
+{#        </div>#}
+         {# Section Ideas (moved outside form, uses JS to interact) #}
+{#         <div class="mt-4 border-t border-primary/10 pt-4">#}
+{#             <p class="text-sm font-medium mb-2">Section Ideas:</p>#}
+{#             <div class="flex flex-wrap gap-2">#}
+{#                 {% for idea in default_ideas %} {# Assuming default_ideas passed in context #}
+{#                 <button type="button" class="btn btn-xs btn-outline btn-primary" onclick="addCustomSectionFromIdea(this, '{{ formset.prefix }}')">#}
+{#                     {% if idea.icon %}<i class="fa-solid {{ idea.icon }} mr-1"></i>{% endif %}#}
+{#                     <span>{{ idea.name }}</span>#}
+{#                 </button>#}
+{#                 {% endfor %}#}
+{#             </div>#}
+{#         </div>#}
+{#    </div>#}
+{##}
+{##}
+{#    <div id="custom_sections_container" class="space-y-8">#}
+{##}
+        {# *** CORRECTED LOOP: Iterate over formset.forms *** #}
+{#        {% for form in formset.forms %}#}
+{#        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg" id="{{ form.prefix }}-row">#}
+{#             {% if form.instance.pk %}{{ form.id }}{% endif %}#}
+{#             {% if formset.can_delete %}#}
+{#                 <div class="hidden">{{ form.DELETE }}</div>#}
+{#             {% endif %}#}
+{##}
+{#            <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">#}
+{#                <h3 class="text-lg font-medium flex items-center flex-grow mr-4">#}
+{#                    <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">#}
+{#                        <i class="fa-solid fa-puzzle-piece text-primary text-sm"></i>#}
+{#                    </span>#}
+                    {# Render Section Name Field Directly for Header #}
+{#                    {% render_field form.name class+="input input-sm input-ghost flex-grow !border-none focus:!outline-none focus:!border-none focus:!ring-0 font-medium text-lg p-0" placeholder="Section Title (e.g., Volunteer Experience)" %}#}
+{#                </h3>#}
+{#                {% if formset.can_delete %}#}
+{#                <button type="button" class="btn btn-ghost btn-sm text-error formset-delete-btn"#}
+{#                        onclick="deleteForm(this, '{{ formset.prefix }}')">#}
+{#                    <i class="fa-solid fa-trash-can mr-1"></i> Remove#}
+{#                </button>#}
+{#                {% endif %}#}
+{#            </div>#}
+{#             {% if form.name.errors %}<div class="text-error text-xs mb-2 -mt-4">{{ form.name.errors|first }}</div>{% endif %}#}
+{##}
+            {# *** CORRECTED FIELDS: Render form fields *** #}
+{#             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">#}
+{#                 <div class="form-control">#}
+{#                    <label class="label" for="{{ form.institution_name.id_for_label }}">#}
+{#                        <span class="label-text font-medium">Institution/Organization</span>#}
+{#                        <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                    </label>#}
+{#                    {% render_field form.institution_name class+="input input-bordered w-full" placeholder="e.g., Code for Good, PMI" %}#}
+{#                    {% if form.institution_name.errors %}<div class="text-error text-xs mt-1">{{ form.institution_name.errors|first }}</div>{% endif %}#}
+{#                 </div>#}
+{#                  <div class="form-control">#}
+{#                    <label class="label" for="{{ form.completion_date.id_for_label }}">#}
+{#                        <span class="label-text font-medium">Date Completed/Received</span>#}
+{#                        <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                    </label>#}
+{#                    {% render_field form.completion_date type="date" class+="input input-bordered w-full" %}#}
+{#                    {% if form.completion_date.errors %}<div class="text-error text-xs mt-1">{{ form.completion_date.errors|first }}</div>{% endif %}#}
+{#                 </div>#}
+{#             </div>#}
+{##}
+{#             <div class="form-control mt-5">#}
+{#                <label class="label" for="{{ form.description.id_for_label }}">#}
+{#                    <span class="label-text font-medium">Description</span>#}
+{#                     <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                </label>#}
+{#                {% render_field form.description class+="textarea textarea-bordered w-full" rows="2" placeholder="Brief description if needed" %}#}
+{#                 {% if form.description.errors %}<div class="text-error text-xs mt-1">{{ form.description.errors|first }}</div>{% endif %}#}
+{#            </div>#}
+{##}
+{#             <div class="form-control mt-5">#}
+{#                <label class="label" for="{{ form.bullet_points.id_for_label }}">#}
+{#                    <span class="label-text font-medium">Details / Bullet Points</span>#}
+{#                     <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                </label>#}
+                 {# Assuming bullet_points is a TextField in the form #}
+{#                {% render_field form.bullet_points class+="textarea textarea-bordered w-full min-h-24" placeholder="• Detail 1...\n• Detail 2..." %}#}
+{#                 {% if form.bullet_points.errors %}<div class="text-error text-xs mt-1">{{ form.bullet_points.errors|first }}</div>{% endif %}#}
+{#            </div>#}
+{##}
+{#             <div class="form-control mt-5">#}
+{#                <label class="label" for="{{ form.link.id_for_label }}">#}
+{#                    <span class="label-text font-medium">Relevant Link</span>#}
+{#                    <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#                </label>#}
+{#                 {% render_field form.link type="url" class+="input input-bordered w-full" placeholder="https://..." %}#}
+{#                 {% if form.link.errors %}<div class="text-error text-xs mt-1">{{ form.link.errors|first }}</div>{% endif %}#}
+{#            </div>#}
+{##}
+{#        </div> {# End form-row #}
+{#        {% empty %}#}
+{#         {% if formset.total_form_count == 0 %}#}
+{#             <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center" id="custom-empty-state">#}
+{#                  <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">#}
+{#                     <i class="fa-solid fa-puzzle-piece text-primary text-2xl"></i>#}
+{#                 </div>#}
+{#                 <h3 class="text-lg font-medium mb-2">No Additional Sections Added Yet</h3>#}
+{#                 <p class="text-gray-500 max-w-md mx-auto mb-6">Add sections like Volunteer Work, Awards, Publications etc.</p>#}
+{#                 <button type="button" class="btn btn-primary" onclick="addForm(this, '{{ formset.prefix }}')">#}
+{#                     <i class="fa-solid fa-plus mr-2"></i> Add Custom Section#}
+{#                 </button>#}
+{#             </div>#}
+{#         {% endif %}#}
+{#        {% endfor %}#}
+{#    </div>#}
+{##}
+    {# Template for adding new forms via JS #}
+{#    <template id="{{ formset.prefix }}-form-template">#}
+{#        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6" id="{{ formset.prefix }}-__prefix__-row">#}
+{#            {% with form=formset.empty_form %}#}
+{#            {% if formset.can_delete %}<div class="hidden"><input type="checkbox" name="{{ form.prefix }}-DELETE" id="id_{{ form.prefix }}-DELETE"></div>{% endif %}#}
+{#             <div class="flex justify-between items-center mb-5 pb-3 border-b">#}
+{#                 {% render_field form.name class+="input input-sm input-ghost flex-grow !border-none font-medium text-lg p-0" placeholder="Section Title*" required="required" %}#}
+{#                 <button type="button" onclick="deleteForm(this, '{{ formset.prefix }}')">Remove</button>#}
+{#             </div>#}
+{#             {% render_field form.institution_name class+="input input-bordered w-full mb-2" placeholder="Institution (Optional)" %}#}
+{#             {% render_field form.completion_date type="date" class+="input input-bordered w-full mb-2" %}#}
+{#             {% render_field form.description class+="textarea textarea-bordered w-full mb-2" placeholder="Description (Optional)" %}#}
+{#             {% render_field form.bullet_points class+="textarea textarea-bordered w-full mb-2" placeholder="Bullet Points (Optional)" %}#}
+{#             {% render_field form.link type="url" class+="input input-bordered w-full" placeholder="Link (Optional)" %}#}
+{#            {% endwith %}#}
+{#        </div>#}
+{#    </template>#}
+{##}
+{#    <div class="flex justify-center mt-8">#}
+{#        <button type="button" class="btn btn-primary" onclick="addForm(this, '{{ formset.prefix }}')">#}
+{#            <i class="fa-solid fa-plus mr-2"></i> Add Another Section#}
+{#        </button>#}
+{#    </div>#}
+{##}
+    {# Navigation buttons are in wizard_base.html #}
+{#</form>#}
+{##}
+{# JS for this step if needed #}
+{#<script>#}
+{#    // Ensure addForm, deleteForm are defined#}
+{#    // Add function to handle clicking an idea button#}
+{#    function addCustomSectionFromIdea(button, prefix) {#}
+{#        const sectionTitle = button.querySelector('span').innerText;#}
+{##}
+{#        // Create a new form row using the existing addForm function#}
+{#        addForm(null, prefix); // We pass null for the button argument#}
+{##}
+{#        // Wait a short moment for the form to be added to the DOM#}
+{#        setTimeout(() => {#}
+{#            const formContainer = document.getElementById('custom_sections_container');#}
+{#            const forms = formContainer.querySelectorAll('.form-row');#}
+{#            if (forms.length > 0) {#}
+{#                const newFormRow = forms[forms.length - 1]; // Get the last added form#}
+{#                const nameInput = newFormRow.querySelector('input[name$="-name"]');#}
+{#                if (nameInput) {#}
+{#                    nameInput.value = sectionTitle; // Set the title#}
+{#                    nameInput.focus(); // Focus the input#}
+{#                }#}
+{#                 // Scroll to the new section#}
+{#                newFormRow.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#            }#}
+{#        }, 100); // Adjust delay if needed#}
+{##}
+{#        // Optional: Highlight the button briefly#}
+{#        button.classList.add('ring-2', 'ring-offset-2', 'ring-primary');#}
+{#        setTimeout(() => { button.classList.remove('ring-2', 'ring-offset-2', 'ring-primary'); }, 1500);#}
+{#    }#}
+{##}
+{#     if (typeof addForm !== 'function') {#}
+{#         function addForm(button, prefix) {#}
+{#             console.warn("addForm function not fully defined. Using basic example.");#}
+{#             const formContainer = document.getElementById('custom_sections_container'); // Target specific container#}
+{#             const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');#}
+{#             const template = document.getElementById(prefix + '-form-template');#}
+{#             if (!formContainer || !totalFormsInput || !template) { console.error("Missing elements for addForm"); return; }#}
+{#             const formNum = parseInt(totalFormsInput.value);#}
+{#             let newFormHtml = template.innerHTML.replace(/__prefix__/g, formNum);#}
+{#             const tempDiv = document.createElement('div');#}
+{#             tempDiv.innerHTML = newFormHtml;#}
+{#             const newFormElement = tempDiv.firstElementChild;#}
+{#             const emptyState = document.getElementById('custom-empty-state');#}
+{#             if(emptyState) emptyState.classList.add('hidden');#}
+{#             formContainer.appendChild(newFormElement);#}
+{#             totalFormsInput.value = formNum + 1;#}
+{#         }#}
+{#     }#}
+{#     if (typeof deleteForm !== 'function') {#}
+{#         function deleteForm(button, prefix) {#}
+{#             console.warn("deleteForm function not fully defined. Using basic example.");#}
+{#             const formRow = button.closest('.form-row');#}
+{#             const deleteInput = formRow.querySelector('input[name$="-DELETE"]');#}
+{#             if (deleteInput) {#}
+{#                 deleteInput.checked = true;#}
+{#                 formRow.style.display = 'none';#}
+{#             } else {#}
+{#                 formRow.remove();#}
+{#             }#}
+{#             const container = document.getElementById('custom_sections_container');#}
+{#             const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');#}
+{#             const emptyState = document.getElementById('custom-empty-state');#}
+{#             if(visibleForms.length === 0 && emptyState) {#}
+{#                 emptyState.classList.remove('hidden');#}
+{#             }#}
+{#         }#}
+{#     }#}
+{#      document.addEventListener('DOMContentLoaded', function() {#}
+{#          const container = document.getElementById('custom_sections_container');#}
+{#          const emptyState = document.getElementById('custom-empty-state');#}
+{#          if (container && emptyState) {#}
+{#              const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');#}
+{#              if(visibleForms.length === 0 && container.querySelector('.form-row')) {#}
+{#                 emptyState.classList.add('hidden');#}
+{#              } else if (visibleForms.length === 0) {#}
+{#                  emptyState.classList.remove('hidden');#}
+{#              } else {#}
+{#                   emptyState.classList.add('hidden');#}
+{#              }#}
+{#          }#}
+{#    });#}
+{#</script>#}
+{#{% endblock %}#}
+{##}
 {#{% extends 'resumes/wizard_base.html' %}#}
 {#{% load static %}#}
 {##}

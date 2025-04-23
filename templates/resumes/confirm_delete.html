@@ -4,30 +4,30 @@
 {% block title %}Confirm Delete Resume{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="card max-w-md mx-auto bg-base-100 shadow-xl">
-        <div class="card-body p-8">
-            <h2 class="card-title text-2xl mb-6 text-error flex items-center">
-                <span class="w-10 h-10 rounded-lg bg-error/10 flex items-center justify-center mr-3">
-                    <i class="fa-solid fa-triangle-exclamation text-error"></i>
+<div class="container mx-auto px-4 py-8 md:py-12"> {# Added vertical padding #}
+    <div class="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"> {# Replaced card and bg-base-100 with Tailwind classes #}
+        <div class="p-8"> {# Replaced card-body with padding #}
+            <h2 class="text-2xl font-bold mb-6 text-red-700 dark:text-red-500 flex items-center"> {# Replaced card-title and text-error #}
+                <span class="flex items-center justify-center w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 mr-3 flex-shrink-0"> {# Replaced bg-error/10 and text-error icon styling #}
+                    <i class="fa-solid fa-triangle-exclamation text-xl"></i> {# Adjusted icon size #}
                 </span>
                 Delete Resume
             </h2>
 
-            <p class="mb-8 text-lg">
-                Are you sure you want to delete the resume "<span class="font-bold">{{ resume.full_name }}</span>"?
+            <p class="mb-8 text-gray-700 dark:text-gray-300 text-lg"> {# Adjusted text color and size #}
+                Are you sure you want to delete the resume "<span class="font-semibold text-gray-900 dark:text-white">{{ resume.full_name }}</span>"? {# Adjusted font-bold to font-semibold, adjusted text colors #}
                 <br class="hidden md:block">
-                <span class="text-red-500 font-medium">This action cannot be undone.</span>
+                <span class="text-red-600 dark:text-red-500 font-medium">This action cannot be undone.</span> {# Adjusted text color #}
             </p>
 
             <form method="post" action="{% url 'job_portal:delete_resume' resume_id=resume.id %}">
                 {% csrf_token %}
-                <div class="border-t border-gray-200 pt-6 mt-2">
-                    <div class="flex flex-col-reverse md:flex-row justify-end gap-4">
-                        <a href="{% url 'job_portal:resume_list' %}" class="btn btn-ghost btn-md">
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-6 mt-2"> {# Adjusted border color #}
+                    <div class="flex flex-col-reverse md:flex-row justify-end gap-3"> {# Adjusted gap #}
+                        <a href="{% url 'job_portal:resume_list' %}" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 text-sm font-medium"> {# Replaced btn btn-ghost btn-md with Tailwind classes #}
                             <i class="fa-solid fa-arrow-left mr-2"></i> Cancel
                         </a>
-                        <button type="submit" class="btn btn-error btn-md">
+                        <button type="submit" class="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 text-sm font-medium dark:bg-red-700 dark:hover:bg-red-800 dark:focus:ring-red-600"> {# Replaced btn btn-error btn-md with Tailwind classes #}
                             <i class="fa-solid fa-trash-can mr-2"></i> Delete Resume
                         </button>
                     </div>
@@ -37,3 +37,43 @@
     </div>
 </div>
 {% endblock %}
+
+{#{% extends 'base_authenticated.html' %}#}
+{#{% load static %}#}
+{##}
+{#{% block title %}Confirm Delete Resume{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#<div class="container mx-auto px-4 py-8">#}
+{#    <div class="card max-w-md mx-auto bg-base-100 shadow-xl">#}
+{#        <div class="card-body p-8">#}
+{#            <h2 class="card-title text-2xl mb-6 text-error flex items-center">#}
+{#                <span class="w-10 h-10 rounded-lg bg-error/10 flex items-center justify-center mr-3">#}
+{#                    <i class="fa-solid fa-triangle-exclamation text-error"></i>#}
+{#                </span>#}
+{#                Delete Resume#}
+{#            </h2>#}
+{##}
+{#            <p class="mb-8 text-lg">#}
+{#                Are you sure you want to delete the resume "<span class="font-bold">{{ resume.full_name }}</span>"?#}
+{#                <br class="hidden md:block">#}
+{#                <span class="text-red-500 font-medium">This action cannot be undone.</span>#}
+{#            </p>#}
+{##}
+{#            <form method="post" action="{% url 'job_portal:delete_resume' resume_id=resume.id %}">#}
+{#                {% csrf_token %}#}
+{#                <div class="border-t border-gray-200 pt-6 mt-2">#}
+{#                    <div class="flex flex-col-reverse md:flex-row justify-end gap-4">#}
+{#                        <a href="{% url 'job_portal:resume_list' %}" class="btn btn-ghost btn-md">#}
+{#                            <i class="fa-solid fa-arrow-left mr-2"></i> Cancel#}
+{#                        </a>#}
+{#                        <button type="submit" class="btn btn-error btn-md">#}
+{#                            <i class="fa-solid fa-trash-can mr-2"></i> Delete Resume#}
+{#                        </button>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </form>#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
+{#{% endblock %}#}
