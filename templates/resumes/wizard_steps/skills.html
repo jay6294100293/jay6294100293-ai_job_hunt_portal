@@ -2,63 +2,80 @@
 
 {% extends 'resumes/wizard_base.html' %}
 {% load static %}
-{% load widget_tweaks %} {# Ensure widget_tweaks is loaded if you use it #}
+{% load widget_tweaks %}
 
 {% block step_title %}Skills{% endblock %}
 {% block step_icon %}<i class="fa-solid fa-code mr-3 text-primary opacity-80"></i>{% endblock %}
 
 {% block step_content %}
-<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="false"> {# Using standard POST #}
+<style>
+    /* Basic styling for the SVG circle - Kept for attributes Tailwind doesn't handle */
+    .proficiency-circle-bg {
+        fill: none;
+        /* Tailwind class 'stroke-gray-200' applied directly */
+    }
+    .proficiency-circle-progress {
+        fill: none;
+        /* Tailwind class 'stroke-indigo-600' applied directly */
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        /* No transition for Tailwind-only approach */
+    }
+    /* Tailwind classes used for text styling directly */
+</style>
+
+<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="false">
     {% csrf_token %}
 
-    {# *** RENDER MANAGEMENT FORM - ESSENTIAL *** #}
+    {# RENDER MANAGEMENT FORM - ESSENTIAL for Django Formsets #}
     {{ formset.management_form }}
 
-    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">
+    {# Informational Tip Box #}
+    <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-5 mb-8">
         <div class="flex items-start">
-             <div class="text-primary text-xl mr-4 mt-1"><i class="fa-solid fa-lightbulb"></i></div>
+             <div class="text-indigo-600 text-xl mr-4 mt-1"><i class="fa-solid fa-lightbulb"></i></div>
             <div>
-                 <p class="text-base">Add skills highlighting technical abilities and professional competencies. Prioritize relevant skills.</p>
-                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-2"><strong>Pro tip:</strong> Mix technical (e.g., Python, SQL), soft (e.g., Leadership, Communication), and tool-specific skills (e.g., AWS, Figma).</p>
+                 <p class="text-base text-indigo-900">Add skills highlighting technical abilities and professional competencies. Prioritize relevant skills.</p>
+                 <p class="text-sm text-gray-600 mt-2"><strong>Pro tip:</strong> Mix technical (e.g., Python, SQL), soft (e.g., Leadership, Communication), and tool-specific skills (e.g., AWS, Figma).</p>
             </div>
         </div>
     </div>
 
     {# --- Main Content Grid --- #}
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8 ">
 
-        {# --- Left Column: Add New Skill (for JS interaction) --- #}
-        <div class="lg:col-span-2">
-            <div class="bg-white shadow-lg rounded-2xl p-6 sticky top-4 border border-gray-100 dark:border-gray-700">
-                 <h3 class="text-lg font-bold text-gray-800 flex items-center mb-5">
-                     <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mr-3"><i class="fa-solid fa-plus text-primary"></i></div>
+        {# --- Left Column: Add New Skill Manually --- #}
+        <div class="lg:col-span-2 ">
+            <div class="bg-white shadow-md rounded-xl p-6 sticky top-4 border border-gray-200">
+                 <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-5">
+                     <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-3"><i class="fa-solid fa-plus text-indigo-600"></i></div>
                      Add Skill Manually
                  </h3>
-                 <div class="space-y-5">
+                 <div class="space-y-4">
                      {# Skill Name Input #}
                      <div class="form-control">
-                         <label class="label py-1" for="add_skill_name"><span class="label-text font-medium">Skill Name</span><span class="label-text-alt text-error">*</span></label>
-                         <input type="text" id="add_skill_name" class="input input-sm input-bordered w-full" placeholder="e.g., Python">
+                         <label class="label py-1" for="add_skill_name"><span class="label-text font-medium text-gray-700">Skill Name</span><span class="label-text-alt text-red-500 ml-1">*</span></label>
+                         <input type="text" id="add_skill_name" class="input input-sm input-bordered focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 w-full" placeholder="e.g., Python">
                      </div>
                      {# Skill Type Select #}
                       <div class="form-control">
-                         <label class="label py-1" for="add_skill_type"><span class="label-text font-medium">Skill Type</span></label>
-                         <select id="add_skill_type" class="select select-sm select-bordered w-full">
+                         <label class="label py-1" for="add_skill_type"><span class="label-text font-medium text-gray-700">Skill Type</span></label>
+                         <select id="add_skill_type" class="select select-sm select-bordered focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 w-full">
                              {% for type_value, type_label in skill_types.items %}
                              <option value="{{ type_value }}">{{ type_label }}</option>
                              {% endfor %}
                          </select>
                      </div>
-                     {# Proficiency Slider #}
+                     {# Proficiency Slider (for input) #}
                      <div class="form-control">
-                         <label class="label py-1" for="add_proficiency_level"><span class="label-text font-medium">Proficiency Level</span></label>
+                         <label class="label py-1" for="add_proficiency_level"><span class="label-text font-medium text-gray-700">Proficiency Level</span></label>
                          <div class="flex items-center gap-3">
-                            <input type="range" id="add_proficiency_level" min="0" max="100" step="10" value="50" class="range range-xs range-primary flex-grow" oninput="this.nextElementSibling.textContent = this.value + '%'">
-                            <output class="text-xs font-medium bg-primary/10 text-primary px-1.5 py-0.5 rounded" id="proficiency_output">50%</output> {# Added ID here #}
+                            <input type="range" id="add_proficiency_level" min="0" max="100" step="10" value="50" class="range range-xs range-primary flex-grow cursor-pointer">
+                            <output class="text-sm font-medium text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md w-14 text-center" id="proficiency_output">50%</output>
                          </div>
                      </div>
-                     {# Add Button for JS #}
-                     <button type="button" id="add-skill-js-btn" class="btn btn-primary w-full btn-sm" onclick="addFormsetRowManually()">
+                     {# Add Button (handled by JS) #}
+                     <button type="button" id="add-skill-js-btn" class="btn btn-primary btn-sm w-full mt-2">
                          <i class="fa-solid fa-plus mr-2"></i> Add to List
                      </button>
                  </div>
@@ -67,274 +84,1174 @@
 
         {# --- Right Column: Display Formset Skills --- #}
         <div class="lg:col-span-3">
-            <div class="bg-white shadow-lg rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-                 <h3 class="text-lg font-bold text-gray-800 flex items-center mb-5">
-                     <div class="w-9 h-9 rounded-full bg-success/10 flex items-center justify-center mr-3"><i class="fa-solid fa-check text-success"></i></div>
+            <div class="bg-white shadow-md rounded-xl p-6 border border-gray-200">
+                 <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-5">
+                     <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3"><i class="fa-solid fa-check text-green-600"></i></div>
                      Your Skills
                  </h3>
 
-                 {# Formset Container #}
-                 <div id="{{ formset.prefix }}-formset-container" class="space-y-3">
+                 {# Formset Container - Two-column grid layout, increased gap #}
+                 <div id="{{ formset.prefix }}-formset-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                      {# Empty State Message #}
-                     {% if formset.total_form_count == 0 %}
-                     <div id="skills_empty_state" class="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg">
+                     {% if not formset.initial_forms and formset.total_form_count == formset.extra %}
+                     <div id="skills_empty_state" class="md:col-span-2 text-center py-12 border-2 border-dashed border-gray-600 rounded-lg">
                          <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-5"><i class="fa-solid fa-code text-gray-400 text-3xl"></i></div>
                          <h4 class="font-semibold text-lg text-gray-700 mb-2">No skills added yet</h4>
                          <p class="text-gray-500 text-sm max-w-xs mx-auto">Use the form on the left to add skills to your resume.</p>
                      </div>
                      {% endif %}
 
-                     {# Loop through Existing Forms (including initial data and extra forms) #}
+                     {# Loop through Existing Forms (from Django context) #}
                      {% for form in formset %}
-                     <div class="formset-row skill-card bg-gray-50 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-lg p-3 flex flex-col md:flex-row items-start md:items-center gap-3 relative group {% if not form.initial and forloop.counter > formset.initial_form_count %}formset-extra-form{% endif %}" id="{{ formset.prefix }}-{{ forloop.counter0 }}">
-                         {# Hidden fields #}
-                         {{ form.id }}
+                     {# --- REVISED Skill Card Layout --- #}
+                     {# Added rounded-2xl for more curve #}
+                     <div class="formset-row skill-card bg-white border border-gray-200 hover:border-indigo-400 hover:shadow-sm transition-all duration-200 rounded-2xl p-3 flex items-center gap-3 relative group {% if not form.initial and not form.is_bound %}hidden{% endif %} {% if not form.initial and forloop.counter > formset.initial_form_count %}formset-extra-form{% endif %}" id="{{ formset.prefix }}-{{ forloop.counter0 }}">
+
+                         {# Hidden fields for form submission #}
+                         <div class="hidden">
+                             {{ form.id }}
+                             {% if formset.can_delete %}{{ form.DELETE }}{% endif %}
+                             {% render_field form.skill_name %}
+                             {% render_field form.skill_type %}
+                             {% render_field form.proficiency_level type="range" min="0" max="100" step="10" class+="slider-input" data-proficiency-target-id="{{ formset.prefix }}-{{ forloop.counter0 }}" %}
+                         </div>
+
+                         {# --- Visible Content - REORDERED --- #}
+                         {# 1. Skill Name #}
+                         <div class="flex-grow font-medium text-sm text-gray-800 truncate skill-name-display">
+                             {{ form.skill_name.value|default:'Unnamed Skill' }}
+                         </div>
+                         {# 2. Skill Type Icon (Smaller) #}
+                         <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-indigo-100 rounded-full text-indigo-600 skill-type-icon" title="{{ form.skill_type.value|default:'' }}">
+                             <i class="fa-solid fa-question text-xs"></i> {# Default icon, smaller size #}
+                         </div>
+                         {# 3. Proficiency Circle #}
+                         <div class="flex-shrink-0 proficiency-display" data-value="{{ form.proficiency_level.value|default:50 }}">
+                             <svg class="w-9 h-9" viewBox="0 0 36 36">
+                                 <path class="stroke-gray-200" stroke-width="4" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                 <path class="proficiency-circle-progress stroke-indigo-600" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="{{ form.proficiency_level.value|default:50 }}, 100" stroke-dashoffset="0" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                 <text class="fill-indigo-700 font-semibold" style="font-size: 0.8rem;" x="18" y="20" text-anchor="middle" dominant-baseline="middle">
+                                     {{ form.proficiency_level.value|default:50 }}%
+                                 </text>
+                             </svg>
+                         </div>
+                         {# 4. Delete Button (Now part of flex layout) #}
                          {% if formset.can_delete %}
-                             {# Checkbox will be visually hidden but functionally present #}
-                             <div class="hidden">{{ form.DELETE }}</div>
+                         <div class="flex-shrink-0">
+                             <button type="button" class="btn btn-xs btn-circle btn-ghost text-gray-400 hover:text-red-500 hover:bg-red-100 formset-delete-btn opacity-50 group-hover:opacity-100 transition-opacity duration-200" title="Remove Skill">
+                                 <i class="fa-solid fa-times"></i>
+                             </button>
+                         </div>
                          {% endif %}
+                         {# --- END Visible Content --- #}
+                     </div>
+                     {# --- END Skill Card Layout --- #}
+                     {% endfor %}
+                 </div> {# End Formset Container #}
 
-                         {# Skill Name Input #}
-                         <div class="form-control flex-grow md:w-auto">
-                             <label class="label sr-only" for="{{ form.skill_name.id_for_label }}">Skill Name</label>
-                             {% render_field form.skill_name class+="input input-sm input-bordered w-full" placeholder="Skill Name" %}
-                             {% if form.skill_name.errors %}<div class="text-error text-xs mt-1">{{ form.skill_name.errors.0 }}</div>{% endif %}
+                 {# Template for Adding New Forms via JavaScript #}
+                 <template id="{{ formset.prefix }}-form-template">
+                    {# --- Template Layout --- #}
+                     {# Added rounded-2xl for more curve #}
+                     <div class="formset-row skill-card bg-white border border-gray-200 hover:border-indigo-400 hover:shadow-sm transition-all duration-200 rounded-2xl p-3 flex items-center gap-3 relative group formset-extra-form" id="{{ formset.prefix }}-__prefix__">
+
+                         {# Hidden fields #}
+                         <div class="hidden">
+                            <input type="hidden" name="{{ formset.prefix }}-__prefix__-id" id="id_{{ formset.prefix }}-__prefix__-id">
+                            {% if formset.can_delete %}
+                            <input type="checkbox" name="{{ formset.prefix }}-__prefix__-DELETE" id="id_{{ formset.prefix }}-__prefix__-DELETE">
+                            {% endif %}
+                            <input type="text" name="{{ formset.prefix }}-__prefix__-skill_name" id="id_{{ formset.prefix }}-__prefix__-skill_name">
+                            <select name="{{ formset.prefix }}-__prefix__-skill_type" id="id_{{ formset.prefix }}-__prefix__-skill_type">
+                                {% for type_value, type_label in skill_types.items %}
+                                <option value="{{ type_value }}">{{ type_label }}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="range" name="{{ formset.prefix }}-__prefix__-proficiency_level" value="50" min="0" max="100" step="10" class="slider-input" id="id_{{ formset.prefix }}-__prefix__-proficiency_level" data-proficiency-target-id="{{ formset.prefix }}-__prefix__">
                          </div>
 
-                         {# Skill Type Select #}
-                         <div class="form-control w-full md:w-auto md:min-w-[120px]">
-                             <label class="label sr-only" for="{{ form.skill_type.id_for_label }}">Skill Type</label>
-                             {% render_field form.skill_type class+="select select-sm select-bordered w-full" %}
-                              {% if form.skill_type.errors %}<div class="text-error text-xs mt-1">{{ form.skill_type.errors.0 }}</div>{% endif %}
+                         {# Visible Content - REORDERED #}
+                         <div class="flex-grow font-medium text-sm text-gray-800 truncate skill-name-display">
+                             __Skill Name__
                          </div>
-
-                         {# Proficiency Slider #}
-                         <div class="form-control w-full md:w-[150px]">
-                             <label class="label sr-only" for="{{ form.proficiency_level.id_for_label }}">Proficiency</label>
-                             <div class="flex items-center gap-2">
-                                 {# *** oninput REMOVED from render_field *** #}
-                                 {% render_field form.proficiency_level type="range" min="0" max="100" step="10" class+="range range-xs range-primary flex-grow" %}
-                                 <output class="text-xs font-medium w-10 text-right">{{ form.proficiency_level.value|default:50 }}%</output>
-                             </div>
-                              {% if form.proficiency_level.errors %}<div class="text-error text-xs mt-1">{{ form.proficiency_level.errors.0 }}</div>{% endif %}
+                         <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-indigo-100 rounded-full text-indigo-600 skill-type-icon" title="">
+                             <i class="fa-solid fa-question text-xs"></i>
                          </div>
-
-                         {# Delete Button #}
+                         <div class="flex-shrink-0 proficiency-display" data-value="50">
+                             <svg class="w-9 h-9" viewBox="0 0 36 36">
+                                <path class="stroke-gray-200" stroke-width="4" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path class="proficiency-circle-progress stroke-indigo-600" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="50, 100" stroke-dashoffset="0" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <text class="fill-indigo-700 font-semibold" style="font-size: 0.6rem;" x="18" y="20" text-anchor="middle" dominant-baseline="middle">50%</text>
+                             </svg>
+                         </div>
                          {% if formset.can_delete %}
-                         <div class="form-control w-full md:w-auto mt-2 md:mt-0 flex justify-end md:justify-center">
-                             <button type="button" class="btn btn-xs btn-ghost text-error formset-delete-btn" onclick="deleteForm(this, '{{ formset.prefix }}')">
-                                 <i class="fa-solid fa-trash-can"></i>
+                         <div class="flex-shrink-0">
+                              <button type="button" class="btn btn-xs btn-circle btn-ghost text-gray-400 hover:text-red-500 hover:bg-red-100 formset-delete-btn opacity-50 group-hover:opacity-100 transition-opacity duration-200" title="Remove Skill">
+                                 <i class="fa-solid fa-times"></i>
                              </button>
                          </div>
                          {% endif %}
                      </div>
-                     {% endfor %}
-                 </div> {# End #skills-formset-container #}
-
-                 {# Template for Adding New Forms via JS #}
-                 <template id="{{ formset.prefix }}-form-template">
-                    <div class="formset-row skill-card bg-gray-50 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-lg p-3 flex flex-col md:flex-row items-start md:items-center gap-3 relative group formset-extra-form" id="{{ formset.prefix }}-__prefix__">
-                        {# Hidden fields #}
-                        <input type="hidden" name="{{ formset.prefix }}-__prefix__-id" id="id_{{ formset.prefix }}-__prefix__-id">
-                        {% if formset.can_delete %}
-                        <div class="hidden"><input type="checkbox" name="{{ formset.prefix }}-__prefix__-DELETE" id="id_{{ formset.prefix }}-__prefix__-DELETE"></div>
-                        {% endif %}
-                        {# Skill Name #}
-                        <div class="form-control flex-grow md:w-auto"><input type="text" name="{{ formset.prefix }}-__prefix__-skill_name" class="input input-sm input-bordered w-full" placeholder="Skill Name" id="id_{{ formset.prefix }}-__prefix__-skill_name"></div>
-                        {# Skill Type #}
-                        <div class="form-control w-full md:w-auto md:min-w-[120px]"><select name="{{ formset.prefix }}-__prefix__-skill_type" class="select select-sm select-bordered w-full" id="id_{{ formset.prefix }}-__prefix__-skill_type">{% for type_value, type_label in skill_types.items %}<option value="{{ type_value }}">{{ type_label }}</option>{% endfor %}</select></div>
-                        {# Proficiency #}
-                        <div class="form-control w-full md:w-[150px]"><div class="flex items-center gap-2"><input type="range" name="{{ formset.prefix }}-__prefix__-proficiency_level" value="50" min="0" max="100" step="10" class="range range-xs range-primary flex-grow" id="id_{{ formset.prefix }}-__prefix__-proficiency_level"><output class="text-xs font-medium w-10 text-right">50%</output></div></div> {# Removed inline oninput here too #}
-                        {# Delete Button #}
-                        <div class="form-control w-full md:w-auto mt-2 md:mt-0 flex justify-end md:justify-center"><button type="button" class="btn btn-xs btn-ghost text-error formset-delete-btn" onclick="deleteForm(this, '{{ formset.prefix }}')"><i class="fa-solid fa-trash-can"></i></button></div>
-                    </div>
+                     {# --- END Template Layout --- #}
                 </template>
 
-                {# Add Form Button (for JS manipulation of formset) #}
-                <div class="mt-4 flex justify-end">
-                    <button type="button" id="add-formset-row-btn" class="btn btn-sm btn-outline btn-primary">
-                        <i class="fa-solid fa-plus mr-2"></i> Add Skill Row (Formset)
-                    </button>
-                </div>
+                {# "Add Empty Row" Button REMOVED #}
 
-            </div> {# End of 'Your Skills' card #}
-        </div> {# End of Right Column #}
-    </div> {# End of Grid #}
+            </div> {# End 'Your Skills' card #}
+        </div> {# End Right Column #}
+    </div> {# End Grid #}
 
-    {# Navigation buttons are in wizard_base.html #}
+    {# Navigation buttons assumed to be in the extended 'wizard_base.html' template #}
 
 </form>
 
-{# --- JavaScript - Ensure this is included --- #}
+{# --- JavaScript Section (Fixed to Correctly Update Percentages) --- #}
 <script>
-    // --- Formset Helper Functions ---
-    function addForm(button, prefix) {
+    // --- Configuration for Skill Type Icons ---
+    const skillTypeIcons = {
+        'technical': 'fa-solid fa-laptop-code',
+        'soft': 'fa-solid fa-users',
+        'language': 'fa-solid fa-language',
+        'tool': 'fa-solid fa-gear',
+        'framework': 'fa-solid fa-cubes-stacked',
+        'database': 'fa-solid fa-database',
+        'other': 'fa-solid fa-star',
+    };
+
+    // --- Helper Functions ---
+
+    function updateProficiencyDisplay(skillCard, proficiencyValue) {
+        if (!skillCard) return;
+        const proficiencyDisplay = skillCard.querySelector('.proficiency-display');
+        if (!proficiencyDisplay) return;
+
+        // Ensure we have a valid proficiency value
+        const value = Math.max(0, Math.min(100, parseInt(proficiencyValue) || 50));
+
+        // Update the SVG display
+        const circleProgress = proficiencyDisplay.querySelector('.proficiency-circle-progress');
+        const valueText = proficiencyDisplay.querySelector('text');
+
+        // Calculate circle properties
+        const circumference = 100;
+        const offset = circumference - value;
+
+        // Update SVG elements
+        if (circleProgress) {
+            circleProgress.setAttribute('stroke-dasharray', `${value}, 100`);
+            circleProgress.setAttribute('stroke-dashoffset', '0');
+        }
+
+        if (valueText) {
+            valueText.textContent = `${value}%`;
+        }
+
+        // Store the current value for reference
+        proficiencyDisplay.dataset.value = value;
+    }
+
+    function updateSkillTypeIcon(skillCard, skillType) {
+        if (!skillCard) return;
+        const iconContainer = skillCard.querySelector('.skill-type-icon');
+        const iconElement = iconContainer ? iconContainer.querySelector('i') : null;
+        if (!iconElement) return;
+        const iconClass = skillTypeIcons[skillType] || skillTypeIcons['other'];
+        iconElement.className = `${iconClass} text-xs`; // Apply icon class + size
+        const skillTypeSelect = document.getElementById('add_skill_type');
+        let typeLabel = skillType;
+        if (skillTypeSelect) {
+            const option = skillTypeSelect.querySelector(`option[value="${skillType}"]`);
+            if (option) typeLabel = option.textContent;
+        }
+        if(iconContainer) iconContainer.title = typeLabel;
+    }
+
+    function updateSkillNameDisplay(skillCard, skillName) {
+         if (!skillCard) return;
+         const nameDisplay = skillCard.querySelector('.skill-name-display');
+         if(nameDisplay) { nameDisplay.textContent = skillName || 'Unnamed Skill'; }
+    }
+
+    function addForm(prefix) {
         const formContainer = document.getElementById(prefix + '-formset-container');
         const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
         const template = document.getElementById(prefix + '-form-template');
-
-        if (!formContainer || !totalFormsInput || !template) {
-            console.error("Formset elements not found for prefix:", prefix);
-            return;
-        }
-
-        const formNum = parseInt(totalFormsInput.value);
-        let newFormHtml = template.innerHTML.replace(/__prefix__/g, formNum);
-
+        if (!formContainer || !totalFormsInput || !template) { console.error("Formset elements not found:", prefix); return -1; }
+        const currentTotalForms = parseInt(totalFormsInput.value);
+        let newFormHtml = template.innerHTML.replace(/__prefix__/g, currentTotalForms);
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = newFormHtml;
         const newFormElement = tempDiv.firstElementChild;
-
-        newFormElement.style.opacity = 0;
-        newFormElement.style.transform = 'translateY(10px)';
-
+        if (!newFormElement) { console.error("Failed to create new form element:", prefix); return -1; }
         formContainer.appendChild(newFormElement);
-        totalFormsInput.value = formNum + 1;
-
-        setTimeout(() => {
-            newFormElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-            newFormElement.style.opacity = 1;
-            newFormElement.style.transform = 'translateY(0)';
-        }, 10);
-
+        totalFormsInput.value = currentTotalForms + 1;
         const emptyState = formContainer.querySelector('#skills_empty_state');
         if (emptyState) emptyState.classList.add('hidden');
-
-        const firstInput = newFormElement.querySelector('input:not([type=hidden]), select, textarea');
-        if (firstInput) firstInput.focus();
-
-        const rangeInput = newFormElement.querySelector('input[type="range"]');
-         if(rangeInput) {
-             // Add listener directly to the new range input
-             // This is handled by event delegation below, no need to add here explicitly
-         }
+        newFormElement.style.opacity = 0; newFormElement.style.transform = 'translateY(5px)';
+        requestAnimationFrame(() => { newFormElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease'; newFormElement.style.opacity = 1; newFormElement.style.transform = 'translateY(0)'; });
+        return currentTotalForms;
     }
 
     function deleteForm(button, prefix) {
         const formRow = button.closest('.formset-row');
+        if (!formRow) { console.error("Delete button parent row not found."); return; }
         const deleteInput = formRow.querySelector('input[name$="-DELETE"]');
         const formIdInput = formRow.querySelector('input[name$="-id"]');
-
-        if (deleteInput && formIdInput && formIdInput.value) {
+        if (deleteInput && formIdInput && formIdInput.value) { // Existing form
             deleteInput.checked = true;
-            formRow.style.transition = 'opacity 0.3s ease, max-height 0.3s ease, margin 0.3s ease, padding 0.3s ease, border 0.3s ease';
-            formRow.style.opacity = '0.5';
-            formRow.style.maxHeight = '50px';
-            formRow.style.borderStyle = 'dashed';
-            formRow.style.borderColor = 'red';
-             formRow.classList.add('formset-row-deleted');
-             // Keep it visible but indicate deletion
-            checkEmptyState(prefix);
-
-        } else {
-            // New, unsaved form: remove directly
-            formRow.style.transition = 'opacity 0.3s ease, max-height 0.3s ease, margin 0.3s ease, padding 0.3s ease, border 0.3s ease';
-            formRow.style.opacity = '0';
-            formRow.style.maxHeight = '0';
-            formRow.style.padding = '0';
-            formRow.style.margin = '0';
-            formRow.style.border = 'none';
-            setTimeout(() => {
-                formRow.remove();
-                const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
-                if (totalFormsInput) {
-                    totalFormsInput.value = parseInt(totalFormsInput.value) - 1;
-                }
-                checkEmptyState(prefix);
-            }, 300);
+            formRow.style.transition = 'opacity 0.3s ease'; formRow.style.opacity = '0.4';
+            formRow.classList.add('formset-row-deleted');
+            formRow.classList.add('hidden'); // Use Tailwind hidden
+        } else { // New form
+            formRow.style.transition = 'opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease, margin 0.3s ease, padding 0.3s ease';
+            formRow.style.opacity = '0'; formRow.style.transform = 'scale(0.95)';
+            formRow.style.maxHeight = '0'; formRow.style.paddingTop = '0'; formRow.style.paddingBottom = '0';
+            formRow.style.marginTop = '0'; formRow.style.marginBottom = '0';
+            formRow.style.overflow = 'hidden';
+            setTimeout(() => { formRow.remove(); checkEmptyState(prefix); }, 300);
         }
+        checkEmptyState(prefix);
     }
 
     function checkEmptyState(prefix) {
-         const formContainer = document.getElementById(prefix + '-formset-container');
-         if (!formContainer) return;
-         const visibleForms = Array.from(formContainer.querySelectorAll('.formset-row')).filter(row => {
-             const deleteInput = row.querySelector('input[name$="-DELETE"]');
-             return !deleteInput || !deleteInput.checked;
-         });
-          const emptyState = document.getElementById('skills_empty_state');
-
-          if (visibleForms.length === 0 && emptyState) {
-              emptyState.classList.remove('hidden');
-          } else if (emptyState) {
-               emptyState.classList.add('hidden');
-          }
+        const formContainer = document.getElementById(prefix + '-formset-container');
+        if (!formContainer) return;
+        const visibleForms = Array.from(formContainer.querySelectorAll('.formset-row:not(.hidden)')).filter(row => {
+            const deleteInput = row.querySelector('input[name$="-DELETE"]');
+            return !deleteInput || !deleteInput.checked;
+        });
+        const emptyState = document.getElementById('skills_empty_state');
+        if (emptyState) {
+            const isGrid = formContainer.classList.contains('md:grid-cols-2');
+            if (isGrid) emptyState.classList.toggle('md:col-span-2', visibleForms.length === 0);
+            emptyState.classList.toggle('hidden', visibleForms.length > 0);
+        }
     }
 
-    function addFormsetRowManually() {
-        const skillName = document.getElementById('add_skill_name').value.trim();
+    /**
+     * Adds a skill using the manual form, updates hidden fields,
+     * updates visible display, and sets up listeners for the new row.
+     */
+    function addSkillManually() {
+        const nameInput = document.getElementById('add_skill_name');
+        const skillName = nameInput.value.trim();
+        const skillTypeInput = document.getElementById('add_skill_type');
+        const skillType = skillTypeInput.value;
+        const proficiencyInput = document.getElementById('add_proficiency_level');
+        const proficiency = parseInt(proficiencyInput.value); // Get value from the manual slider
+        const prefix = '{{ formset.prefix }}';
+        let errorMsgElement = document.getElementById('skill_name_error');
+
+        // Validation
+        nameInput.classList.remove('input-error');
+        if (errorMsgElement) errorMsgElement.remove();
         if (!skillName) {
-            alert('Please enter a skill name.');
-            document.getElementById('add_skill_name').focus();
+            nameInput.classList.add('input-error'); nameInput.focus();
+            errorMsgElement = document.createElement('div'); errorMsgElement.id = 'skill_name_error';
+            errorMsgElement.className = 'text-error text-xs mt-1'; errorMsgElement.textContent = 'Please enter a skill name';
+            nameInput.parentNode.appendChild(errorMsgElement);
+            setTimeout(() => { nameInput.classList.remove('input-error'); if (errorMsgElement) errorMsgElement.remove(); }, 3000);
             return;
         }
-        const skillType = document.getElementById('add_skill_type').value;
-        const proficiency = document.getElementById('add_proficiency_level').value;
 
-        const prefix = '{{ formset.prefix }}';
-        addForm(null, prefix);
+        // Add form structure
+        const newIndex = addForm(prefix);
+        if (newIndex === -1) return; // Stop if adding failed
 
-        setTimeout(() => {
-            const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
-            if (!totalFormsInput) return;
+        const newCardElement = document.getElementById(`${prefix}-${newIndex}`);
+        if (!newCardElement) { console.error(`Could not find new card: ${prefix}-${newIndex}`); return; }
 
-            const totalForms = parseInt(totalFormsInput.value);
-            const newIndex = totalForms - 1;
+        // --- Populate Hidden Fields ---
+        const hiddenNameField = newCardElement.querySelector(`#id_${prefix}-${newIndex}-skill_name`);
+        const hiddenTypeField = newCardElement.querySelector(`#id_${prefix}-${newIndex}-skill_type`);
+        const hiddenProfField = newCardElement.querySelector(`#id_${prefix}-${newIndex}-proficiency_level`); // Hidden range input
 
-            const nameField = document.getElementById(`id_${prefix}-${newIndex}-skill_name`);
-            const typeField = document.getElementById(`id_${prefix}-${newIndex}-skill_type`);
-            const profField = document.getElementById(`id_${prefix}-${newIndex}-proficiency_level`);
-            const profOutput = profField ? profField.nextElementSibling : null;
+        if (hiddenNameField) hiddenNameField.value = skillName;
+        if (hiddenTypeField) hiddenTypeField.value = skillType;
+        if (hiddenProfField) {
+            hiddenProfField.value = proficiency;
+        } else {
+            console.warn(`Hidden proficiency field not found for index ${newIndex}`);
+        }
 
-            if (nameField) nameField.value = skillName;
-            if (typeField) typeField.value = skillType;
-            if (profField) {
-                profField.value = proficiency;
-                 if(profOutput && profOutput.tagName === 'OUTPUT') profOutput.textContent = proficiency + '%';
-            }
+        // --- Update the SVG in the template ---
+        // First, update the circle progress path
+        const svgPathElement = newCardElement.querySelector('.proficiency-circle-progress');
+        if (svgPathElement) {
+            svgPathElement.setAttribute('stroke-dasharray', `${proficiency}, 100`);
+            svgPathElement.setAttribute('stroke-dashoffset', '0');
+        }
 
-            document.getElementById('add_skill_name').value = '';
-            document.getElementById('add_skill_type').value = 'technical';
-            document.getElementById('add_proficiency_level').value = 50;
-            const manualProfOutput = document.getElementById('proficiency_output');
-            if (manualProfOutput) manualProfOutput.textContent = '50';
+        // Then update the text element with the correct percentage
+        const svgTextElement = newCardElement.querySelector('text');
+        if (svgTextElement) {
+            svgTextElement.textContent = `${proficiency}%`;
+        }
 
-        }, 150);
-     }
+        // --- Update Visible Display using the correct proficiency value ---
+        updateSkillNameDisplay(newCardElement, skillName);
+        updateSkillTypeIcon(newCardElement, skillType);
+        updateProficiencyDisplay(newCardElement, proficiency); // This now correctly updates the SVG display
 
-    // Attach Event Listeners on DOMContentLoaded
+        // Make the new card visible
+        newCardElement.classList.remove('hidden');
+
+        // --- Setup Listeners (just delete button now) ---
+        setupDeleteListener(newCardElement); // Simplified setup
+
+        // --- Reset Manual Form ---
+        nameInput.value = '';
+        skillTypeInput.value = skillTypeInput.querySelector('option').value;
+        proficiencyInput.value = 50; // Reset slider
+        document.getElementById('proficiency_output').textContent = '50%'; // Reset manual output display
+        nameInput.focus();
+    }
+
+    /**
+     * Sets up only the delete listener for a given formset row.
+     * @param {HTMLElement} formRow - The formset row element (div.formset-row).
+     */
+    function setupDeleteListener(formRow) {
+        // Delete Button Listener
+        const deleteBtn = formRow.querySelector('.formset-delete-btn');
+        if (deleteBtn && !deleteBtn.getAttribute('data-listener-attached')) {
+            deleteBtn.addEventListener('click', function() { deleteForm(this, '{{ formset.prefix }}'); });
+            deleteBtn.setAttribute('data-listener-attached', 'true');
+        }
+    }
+
+    /**
+     * Initializes the display (icon, name, proficiency) for an existing row
+     * based on its hidden field values.
+     * @param {HTMLElement} formRow - The formset row element.
+     */
+    function initializeExistingRowDisplay(formRow) {
+        // Initialize Display based on Hidden Fields
+        const hiddenNameField = formRow.querySelector('input[name$="-skill_name"]');
+        const hiddenTypeField = formRow.querySelector('select[name$="-skill_type"]');
+        const hiddenProfField = formRow.querySelector('input[name$="-proficiency_level"]'); // Hidden range input
+
+        if (hiddenNameField) updateSkillNameDisplay(formRow, hiddenNameField.value);
+        if (hiddenTypeField) updateSkillTypeIcon(formRow, hiddenTypeField.value);
+
+        // Get proficiency value and ensure it's a number
+        let proficiencyValue = 50; // Default value
+        if (hiddenProfField && hiddenProfField.value) {
+            proficiencyValue = parseInt(hiddenProfField.value) || 50;
+        }
+
+        // Update the SVG circle and text for the existing row
+        const svgPathElement = formRow.querySelector('.proficiency-circle-progress');
+        if (svgPathElement) {
+            svgPathElement.setAttribute('stroke-dasharray', `${proficiencyValue}, 100`);
+            svgPathElement.setAttribute('stroke-dashoffset', '0');
+        }
+
+        const svgTextElement = formRow.querySelector('text');
+        if (svgTextElement) {
+            svgTextElement.textContent = `${proficiencyValue}%`;
+        }
+
+        // Also update the data-value attribute on the proficiency display container
+        const proficiencyDisplay = formRow.querySelector('.proficiency-display');
+        if (proficiencyDisplay) {
+            proficiencyDisplay.dataset.value = proficiencyValue;
+        }
+    }
+
+    // --- Initialization on DOM Load ---
     document.addEventListener('DOMContentLoaded', function() {
-        const addFormsetBtn = document.getElementById('add-formset-row-btn');
-        if (addFormsetBtn) {
-            addFormsetBtn.addEventListener('click', function() {
-                addForm(this, '{{ formset.prefix }}');
+        const prefix = '{{ formset.prefix }}';
+
+        const addManualBtn = document.getElementById('add-skill-js-btn');
+        if (addManualBtn) { addManualBtn.addEventListener('click', addSkillManually); }
+
+        // Listener & Initial Value: Manual Proficiency Slider Output
+        const manualSlider = document.getElementById('add_proficiency_level');
+        if (manualSlider && !manualSlider.getAttribute('data-listener-attached')) {
+             const manualOutput = document.getElementById('proficiency_output');
+             if (manualOutput) {
+                 manualSlider.addEventListener('input', function() { manualOutput.textContent = this.value + '%'; });
+                 manualSlider.setAttribute('data-listener-attached', 'true');
+                 manualOutput.textContent = manualSlider.value + '%';
+             }
+        }
+
+        // Setup Existing Formset Rows
+        const formsetContainer = document.getElementById(`${prefix}-formset-container`);
+        if (formsetContainer) {
+            const existingRows = formsetContainer.querySelectorAll('.formset-row');
+            existingRows.forEach(row => {
+                // Skip setup for rows that are meant to be initially hidden
+                 if (!row.classList.contains('hidden')) {
+                    initializeExistingRowDisplay(row); // Set initial display
+                    setupDeleteListener(row);        // Attach delete listener
+                 }
             });
         }
 
-         const addManualBtn = document.getElementById('add-skill-js-btn');
-         if (addManualBtn) {
-             addManualBtn.addEventListener('click', addFormsetRowManually);
-         }
-
-         const formsetContainer = document.getElementById('{{ formset.prefix }}-formset-container');
-         if (formsetContainer) {
-             // Use event delegation for proficiency sliders
-             formsetContainer.addEventListener('input', function(event) {
-                if (event.target.matches('input[type="range"][name$="-proficiency_level"]')) {
-                     const output = event.target.nextElementSibling; // The <output> tag
-                     if (output && output.tagName === 'OUTPUT') {
-                         output.textContent = event.target.value + '%';
-                     }
-                 }
-             });
-         }
-
-         checkEmptyState('{{ formset.prefix }}');
+        // Initial Check for Empty State
+        checkEmptyState(prefix);
     });
 </script>
 {% endblock %}
 
-
+{##}
+{##}
+{# templates/resumes/wizard_steps/skills.html#}
+{##}
+{#{% extends 'resumes/wizard_base.html' %}#}
+{#{% load static %}#}
+{#{% load widget_tweaks %}#}
+{##}
+{#{% block step_title %}Skills{% endblock %}#}
+{#{% block step_icon %}<i class="fa-solid fa-code mr-3 text-primary opacity-80"></i>{% endblock %}#}
+{##}
+{#{% block step_content %}#}
+{#<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="false">#}
+{#    {% csrf_token %}#}
+{##}
+{#     *** RENDER MANAGEMENT FORM - ESSENTIAL ***#}
+{#    {{ formset.management_form }}#}
+{##}
+{#    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8 border-indigo-600">#}
+{#        <div class="flex items-start">#}
+{#             <div class="text-primary text-xl mr-4 mt-1"><i class="fa-solid fa-lightbulb"></i></div>#}
+{#            <div>#}
+{#                 <p class="text-base">Add skills highlighting technical abilities and professional competencies. Prioritize relevant skills.</p>#}
+{#                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-2"><strong>Pro tip:</strong> Mix technical (e.g., Python, SQL), soft (e.g., Leadership, Communication), and tool-specific skills (e.g., AWS, Figma).</p>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#     --- Main Content Grid ---#}
+{#    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8 ">#}
+{##}
+{#         --- Left Column: Add New Skill (for JS interaction) ---#}
+{#        <div class="lg:col-span-2 ">#}
+{#            <div class="bg-white shadow-lg rounded-2xl p-6 sticky top-4 border border-primary/30 dark:border-primary/30 border-indigo-600">#}
+{#                 <h3 class="text-lg font-bold text-gray-800 flex items-center mb-5">#}
+{#                     <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mr-3"><i class="fa-solid fa-plus text-primary"></i></div>#}
+{#                     Add Skill Manually#}
+{#                 </h3>#}
+{#                 <div class="space-y-5">#}
+{#                      Skill Name Input#}
+{#                     <div class="form-control">#}
+{#                         <label class="label py-1" for="add_skill_name"><span class="label-text font-medium">Skill Name</span><span class="label-text-alt text-error">*</span></label>#}
+{#                         <input type="text" id="add_skill_name" class="input input-sm input-bordered input-primary w-full" placeholder="e.g., Python">#}
+{#                     </div>#}
+{#                      Skill Type Select#}
+{#                      <div class="form-control">#}
+{#                         <label class="label py-1" for="add_skill_type"><span class="label-text font-medium">Skill Type</span></label>#}
+{#                         <select id="add_skill_type" class="select select-sm select-bordered select-primary w-full">#}
+{#                             {% for type_value, type_label in skill_types.items %}#}
+{#                             <option value="{{ type_value }}">{{ type_label }}</option>#}
+{#                             {% endfor %}#}
+{#                         </select>#}
+{#                     </div>#}
+{#                      Proficiency Slider#}
+{#                     <div class="form-control">#}
+{#                         <label class="label py-1" for="add_proficiency_level"><span class="label-text font-medium">Proficiency Level</span></label>#}
+{#                         <div class="flex items-center gap-3">#}
+{#                            <input type="range" id="add_proficiency_level" min="0" max="100" step="10" value="50" class="range range-xs range-primary flex-grow" oninput="updateProficiencyOutput(this, 'proficiency_output')">#}
+{#                            <output class="text-xs font-medium bg-primary/10 text-primary px-1.5 py-0.5 rounded w-12 text-center" id="proficiency_output">50%</output>#}
+{#                         </div>#}
+{#                     </div>#}
+{#                      Add Button for JS#}
+{#                     <button type="button" id="add-skill-js-btn" class="btn btn-primary w-full btn-sm">#}
+{#                         <i class="fa-solid fa-plus mr-2"></i> Add to List#}
+{#                     </button>#}
+{#                 </div>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#         --- Right Column: Display Formset Skills ---#}
+{#        <div class="lg:col-span-3">#}
+{#            <div class="bg-white shadow-lg rounded-2xl p-6 border border-primary/30 dark:border-primary/30 border-indigo-600">#}
+{#                 <h3 class="text-lg font-bold text-gray-800 flex items-center mb-5">#}
+{#                     <div class="w-9 h-9 rounded-full bg-success/10 flex items-center justify-center mr-3"><i class="fa-solid fa-check text-success"></i></div>#}
+{#                     Your Skills#}
+{#                 </h3>#}
+{##}
+{#                  Formset Container#}
+{#                 <div id="{{ formset.prefix }}-formset-container" class="space-y-3">#}
+{#                      Empty State Message#}
+{#                     {% if formset.total_form_count == 0 %}#}
+{#                     <div id="skills_empty_state" class="text-center py-12 border-2 border-dashed border-primary/20 rounded-lg">#}
+{#                         <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-5"><i class="fa-solid fa-code text-gray-400 text-3xl"></i></div>#}
+{#                         <h4 class="font-semibold text-lg text-gray-700 mb-2">No skills added yet</h4>#}
+{#                         <p class="text-gray-500 text-sm max-w-xs mx-auto">Use the form on the left to add skills to your resume.</p>#}
+{#                     </div>#}
+{#                     {% endif %}#}
+{##}
+{#                      Loop through Existing Forms (including initial data and extra forms)#}
+{#                     {% for form in formset %}#}
+{#                     <div class="formset-row skill-card bg-gray-50 border border-primary/30 dark:border-primary/30 rounded-lg p-3 flex flex-col md:flex-row items-start md:items-center gap-3 relative group {% if not form.initial and forloop.counter > formset.initial_form_count %}formset-extra-form{% endif %}" id="{{ formset.prefix }}-{{ forloop.counter0 }}">#}
+{#                          Hidden fields#}
+{#                         {{ form.id }}#}
+{#                         {% if formset.can_delete %}#}
+{#                              Checkbox will be visually hidden but functionally present#}
+{#                             <div class="hidden">{{ form.DELETE }}</div>#}
+{#                         {% endif %}#}
+{##}
+{#                          Skill Name Input#}
+{#                         <div class="form-control flex-grow md:w-auto">#}
+{#                             <label class="label sr-only" for="{{ form.skill_name.id_for_label }}">Skill Name</label>#}
+{#                             {% render_field form.skill_name class+="input input-sm input-bordered input-primary w-full" placeholder="Skill Name" %}#}
+{#                             {% if form.skill_name.errors %}<div class="text-error text-xs mt-1">{{ form.skill_name.errors.0 }}</div>{% endif %}#}
+{#                         </div>#}
+{##}
+{#                          Skill Type Select#}
+{#                         <div class="form-control w-full md:w-auto md:min-w-[120px]">#}
+{#                             <label class="label sr-only" for="{{ form.skill_type.id_for_label }}">Skill Type</label>#}
+{#                             {% render_field form.skill_type class+="select select-sm select-bordered select-primary w-full" %}#}
+{#                              {% if form.skill_type.errors %}<div class="text-error text-xs mt-1">{{ form.skill_type.errors.0 }}</div>{% endif %}#}
+{#                         </div>#}
+{##}
+{#                          Proficiency Slider#}
+{#                         <div class="form-control w-full md:w-[175px]">#}
+{#                             <label class="label sr-only" for="{{ form.proficiency_level.id_for_label }}">Proficiency</label>#}
+{#                             <div class="flex items-center gap-2">#}
+{#                                 {% render_field form.proficiency_level type="range" min="0" max="100" step="10" class+="range range-xs range-primary flex-grow slider-input" data-output-id="output-{{ form.prefix }}-{{ forloop.counter0 }}" %}#}
+{#                                 <output class="text-xs font-medium w-12 text-center bg-primary/10 text-primary px-1.5 py-0.5 rounded mr-2" id="output-{{ form.prefix }}-{{ forloop.counter0 }}">{{ form.proficiency_level.value|default:50 }}%</output>#}
+{#                             </div>#}
+{#                              {% if form.proficiency_level.errors %}<div class="text-error text-xs mt-1">{{ form.proficiency_level.errors.0 }}</div>{% endif %}#}
+{#                         </div>#}
+{##}
+{#                          Delete Button#}
+{#                         {% if formset.can_delete %}#}
+{#                         <div class="form-control w-full md:w-auto mt-2 md:mt-0 flex justify-end md:justify-center">#}
+{#                             <button type="button" class="btn btn-xs btn-ghost text-error formset-delete-btn">#}
+{#                                 <i class="fa-solid fa-trash-can"></i>#}
+{#                             </button>#}
+{#                         </div>#}
+{#                         {% endif %}#}
+{#                     </div>#}
+{#                     {% endfor %}#}
+{#                 </div>#}
+{##}
+{#                  Template for Adding New Forms via JS#}
+{#                 <template id="{{ formset.prefix }}-form-template">#}
+{#                    <div class="formset-row skill-card bg-gray-50 border border-primary/30 dark:border-primary/30 rounded-lg p-3 flex flex-col md:flex-row items-start md:items-center gap-3 relative group formset-extra-form" id="{{ formset.prefix }}-__prefix__">#}
+{#                         Hidden fields#}
+{#                        <input type="hidden" name="{{ formset.prefix }}-__prefix__-id" id="id_{{ formset.prefix }}-__prefix__-id">#}
+{#                        {% if formset.can_delete %}#}
+{#                        <div class="hidden"><input type="checkbox" name="{{ formset.prefix }}-__prefix__-DELETE" id="id_{{ formset.prefix }}-__prefix__-DELETE"></div>#}
+{#                        {% endif %}#}
+{#                         Skill Name#}
+{#                        <div class="form-control flex-grow md:w-auto"><input type="text" name="{{ formset.prefix }}-__prefix__-skill_name" class="input input-sm input-bordered input-primary w-full" placeholder="Skill Name" id="id_{{ formset.prefix }}-__prefix__-skill_name"></div>#}
+{#                         Skill Type#}
+{#                        <div class="form-control w-full md:w-auto md:min-w-[120px]"><select name="{{ formset.prefix }}-__prefix__-skill_type" class="select select-sm select-bordered select-primary w-full" id="id_{{ formset.prefix }}-__prefix__-skill_type">{% for type_value, type_label in skill_types.items %}<option value="{{ type_value }}">{{ type_label }}</option>{% endfor %}</select></div>#}
+{#                         Proficiency#}
+{#                        <div class="form-control w-full md:w-[175px]"><div class="flex items-center gap-2"><input type="range" name="{{ formset.prefix }}-__prefix__-proficiency_level" value="50" min="0" max="100" step="10" class="range range-xs range-primary flex-grow slider-input" id="id_{{ formset.prefix }}-__prefix__-proficiency_level" data-output-id="output-{{ formset.prefix }}-__prefix__"><output class="text-xs font-medium w-12 text-center bg-primary/10 text-primary px-1.5 py-0.5 rounded mr-2" id="output-{{ formset.prefix }}-__prefix__">50%</output></div></div>#}
+{#                         Delete Button#}
+{#                        <div class="form-control w-full md:w-auto mt-2 md:mt-0 flex justify-end md:justify-center"><button type="button" class="btn btn-xs btn-ghost text-error formset-delete-btn"><i class="fa-solid fa-trash-can"></i></button></div>#}
+{#                    </div>#}
+{#                </template>#}
+{##}
+{#                 Add Form Button (for JS manipulation of formset)#}
+{#                <div class="mt-4 flex justify-end">#}
+{#                    <button type="button" id="add-formset-row-btn" class="btn btn-sm btn-outline btn-primary">#}
+{#                        <i class="fa-solid fa-plus mr-2"></i> Add Empty Row#}
+{#                    </button>#}
+{#                </div>#}
+{##}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#     Navigation buttons are in wizard_base.html#}
+{##}
+{#</form>#}
+{##}
+{# --- JavaScript - Updated for better event handling ---#}
+{#<script>#}
+{#    // Utility function to update proficiency output#}
+{#    function updateProficiencyOutput(rangeInput, outputId) {#}
+{#        const output = document.getElementById(outputId) || rangeInput.nextElementSibling;#}
+{#        if (output) {#}
+{#            output.textContent = rangeInput.value + '%';#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Add a new form to the formset#}
+{#    function addForm(prefix) {#}
+{#        const formContainer = document.getElementById(prefix + '-formset-container');#}
+{#        const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');#}
+{#        const template = document.getElementById(prefix + '-form-template');#}
+{##}
+{#        if (!formContainer || !totalFormsInput || !template) {#}
+{#            console.error("Formset elements not found for prefix:", prefix);#}
+{#            return;#}
+{#        }#}
+{##}
+{#        const formNum = parseInt(totalFormsInput.value);#}
+{#        let newFormHtml = template.innerHTML.replace(/__prefix__/g, formNum);#}
+{##}
+{#        const tempDiv = document.createElement('div');#}
+{#        tempDiv.innerHTML = newFormHtml;#}
+{#        const newFormElement = tempDiv.firstElementChild;#}
+{##}
+{#        // Set initial state for animation#}
+{#        newFormElement.style.opacity = 0;#}
+{#        newFormElement.style.transform = 'translateY(10px)';#}
+{##}
+{#        // Append to container#}
+{#        formContainer.appendChild(newFormElement);#}
+{##}
+{#        // Update total forms count#}
+{#        totalFormsInput.value = formNum + 1;#}
+{##}
+{#        // Animate the new element#}
+{#        setTimeout(() => {#}
+{#            newFormElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';#}
+{#            newFormElement.style.opacity = 1;#}
+{#            newFormElement.style.transform = 'translateY(0)';#}
+{##}
+{#            // Setup event listeners for the new row#}
+{#            setupFormRowEventListeners(newFormElement);#}
+{#        }, 10);#}
+{##}
+{#        // Hide empty state if it exists#}
+{#        const emptyState = formContainer.querySelector('#skills_empty_state');#}
+{#        if (emptyState) emptyState.classList.add('hidden');#}
+{##}
+{#        // Focus on the first input#}
+{#        const firstInput = newFormElement.querySelector('input:not([type=hidden]), select, textarea');#}
+{#        if (firstInput) firstInput.focus();#}
+{##}
+{#        return formNum;#}
+{#    }#}
+{##}
+{#    // Delete a form from the formset#}
+{#    function deleteForm(button, prefix) {#}
+{#        const formRow = button.closest('.formset-row');#}
+{#        const deleteInput = formRow.querySelector('input[name$="-DELETE"]');#}
+{#        const formIdInput = formRow.querySelector('input[name$="-id"]');#}
+{##}
+{#        if (deleteInput && formIdInput && formIdInput.value) {#}
+{#            // Handle existing saved form (mark for deletion)#}
+{#            deleteInput.checked = true;#}
+{#            formRow.style.transition = 'opacity 0.3s ease, max-height 0.3s ease, border 0.3s ease';#}
+{#            formRow.style.opacity = '0.5';#}
+{#            formRow.style.borderStyle = 'dashed';#}
+{#            formRow.style.borderColor = 'red';#}
+{#            formRow.classList.add('formset-row-deleted');#}
+{#        } else {#}
+{#            // Handle new unsaved form (remove from DOM)#}
+{#            formRow.style.transition = 'opacity 0.3s ease, max-height 0.3s ease, margin 0.3s ease, padding 0.3s ease, border 0.3s ease';#}
+{#            formRow.style.opacity = '0';#}
+{#            formRow.style.maxHeight = '0';#}
+{#            formRow.style.padding = '0';#}
+{#            formRow.style.margin = '0';#}
+{#            formRow.style.border = 'none';#}
+{##}
+{#            setTimeout(() => {#}
+{#                formRow.remove();#}
+{##}
+{#                // Update total forms count#}
+{#                const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');#}
+{#                if (totalFormsInput) {#}
+{#                    totalFormsInput.value = parseInt(totalFormsInput.value) - 1;#}
+{#                }#}
+{##}
+{#                // Update empty state display#}
+{#                checkEmptyState(prefix);#}
+{#            }, 300);#}
+{#        }#}
+{##}
+{#        // Check if we need to show the empty state#}
+{#        checkEmptyState(prefix);#}
+{#    }#}
+{##}
+{#    // Check if the formset is empty and show/hide the empty state accordingly#}
+{#    function checkEmptyState(prefix) {#}
+{#        const formContainer = document.getElementById(prefix + '-formset-container');#}
+{#        if (!formContainer) return;#}
+{##}
+{#        // Count visible forms (excluding those marked for deletion)#}
+{#        const visibleForms = Array.from(formContainer.querySelectorAll('.formset-row')).filter(row => {#}
+{#            const deleteInput = row.querySelector('input[name$="-DELETE"]');#}
+{#            return !deleteInput || !deleteInput.checked;#}
+{#        });#}
+{##}
+{#        const emptyState = document.getElementById('skills_empty_state');#}
+{#        if (emptyState) {#}
+{#            if (visibleForms.length === 0) {#}
+{#                emptyState.classList.remove('hidden');#}
+{#            } else {#}
+{#                emptyState.classList.add('hidden');#}
+{#            }#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Add a skill manually from the left panel#}
+{#    function addSkillManually() {#}
+{#        const skillName = document.getElementById('add_skill_name').value.trim();#}
+{#        if (!skillName) {#}
+{#            // Show validation error#}
+{#            const nameInput = document.getElementById('add_skill_name');#}
+{#            nameInput.classList.add('input-error');#}
+{#            nameInput.focus();#}
+{##}
+{#            // Show error message under input#}
+{#            let errorMsg = document.getElementById('skill_name_error');#}
+{#            if (!errorMsg) {#}
+{#                errorMsg = document.createElement('div');#}
+{#                errorMsg.id = 'skill_name_error';#}
+{#                errorMsg.className = 'text-error text-xs mt-1';#}
+{#                errorMsg.textContent = 'Please enter a skill name';#}
+{#                nameInput.parentNode.appendChild(errorMsg);#}
+{#            }#}
+{##}
+{#            // Remove error after 3 seconds#}
+{#            setTimeout(() => {#}
+{#                nameInput.classList.remove('input-error');#}
+{#                if (errorMsg) errorMsg.remove();#}
+{#            }, 3000);#}
+{##}
+{#            return;#}
+{#        }#}
+{##}
+{#        // Get form values#}
+{#        const skillType = document.getElementById('add_skill_type').value;#}
+{#        const proficiency = document.getElementById('add_proficiency_level').value;#}
+{#        const prefix = '{{ formset.prefix }}';#}
+{##}
+{#        // Add a new form row#}
+{#        const newIndex = addForm(prefix);#}
+{##}
+{#        // Set values in the new form#}
+{#        setTimeout(() => {#}
+{#            const nameField = document.getElementById(`id_${prefix}-${newIndex}-skill_name`);#}
+{#            const typeField = document.getElementById(`id_${prefix}-${newIndex}-skill_type`);#}
+{#            const profField = document.getElementById(`id_${prefix}-${newIndex}-proficiency_level`);#}
+{#            const profOutput = document.getElementById(`output-${prefix}-${newIndex}`);#}
+{##}
+{#            if (nameField) nameField.value = skillName;#}
+{#            if (typeField) typeField.value = skillType;#}
+{#            if (profField) {#}
+{#                profField.value = proficiency;#}
+{#                if (profOutput) profOutput.textContent = proficiency + '%';#}
+{#            }#}
+{##}
+{#            // Reset the form fields#}
+{#            document.getElementById('add_skill_name').value = '';#}
+{#            document.getElementById('add_skill_type').value = 'technical';#}
+{#            document.getElementById('add_proficiency_level').value = 50;#}
+{#            document.getElementById('proficiency_output').textContent = '50%';#}
+{##}
+{#            // Focus back on skill name input#}
+{#            document.getElementById('add_skill_name').focus();#}
+{#        }, 50);#}
+{#    }#}
+{##}
+{#    // Set up event listeners for a form row#}
+{#    function setupFormRowEventListeners(formRow) {#}
+{#        // Find the delete button in this row#}
+{#        const deleteBtn = formRow.querySelector('.formset-delete-btn');#}
+{#        if (deleteBtn) {#}
+{#            deleteBtn.addEventListener('click', function() {#}
+{#                deleteForm(this, '{{ formset.prefix }}');#}
+{#            });#}
+{#        }#}
+{##}
+{#        // Set up range input event listeners#}
+{#        const rangeInput = formRow.querySelector('.slider-input');#}
+{#        if (rangeInput) {#}
+{#            const outputId = rangeInput.dataset.outputId;#}
+{#            rangeInput.addEventListener('input', function() {#}
+{#                const output = document.getElementById(outputId);#}
+{#                if (output) {#}
+{#                    output.textContent = this.value + '%';#}
+{#                }#}
+{#            });#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Initialize all event listeners#}
+{#    document.addEventListener('DOMContentLoaded', function() {#}
+{#        // Add empty row button#}
+{#        const addEmptyRowBtn = document.getElementById('add-formset-row-btn');#}
+{#        if (addEmptyRowBtn) {#}
+{#            addEmptyRowBtn.addEventListener('click', function() {#}
+{#                addForm('{{ formset.prefix }}');#}
+{#            });#}
+{#        }#}
+{##}
+{#        // Add skill manually button#}
+{#        const addManualBtn = document.getElementById('add-skill-js-btn');#}
+{#        if (addManualBtn) {#}
+{#            addManualBtn.addEventListener('click', addSkillManually);#}
+{#            // Remove the inline onclick to prevent multiple calls#}
+{#            addManualBtn.removeAttribute('onclick');#}
+{#        }#}
+{##}
+{#        // Set up proficiency slider in the manual form#}
+{#        const manualSlider = document.getElementById('add_proficiency_level');#}
+{#        if (manualSlider) {#}
+{#            manualSlider.addEventListener('input', function() {#}
+{#                updateProficiencyOutput(this, 'proficiency_output');#}
+{#            });#}
+{#        }#}
+{##}
+{#        // Set up existing form rows#}
+{#        const existingRows = document.querySelectorAll('.formset-row');#}
+{#        existingRows.forEach(setupFormRowEventListeners);#}
+{##}
+{#        // Initialize range sliders for existing rows#}
+{#        document.querySelectorAll('.slider-input').forEach(input => {#}
+{#            // Set initial values for outputs#}
+{#            const outputId = input.dataset.outputId;#}
+{#            if (outputId) {#}
+{#                const output = document.getElementById(outputId);#}
+{#                if (output) {#}
+{#                    output.textContent = input.value + '%';#}
+{#                }#}
+{#            }#}
+{#        });#}
+{##}
+{#        // Check if empty state should be shown#}
+{#        checkEmptyState('{{ formset.prefix }}');#}
+{#    });#}
+{#</script>#}
+{#{% endblock %}#}
+{##}
+{#{% extends 'resumes/wizard_base.html' %}#}
+{#{% load static %}#}
+{#{% load widget_tweaks %} {# Ensure widget_tweaks is loaded if you use it #}
+{##}
+{#{% block step_title %}Skills{% endblock %}#}
+{#{% block step_icon %}<i class="fa-solid fa-code mr-3 text-primary opacity-80"></i>{% endblock %}#}
+{##}
+{#{% block step_content %}#}
+{#<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="false"> {# Using standard POST #}
+{#    {% csrf_token %}#}
+{##}
+    {# *** RENDER MANAGEMENT FORM - ESSENTIAL *** #}
+{#    {{ formset.management_form }}#}
+{##}
+{#    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">#}
+{#        <div class="flex items-start">#}
+{#             <div class="text-primary text-xl mr-4 mt-1"><i class="fa-solid fa-lightbulb"></i></div>#}
+{#            <div>#}
+{#                 <p class="text-base">Add skills highlighting technical abilities and professional competencies. Prioritize relevant skills.</p>#}
+{#                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-2"><strong>Pro tip:</strong> Mix technical (e.g., Python, SQL), soft (e.g., Leadership, Communication), and tool-specific skills (e.g., AWS, Figma).</p>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+    {# --- Main Content Grid --- #}
+{#    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">#}
+{##}
+        {# --- Left Column: Add New Skill (for JS interaction) --- #}
+{#        <div class="lg:col-span-2">#}
+{#            <div class="bg-white shadow-lg rounded-2xl p-6 sticky top-4 border border-gray-100 dark:border-gray-700">#}
+{#                 <h3 class="text-lg font-bold text-gray-800 flex items-center mb-5">#}
+{#                     <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mr-3"><i class="fa-solid fa-plus text-primary"></i></div>#}
+{#                     Add Skill Manually#}
+{#                 </h3>#}
+{#                 <div class="space-y-5">#}
+                     {# Skill Name Input #}
+{#                     <div class="form-control">#}
+{#                         <label class="label py-1" for="add_skill_name"><span class="label-text font-medium">Skill Name</span><span class="label-text-alt text-error">*</span></label>#}
+{#                         <input type="text" id="add_skill_name" class="input input-sm input-bordered w-full" placeholder="e.g., Python">#}
+{#                     </div>#}
+                     {# Skill Type Select #}
+{#                      <div class="form-control">#}
+{#                         <label class="label py-1" for="add_skill_type"><span class="label-text font-medium">Skill Type</span></label>#}
+{#                         <select id="add_skill_type" class="select select-sm select-bordered w-full">#}
+{#                             {% for type_value, type_label in skill_types.items %}#}
+{#                             <option value="{{ type_value }}">{{ type_label }}</option>#}
+{#                             {% endfor %}#}
+{#                         </select>#}
+{#                     </div>#}
+                     {# Proficiency Slider #}
+{#                     <div class="form-control">#}
+{#                         <label class="label py-1" for="add_proficiency_level"><span class="label-text font-medium">Proficiency Level</span></label>#}
+{#                         <div class="flex items-center gap-3">#}
+{#                            <input type="range" id="add_proficiency_level" min="0" max="100" step="10" value="50" class="range range-xs range-primary flex-grow" oninput="this.nextElementSibling.textContent = this.value + '%'">#}
+{#                            <output class="text-xs font-medium bg-primary/10 text-primary px-1.5 py-0.5 rounded" id="proficiency_output">50%</output> {# Added ID here #}
+{#                         </div>#}
+{#                     </div>#}
+                     {# Add Button for JS #}
+{#                     <button type="button" id="add-skill-js-btn" class="btn btn-primary w-full btn-sm" onclick="addFormsetRowManually()">#}
+{#                         <i class="fa-solid fa-plus mr-2"></i> Add to List#}
+{#                     </button>#}
+{#                 </div>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+        {# --- Right Column: Display Formset Skills --- #}
+{#        <div class="lg:col-span-3">#}
+{#            <div class="bg-white shadow-lg rounded-2xl p-6 border border-gray-100 dark:border-gray-700">#}
+{#                 <h3 class="text-lg font-bold text-gray-800 flex items-center mb-5">#}
+{#                     <div class="w-9 h-9 rounded-full bg-success/10 flex items-center justify-center mr-3"><i class="fa-solid fa-check text-success"></i></div>#}
+{#                     Your Skills#}
+{#                 </h3>#}
+{##}
+                 {# Formset Container #}
+{#                 <div id="{{ formset.prefix }}-formset-container" class="space-y-3">#}
+                     {# Empty State Message #}
+{#                     {% if formset.total_form_count == 0 %}#}
+{#                     <div id="skills_empty_state" class="text-center py-12 border-2 border-dashed border-gray-200 rounded-lg">#}
+{#                         <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-5"><i class="fa-solid fa-code text-gray-400 text-3xl"></i></div>#}
+{#                         <h4 class="font-semibold text-lg text-gray-700 mb-2">No skills added yet</h4>#}
+{#                         <p class="text-gray-500 text-sm max-w-xs mx-auto">Use the form on the left to add skills to your resume.</p>#}
+{#                     </div>#}
+{#                     {% endif %}#}
+{##}
+                     {# Loop through Existing Forms (including initial data and extra forms) #}
+{#                     {% for form in formset %}#}
+{#                     <div class="formset-row skill-card bg-gray-50 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-lg p-3 flex flex-col md:flex-row items-start md:items-center gap-3 relative group {% if not form.initial and forloop.counter > formset.initial_form_count %}formset-extra-form{% endif %}" id="{{ formset.prefix }}-{{ forloop.counter0 }}">#}
+                         {# Hidden fields #}
+{#                         {{ form.id }}#}
+{#                         {% if formset.can_delete %}#}
+                             {# Checkbox will be visually hidden but functionally present #}
+{#                             <div class="hidden">{{ form.DELETE }}</div>#}
+{#                         {% endif %}#}
+{##}
+                         {# Skill Name Input #}
+{#                         <div class="form-control flex-grow md:w-auto">#}
+{#                             <label class="label sr-only" for="{{ form.skill_name.id_for_label }}">Skill Name</label>#}
+{#                             {% render_field form.skill_name class+="input input-sm input-bordered w-full" placeholder="Skill Name" %}#}
+{#                             {% if form.skill_name.errors %}<div class="text-error text-xs mt-1">{{ form.skill_name.errors.0 }}</div>{% endif %}#}
+{#                         </div>#}
+{##}
+                         {# Skill Type Select #}
+{#                         <div class="form-control w-full md:w-auto md:min-w-[120px]">#}
+{#                             <label class="label sr-only" for="{{ form.skill_type.id_for_label }}">Skill Type</label>#}
+{#                             {% render_field form.skill_type class+="select select-sm select-bordered w-full" %}#}
+{#                              {% if form.skill_type.errors %}<div class="text-error text-xs mt-1">{{ form.skill_type.errors.0 }}</div>{% endif %}#}
+{#                         </div>#}
+{##}
+                         {# Proficiency Slider #}
+{#                         <div class="form-control w-full md:w-[150px]">#}
+{#                             <label class="label sr-only" for="{{ form.proficiency_level.id_for_label }}">Proficiency</label>#}
+{#                             <div class="flex items-center gap-2">#}
+                                 {# *** oninput REMOVED from render_field *** #}
+{#                                 {% render_field form.proficiency_level type="range" min="0" max="100" step="10" class+="range range-xs range-primary flex-grow" %}#}
+{#                                 <output class="text-xs font-medium w-10 text-right">{{ form.proficiency_level.value|default:50 }}%</output>#}
+{#                             </div>#}
+{#                              {% if form.proficiency_level.errors %}<div class="text-error text-xs mt-1">{{ form.proficiency_level.errors.0 }}</div>{% endif %}#}
+{#                         </div>#}
+{##}
+                         {# Delete Button #}
+{#                         {% if formset.can_delete %}#}
+{#                         <div class="form-control w-full md:w-auto mt-2 md:mt-0 flex justify-end md:justify-center">#}
+{#                             <button type="button" class="btn btn-xs btn-ghost text-error formset-delete-btn" onclick="deleteForm(this, '{{ formset.prefix }}')">#}
+{#                                 <i class="fa-solid fa-trash-can"></i>#}
+{#                             </button>#}
+{#                         </div>#}
+{#                         {% endif %}#}
+{#                     </div>#}
+{#                     {% endfor %}#}
+{#                 </div> {# End #skills-formset-container #}
+{##}
+                 {# Template for Adding New Forms via JS #}
+{#                 <template id="{{ formset.prefix }}-form-template">#}
+{#                    <div class="formset-row skill-card bg-gray-50 border border-gray-200 dark:border-gray-700 dark:bg-gray-800 rounded-lg p-3 flex flex-col md:flex-row items-start md:items-center gap-3 relative group formset-extra-form" id="{{ formset.prefix }}-__prefix__">#}
+                        {# Hidden fields #}
+{#                        <input type="hidden" name="{{ formset.prefix }}-__prefix__-id" id="id_{{ formset.prefix }}-__prefix__-id">#}
+{#                        {% if formset.can_delete %}#}
+{#                        <div class="hidden"><input type="checkbox" name="{{ formset.prefix }}-__prefix__-DELETE" id="id_{{ formset.prefix }}-__prefix__-DELETE"></div>#}
+{#                        {% endif %}#}
+                        {# Skill Name #}
+{#                        <div class="form-control flex-grow md:w-auto"><input type="text" name="{{ formset.prefix }}-__prefix__-skill_name" class="input input-sm input-bordered w-full" placeholder="Skill Name" id="id_{{ formset.prefix }}-__prefix__-skill_name"></div>#}
+                        {# Skill Type #}
+{#                        <div class="form-control w-full md:w-auto md:min-w-[120px]"><select name="{{ formset.prefix }}-__prefix__-skill_type" class="select select-sm select-bordered w-full" id="id_{{ formset.prefix }}-__prefix__-skill_type">{% for type_value, type_label in skill_types.items %}<option value="{{ type_value }}">{{ type_label }}</option>{% endfor %}</select></div>#}
+                        {# Proficiency #}
+{#                        <div class="form-control w-full md:w-[150px]"><div class="flex items-center gap-2"><input type="range" name="{{ formset.prefix }}-__prefix__-proficiency_level" value="50" min="0" max="100" step="10" class="range range-xs range-primary flex-grow" id="id_{{ formset.prefix }}-__prefix__-proficiency_level"><output class="text-xs font-medium w-10 text-right">50%</output></div></div> {# Removed inline oninput here too #}
+                        {# Delete Button #}
+{#                        <div class="form-control w-full md:w-auto mt-2 md:mt-0 flex justify-end md:justify-center"><button type="button" class="btn btn-xs btn-ghost text-error formset-delete-btn" onclick="deleteForm(this, '{{ formset.prefix }}')"><i class="fa-solid fa-trash-can"></i></button></div>#}
+{#                    </div>#}
+{#                </template>#}
+{##}
+                {# Add Form Button (for JS manipulation of formset) #}
+{#                <div class="mt-4 flex justify-end">#}
+{#                    <button type="button" id="add-formset-row-btn" class="btn btn-sm btn-outline btn-primary">#}
+{#                        <i class="fa-solid fa-plus mr-2"></i> Add Skill Row (Formset)#}
+{#                    </button>#}
+{#                </div>#}
+{##}
+{#            </div> {# End of 'Your Skills' card #}
+{#        </div> {# End of Right Column #}
+{#    </div> {# End of Grid #}
+{##}
+    {# Navigation buttons are in wizard_base.html #}
+{##}
+{#</form>#}
+{##}
+{# --- JavaScript - Ensure this is included --- #}
+{#<script>#}
+{#    // --- Formset Helper Functions ---#}
+{#    function addForm(button, prefix) {#}
+{#        const formContainer = document.getElementById(prefix + '-formset-container');#}
+{#        const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');#}
+{#        const template = document.getElementById(prefix + '-form-template');#}
+{##}
+{#        if (!formContainer || !totalFormsInput || !template) {#}
+{#            console.error("Formset elements not found for prefix:", prefix);#}
+{#            return;#}
+{#        }#}
+{##}
+{#        const formNum = parseInt(totalFormsInput.value);#}
+{#        let newFormHtml = template.innerHTML.replace(/__prefix__/g, formNum);#}
+{##}
+{#        const tempDiv = document.createElement('div');#}
+{#        tempDiv.innerHTML = newFormHtml;#}
+{#        const newFormElement = tempDiv.firstElementChild;#}
+{##}
+{#        newFormElement.style.opacity = 0;#}
+{#        newFormElement.style.transform = 'translateY(10px)';#}
+{##}
+{#        formContainer.appendChild(newFormElement);#}
+{#        totalFormsInput.value = formNum + 1;#}
+{##}
+{#        setTimeout(() => {#}
+{#            newFormElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';#}
+{#            newFormElement.style.opacity = 1;#}
+{#            newFormElement.style.transform = 'translateY(0)';#}
+{#        }, 10);#}
+{##}
+{#        const emptyState = formContainer.querySelector('#skills_empty_state');#}
+{#        if (emptyState) emptyState.classList.add('hidden');#}
+{##}
+{#        const firstInput = newFormElement.querySelector('input:not([type=hidden]), select, textarea');#}
+{#        if (firstInput) firstInput.focus();#}
+{##}
+{#        const rangeInput = newFormElement.querySelector('input[type="range"]');#}
+{#         if(rangeInput) {#}
+{#             // Add listener directly to the new range input#}
+{#             // This is handled by event delegation below, no need to add here explicitly#}
+{#         }#}
+{#    }#}
+{##}
+{#    function deleteForm(button, prefix) {#}
+{#        const formRow = button.closest('.formset-row');#}
+{#        const deleteInput = formRow.querySelector('input[name$="-DELETE"]');#}
+{#        const formIdInput = formRow.querySelector('input[name$="-id"]');#}
+{##}
+{#        if (deleteInput && formIdInput && formIdInput.value) {#}
+{#            deleteInput.checked = true;#}
+{#            formRow.style.transition = 'opacity 0.3s ease, max-height 0.3s ease, margin 0.3s ease, padding 0.3s ease, border 0.3s ease';#}
+{#            formRow.style.opacity = '0.5';#}
+{#            formRow.style.maxHeight = '50px';#}
+{#            formRow.style.borderStyle = 'dashed';#}
+{#            formRow.style.borderColor = 'red';#}
+{#             formRow.classList.add('formset-row-deleted');#}
+{#             // Keep it visible but indicate deletion#}
+{#            checkEmptyState(prefix);#}
+{##}
+{#        } else {#}
+{#            // New, unsaved form: remove directly#}
+{#            formRow.style.transition = 'opacity 0.3s ease, max-height 0.3s ease, margin 0.3s ease, padding 0.3s ease, border 0.3s ease';#}
+{#            formRow.style.opacity = '0';#}
+{#            formRow.style.maxHeight = '0';#}
+{#            formRow.style.padding = '0';#}
+{#            formRow.style.margin = '0';#}
+{#            formRow.style.border = 'none';#}
+{#            setTimeout(() => {#}
+{#                formRow.remove();#}
+{#                const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');#}
+{#                if (totalFormsInput) {#}
+{#                    totalFormsInput.value = parseInt(totalFormsInput.value) - 1;#}
+{#                }#}
+{#                checkEmptyState(prefix);#}
+{#            }, 300);#}
+{#        }#}
+{#    }#}
+{##}
+{#    function checkEmptyState(prefix) {#}
+{#         const formContainer = document.getElementById(prefix + '-formset-container');#}
+{#         if (!formContainer) return;#}
+{#         const visibleForms = Array.from(formContainer.querySelectorAll('.formset-row')).filter(row => {#}
+{#             const deleteInput = row.querySelector('input[name$="-DELETE"]');#}
+{#             return !deleteInput || !deleteInput.checked;#}
+{#         });#}
+{#          const emptyState = document.getElementById('skills_empty_state');#}
+{##}
+{#          if (visibleForms.length === 0 && emptyState) {#}
+{#              emptyState.classList.remove('hidden');#}
+{#          } else if (emptyState) {#}
+{#               emptyState.classList.add('hidden');#}
+{#          }#}
+{#    }#}
+{##}
+{#    function addFormsetRowManually() {#}
+{#        const skillName = document.getElementById('add_skill_name').value.trim();#}
+{#        if (!skillName) {#}
+{#            alert('Please enter a skill name.');#}
+{#            document.getElementById('add_skill_name').focus();#}
+{#            return;#}
+{#        }#}
+{#        const skillType = document.getElementById('add_skill_type').value;#}
+{#        const proficiency = document.getElementById('add_proficiency_level').value;#}
+{##}
+{#        const prefix = '{{ formset.prefix }}';#}
+{#        addForm(null, prefix);#}
+{##}
+{#        setTimeout(() => {#}
+{#            const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');#}
+{#            if (!totalFormsInput) return;#}
+{##}
+{#            const totalForms = parseInt(totalFormsInput.value);#}
+{#            const newIndex = totalForms - 1;#}
+{##}
+{#            const nameField = document.getElementById(`id_${prefix}-${newIndex}-skill_name`);#}
+{#            const typeField = document.getElementById(`id_${prefix}-${newIndex}-skill_type`);#}
+{#            const profField = document.getElementById(`id_${prefix}-${newIndex}-proficiency_level`);#}
+{#            const profOutput = profField ? profField.nextElementSibling : null;#}
+{##}
+{#            if (nameField) nameField.value = skillName;#}
+{#            if (typeField) typeField.value = skillType;#}
+{#            if (profField) {#}
+{#                profField.value = proficiency;#}
+{#                 if(profOutput && profOutput.tagName === 'OUTPUT') profOutput.textContent = proficiency + '%';#}
+{#            }#}
+{##}
+{#            document.getElementById('add_skill_name').value = '';#}
+{#            document.getElementById('add_skill_type').value = 'technical';#}
+{#            document.getElementById('add_proficiency_level').value = 50;#}
+{#            const manualProfOutput = document.getElementById('proficiency_output');#}
+{#            if (manualProfOutput) manualProfOutput.textContent = '50';#}
+{##}
+{#        }, 150);#}
+{#     }#}
+{##}
+{#    // Attach Event Listeners on DOMContentLoaded#}
+{#    document.addEventListener('DOMContentLoaded', function() {#}
+{#        const addFormsetBtn = document.getElementById('add-formset-row-btn');#}
+{#        if (addFormsetBtn) {#}
+{#            addFormsetBtn.addEventListener('click', function() {#}
+{#                addForm(this, '{{ formset.prefix }}');#}
+{#            });#}
+{#        }#}
+{##}
+{#         const addManualBtn = document.getElementById('add-skill-js-btn');#}
+{#         if (addManualBtn) {#}
+{#             addManualBtn.addEventListener('click', addFormsetRowManually);#}
+{#         }#}
+{##}
+{#         const formsetContainer = document.getElementById('{{ formset.prefix }}-formset-container');#}
+{#         if (formsetContainer) {#}
+{#             // Use event delegation for proficiency sliders#}
+{#             formsetContainer.addEventListener('input', function(event) {#}
+{#                if (event.target.matches('input[type="range"][name$="-proficiency_level"]')) {#}
+{#                     const output = event.target.nextElementSibling; // The <output> tag#}
+{#                     if (output && output.tagName === 'OUTPUT') {#}
+{#                         output.textContent = event.target.value + '%';#}
+{#                     }#}
+{#                 }#}
+{#             });#}
+{#         }#}
+{##}
+{#         checkEmptyState('{{ formset.prefix }}');#}
+{#    });#}
+{#</script>#}
+{#{% endblock %}#}
+{##}
+{##}
 {#{% extends 'resumes/wizard_base.html' %}#}
 {#{% load static %}#}
 {##}

@@ -2,7 +2,7 @@
 URL configuration for ai_job_hunt_portal project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.1/topics/http/urls/
+    https://docs.djangoproject.com/en/5.2/topics/http/urls/
 Examples:
 Function views
     1. Add an import:  from my_app import views
@@ -18,7 +18,7 @@ Including another URLconf
 from django.urls import path, include
 
 urlpatterns = [
-    #    path("admin/", admin.site.urls),
+    #    path('admin/', admin.site.urls),
     path('auth/', include('auth_app.auth_app_url')),
     path('job/', include('job_portal.job_portal_url')),
     path("__reload__/", include("django_browser_reload.urls")),

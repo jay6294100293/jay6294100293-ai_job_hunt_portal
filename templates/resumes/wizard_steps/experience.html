@@ -1,279 +1,1937 @@
-{# templates/resumes/wizard_steps/experience.html #}
 {% extends 'resumes/wizard_base.html' %}
 {% load static %}
-{% load widget_tweaks %} {# Make sure widget_tweaks is loaded #}
+{% load widget_tweaks %}
 
 {% block step_title %}Work Experience{% endblock %}
-{% block step_icon %}<i class="fa-solid fa-briefcase mr-3 text-primary opacity-80"></i>{% endblock %}
+{% block step_icon %}<i class="fa-solid fa-briefcase mr-3 text-indigo-600 opacity-80"></i>{% endblock %}
 
 {% block step_content %}
 <form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}">
     {% csrf_token %}
 
-    {# *** Management Form *** #}
+    {# Management Form #}
     {{ formset.management_form }}
 
+    {# Hidden input to store skills data passed from the view #}
+    <input type="hidden" id="skills-data-json" value="{{ skills_data|escape }}">
+
     <div class="flex flex-col md:flex-row gap-6">
+        {# Left Column: Experience Forms #}
         <div class="w-full md:w-2/3">
             <div id="experiences_container" class="space-y-6">
 
                 {# Loop over formset.forms #}
                 {% for form in formset.forms %}
-                <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-lg p-6 experience-entry" id="{{ form.prefix }}-row" data-index="{{ forloop.counter0 }}">
+                <div class="form-row bg-white border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 p-6 experience-entry" id="{{ form.prefix }}-row" data-index="{{ forloop.counter0 }}">
                     {# Hidden fields #}
-                    {# {{ form.id }} #} {# Only needed if using modelformset and referencing existing instances #}
-                    {% if formset.can_delete %}
-                        <div class="hidden">{{ form.DELETE }}</div>
-                    {% endif %}
+                    {% if formset.can_delete %} <div class="hidden">{{ form.DELETE }}</div> {% endif %}
+                    {% if form.instance.pk %}{{ form.id }}{% endif %}
 
-                    <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-100 dark:border-gray-700">
+                    {# Form Header #}
+                    <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-200">
                         <h3 class="text-lg font-medium flex items-center">
-                            <span class="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center mr-3 shadow-sm"><i class="fa-solid fa-briefcase text-primary text-sm"></i></span>
-                            <span class="text-gray-800 dark:text-gray-800">Experience #<span class="experience-number font-semibold">{{ forloop.counter }}</span></span>
+                            <span class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center mr-3 shadow-sm"> <i class="fa-solid fa-briefcase text-indigo-600 text-sm"></i> </span>
+                            <span class="text-gray-800">Experience #<span class="experience-number font-semibold">{{ forloop.counter }}</span></span>
                         </h3>
-                         {% if formset.can_delete %}
-                        <button type="button" class="btn btn-ghost btn-sm text-error hover:bg-error/10 formset-delete-btn" onclick="deleteForm(this, '{{ formset.prefix }}')">
-                            <i class="fa-solid fa-trash-can mr-1"></i> Remove
-                        </button>
-                         {% endif %}
+                        {% if formset.can_delete %} <button type="button" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors duration-200 formset-delete-btn" onclick="deleteForm(this, '{{ formset.prefix }}')"> <i class="fa-solid fa-trash-can mr-1.5"></i> Remove </button> {% endif %}
                     </div>
 
+                    {# Form Fields #}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div class="form-control">
-                            <label class="label" for="{{ form.job_title.id_for_label }}">
-                                <span class="label-text font-medium">Job Title</span>
-                                <span class="label-text-alt text-error">*</span>
-                            </label>
-                             {# Note: Removed explicit value attribute, widget_tweaks uses form field's value #}
-                             {% render_field form.job_title class+="input input-bordered w-full pl-10 focus:border-primary focus:ring-1 focus:ring-primary" placeholder="e.g., Senior Software Engineer" required="required" %}
-                             {% if form.job_title.errors %}<div class="text-error text-xs mt-1">{{ form.job_title.errors.0 }}</div>{% endif %}
-                        </div>
-                        <div class="form-control">
-                            <label class="label" for="{{ form.employer.id_for_label }}">
-                                <span class="label-text font-medium">Employer/Company</span>
-                                <span class="label-text-alt text-error">*</span>
-                            </label>
-                            {% render_field form.employer class+="input input-bordered w-full pl-10 focus:border-primary focus:ring-1 focus:ring-primary" placeholder="e.g., Google, Microsoft" required="required" %}
-                            {% if form.employer.errors %}<div class="text-error text-xs mt-1">{{ form.employer.errors.0 }}</div>{% endif %}
-                        </div>
-                         <div class="form-control">
-                            <label class="label" for="{{ form.location.id_for_label }}">
-                                <span class="label-text font-medium">Location</span>
-                                 <span class="label-text-alt text-error">*</span>
-                            </label>
-                            {% render_field form.location class+="input input-bordered w-full pl-10 focus:border-primary focus:ring-1 focus:ring-primary" placeholder="San Francisco, CA or Remote" required="required" %}
-                             {% if form.location.errors %}<div class="text-error text-xs mt-1">{{ form.location.errors.0 }}</div>{% endif %}
-                        </div>
-                        <div class="form-control">
-                             <label class="label" for="{{ form.start_date.id_for_label }}">
-                                <span class="label-text font-medium">Start Date</span>
-                                <span class="label-text-alt text-error">*</span>
-                             </label>
-                             {# *** MODIFICATION: Removed explicit value attribute *** #}
-                             {% render_field form.start_date type="date" class+="input input-bordered w-full pl-10 focus:border-primary focus:ring-1 focus:ring-primary" required="required" %}
-                             {% if form.start_date.errors %}<div class="text-error text-xs mt-1">{{ form.start_date.errors.0 }}</div>{% endif %}
-                        </div>
-                         <div class="form-control end-date-container">
-                             <label class="label" for="{{ form.end_date.id_for_label }}">
-                                <span class="label-text font-medium">End Date</span>
-                                <span class="label-text-alt text-gray-500">(Leave blank if current)</span>
-                            </label>
-                            {# *** MODIFICATION: Removed explicit value attribute *** #}
-                            {% render_field form.end_date type="date" class+="input input-bordered w-full pl-10 focus:border-primary focus:ring-1 focus:ring-primary" %}
-                             {% if form.end_date.errors %}<div class="text-error text-xs mt-1">{{ form.end_date.errors.0 }}</div>{% endif %}
-
-                             <div class="form-control mt-2">
-                                <label class="cursor-pointer label justify-start gap-3 py-1">
-                                    {% render_field form.is_current class+="checkbox checkbox-primary checkbox-sm" onchange="toggleEndDate(this)" %}
-                                    <span class="label-text">I currently work here</span>
-                                </label>
-                             </div>
-                        </div>
+                        <div class="form-control"> <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ form.job_title.id_for_label }}"> Job Title <span class="text-red-500">*</span> </label> <div class="relative"> <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"> <i class="fa-solid fa-id-badge text-gray-400"></i> </div> {% render_field form.job_title class+="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Senior Software Engineer" required="required" %} </div> {% if form.job_title.errors %}<div class="text-red-500 text-xs mt-1">{{ form.job_title.errors.0 }}</div>{% endif %} </div>
+                        <div class="form-control"> <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ form.employer.id_for_label }}"> Employer/Company <span class="text-red-500">*</span> </label> <div class="relative"> <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"> <i class="fa-solid fa-building text-gray-400"></i> </div> {% render_field form.employer class+="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Google, Microsoft" required="required" %} </div> {% if form.employer.errors %}<div class="text-red-500 text-xs mt-1">{{ form.employer.errors.0 }}</div>{% endif %} </div>
+                        <div class="form-control"> <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ form.location.id_for_label }}"> Location <span class="text-red-500">*</span> </label> <div class="relative"> <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"> <i class="fa-solid fa-map-marker-alt text-gray-400"></i> </div> {% render_field form.location class+="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="San Francisco, CA or Remote" required="required" %} </div> {% if form.location.errors %}<div class="text-red-500 text-xs mt-1">{{ form.location.errors.0 }}</div>{% endif %} </div>
+                        <div class="form-control"> <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ form.start_date.id_for_label }}"> Start Date <span class="text-red-500">*</span> </label> <div class="relative"> <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"> <i class="fa-solid fa-calendar-alt text-gray-400"></i> </div> {% render_field form.start_date type="date" class+="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required="required" %} </div> {% if form.start_date.errors %}<div class="text-red-500 text-xs mt-1">{{ form.start_date.errors.0 }}</div>{% endif %} </div>
+                        <div class="form-control end-date-container"> <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ form.end_date.id_for_label }}"> End Date <span class="text-gray-500 text-xs font-normal">(Leave blank if current)</span> </label> <div class="relative"> <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"> <i class="fa-solid fa-calendar-check text-gray-400"></i> </div> {% render_field form.end_date type="date" class+="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" %} </div> {% if form.end_date.errors %}<div class="text-red-500 text-xs mt-1">{{ form.end_date.errors.0 }}</div>{% endif %} <div class="mt-2 flex items-center"> <label class="inline-flex items-center cursor-pointer"> {% render_field form.is_current class+="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" onchange="toggleEndDate(this)" %} <span class="ml-2 text-sm text-gray-700">I currently work here</span> </label> </div> </div>
                     </div>
 
-                    {# --- Bullet Points Section (Corrected Access) --- #}
+                    {# Bullet Points Section #}
                     <div class="mt-6 bullet-points-container">
-                         <div class="flex justify-between items-center mb-2">
-                             <span class="font-medium">Responsibilities/Achievements</span>
-                             <button type="button" class="btn btn-xs btn-primary text-white shadow-sm" onclick="openBulletGenerationModal('{{ forloop.counter0 }}')">
-                                <i class="fa-solid fa-magic mr-1"></i> AI Generate
-                             </button>
-                         </div>
-                         {# Hidden field for bullet count (used by JS) #}
-                         <input type="hidden" name="bullet_count_{{ forloop.counter0 }}" value="{{ form.initial.bullet_points|length|default:0 }}" class="bullet-count" id="bullet_count_{{ forloop.counter0 }}">
-
-                         <div class="bullet-points space-y-2 p-2 bg-gradient-to-b from-white to-gray-50 dark:from-gray-500/10 dark:to-gray-800/10 rounded-lg border border-gray-100 dark:border-gray-700 shadow-inner" id="bullet_points_container_{{ forloop.counter0 }}">
-                             {# Loop over initial bullet points to render them #}
-                             {% for bullet_item in form.initial.bullet_points %}
-                                 {% include 'resumes/partials/bullet_point_form_row.html' with parent_index=forloop.parentloop.counter0 index=forloop.counter0 bullet_text=bullet_item.description %}
-                             {% empty %}
-                                 {# Render one empty bullet row if no initial bullets #}
-                                 {% include 'resumes/partials/bullet_point_form_row.html' with parent_index=forloop.counter0 index=0 %}
-                             {% endfor %}
-                         </div>
-                         <div class="flex justify-end mt-3">
-                             {# Button to add more bullets via JS #}
-                             <button type="button" class="btn btn-primary btn-sm hover:shadow-md" onclick="addBulletPoint('{{ forloop.counter0 }}')">
-                                 <i class="fa-solid fa-plus mr-2"></i> Add Bullet Point
-                             </button>
-                         </div>
+                        <div class="flex justify-between items-center mb-2"> <span class="text-sm font-medium text-gray-700 flex items-center"> <i class="fa-solid fa-list-ul text-indigo-600 mr-2"></i> Responsibilities and Achievements <span class="text-red-500 ml-1">*</span> </span> <button type="button" class="ai-generate-btn inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" data-index="{{ forloop.counter0 }}"> <i class="fa-solid fa-magic mr-1.5"></i> AI Generate </button> </div>
+                        <input type="hidden" name="bullet_count_{{ forloop.counter0 }}" value="{{ form.initial.bullet_points|length|default:1 }}" class="bullet-count" id="bullet_count_{{ forloop.counter0 }}">
+                        <div class="bullet-points space-y-2 p-4 bg-gradient-to-b from-gray-50 to-white rounded-lg border border-gray-200 shadow-inner" id="bullet_points_container_{{ forloop.counter0 }}">
+                            {% for bullet_item in form.initial.bullet_points %}
+                                {# Use the corrected partial path #}
+                                {% include 'resumes/partials/experience_ai/experience_bullet_point_form_row.html' with parent_index=forloop.parentloop.counter0 index=forloop.counter0 bullet_text=bullet_item.description job_title=form.job_title.value employer=form.employer.value %}
+                            {% empty %}
+                                {# Use the corrected partial path #}
+                                {% include 'resumes/partials/experience_ai/experience_bullet_point_form_row.html' with parent_index=forloop.counter0 index=0 bullet_text="" job_title=form.job_title.value employer=form.employer.value %}
+                            {% endfor %}
+                        </div>
+                        <div class="flex justify-end mt-3"> <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" onclick="addBulletPoint('{{ forloop.counter0 }}')"> <i class="fa-solid fa-plus mr-1.5"></i> Add Bullet Point </button> </div>
                     </div>
-                    {# --- End Bullet Points --- #}
-
-                </div> {# End form-row #}
+                </div>
                 {% empty %}
-                 <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center">
-                    <p>No experience entries found or loaded. Use the button below to add one.</p>
-                 </div>
+                 <div class="bg-white border border-gray-200 rounded-xl shadow p-8 text-center"> <div class="text-gray-500"> <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 mb-4"> <i class="fa-solid fa-briefcase text-gray-400 text-xl"></i> </div> <p class="text-lg font-medium text-gray-900 mb-1">No work experience yet</p> <p class="text-sm">Use the button below to add your work experience.</p> </div> </div>
                 {% endfor %}
-            </div> {# End experiences_container #}
+            </div>{# End experiences_container #}
 
-            {# Template for adding new experience forms via JS (Simplified Example) #}
+            {# Template for Adding New Experience Forms #}
             <template id="{{ formset.prefix }}-form-template">
-                 <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-lg p-6 experience-entry" id="{{ formset.prefix }}-__prefix__-row" data-index="__prefix__">
-                     <div class="hidden"><input type="checkbox" name="{{ formset.prefix }}-__prefix__-DELETE" id="id_{{ formset.prefix }}-__prefix__-DELETE"></div>
-                     <div class="flex justify-between items-center mb-5 pb-3 border-b"><h3>New Entry</h3><button type="button" onclick="deleteForm(this, '{{ formset.prefix }}')">Remove</button></div>
-                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div><label>Job Title*</label><input type="text" name="{{ formset.prefix }}-__prefix__-job_title" required class="input input-bordered w-full"></div>
-                        <div><label>Employer*</label><input type="text" name="{{ formset.prefix }}-__prefix__-employer" required class="input input-bordered w-full"></div>
-                        <div><label>Location*</label><input type="text" name="{{ formset.prefix }}-__prefix__-location" required class="input input-bordered w-full"></div>
-                        <div><label>Start Date*</label><input type="date" name="{{ formset.prefix }}-__prefix__-start_date" required class="input input-bordered w-full"></div>
-                        <div><label>End Date</label><input type="date" name="{{ formset.prefix }}-__prefix__-end_date" class="input input-bordered w-full"><label><input type="checkbox" name="{{ formset.prefix }}-__prefix__-is_current" class="checkbox"> Current</label></div>
-                     </div>
-                     <div class="mt-6 bullet-points-container" id="bullet_points_container___prefix__">
-                         <input type="hidden" name="bullet_count___prefix__" value="1" class="bullet-count">
-                         {% include 'resumes/partials/bullet_point_form_row.html' with parent_index='__prefix__' index=0 bullet_text="" %} {# Include one empty bullet #}
-                         <button type="button" onclick="addBulletPoint('__prefix__')">Add Bullet</button>
-                     </div>
-                 </div>
+                <div class="form-row bg-white border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 p-6 experience-entry" id="{{ formset.prefix }}-__prefix__-row" data-index="__prefix__">
+                    <div class="hidden"><input type="checkbox" name="{{ formset.prefix }}-__prefix__-DELETE" id="id_{{ formset.prefix }}-__prefix__-DELETE"></div>
+                    <input type="hidden" name="{{ formset.prefix }}-__prefix__-id" id="id_{{ formset.prefix }}-__prefix__-id">
+                    <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-200"> <h3 class="text-lg font-medium flex items-center"> <span class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center mr-3 shadow-sm"> <i class="fa-solid fa-briefcase text-indigo-600 text-sm"></i> </span> <span class="text-gray-800">New Experience</span> </h3> <button type="button" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors duration-200" onclick="deleteForm(this, '{{ formset.prefix }}')"> <i class="fa-solid fa-trash-can mr-1.5"></i> Remove </button> </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="form-control"> <label class="block text-sm font-medium text-gray-700 mb-1"> Job Title <span class="text-red-500">*</span> </label> <div class="relative"> <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"> <i class="fa-solid fa-id-badge text-gray-400"></i> </div> <input type="text" name="{{ formset.prefix }}-__prefix__-job_title" id="id_{{ formset.prefix }}-__prefix__-job_title" required class="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Senior Software Engineer"> </div> </div>
+                        <div class="form-control"> <label class="block text-sm font-medium text-gray-700 mb-1"> Employer/Company <span class="text-red-500">*</span> </label> <div class="relative"> <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"> <i class="fa-solid fa-building text-gray-400"></i> </div> <input type="text" name="{{ formset.prefix }}-__prefix__-employer" id="id_{{ formset.prefix }}-__prefix__-employer" required class="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Google, Microsoft"> </div> </div>
+                        <div class="form-control"> <label class="block text-sm font-medium text-gray-700 mb-1"> Location <span class="text-red-500">*</span> </label> <div class="relative"> <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"> <i class="fa-solid fa-map-marker-alt text-gray-400"></i> </div> <input type="text" name="{{ formset.prefix }}-__prefix__-location" id="id_{{ formset.prefix }}-__prefix__-location" required class="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="San Francisco, CA or Remote"> </div> </div>
+                        <div class="form-control"> <label class="block text-sm font-medium text-gray-700 mb-1"> Start Date <span class="text-red-500">*</span> </label> <div class="relative"> <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"> <i class="fa-solid fa-calendar-alt text-gray-400"></i> </div> <input type="date" name="{{ formset.prefix }}-__prefix__-start_date" id="id_{{ formset.prefix }}-__prefix__-start_date" required class="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> </div> </div>
+                        <div class="form-control end-date-container"> <label class="block text-sm font-medium text-gray-700 mb-1"> End Date <span class="text-gray-500 text-xs font-normal">(Leave blank if current)</span> </label> <div class="relative"> <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"> <i class="fa-solid fa-calendar-check text-gray-400"></i> </div> <input type="date" name="{{ formset.prefix }}-__prefix__-end_date" id="id_{{ formset.prefix }}-__prefix__-end_date" class="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"> </div> <div class="mt-2 flex items-center"> <label class="inline-flex items-center cursor-pointer"> <input type="checkbox" name="{{ formset.prefix }}-__prefix__-is_current" id="id_{{ formset.prefix }}-__prefix__-is_current" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" onchange="toggleEndDate(this)"> <span class="ml-2 text-sm text-gray-700">I currently work here</span> </label> </div> </div>
+                    </div>
+                    <div class="mt-6 bullet-points-container">
+                        <div class="flex justify-between items-center mb-2"> <span class="text-sm font-medium text-gray-700 flex items-center"> <i class="fa-solid fa-list-ul text-indigo-600 mr-2"></i> Responsibilities and Achievements <span class="text-red-500 ml-1">*</span> </span> <button type="button" class="ai-generate-btn inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" data-index="__prefix__"> <i class="fa-solid fa-magic mr-1.5"></i> AI Generate </button> </div>
+                        <input type="hidden" name="bullet_count___prefix__" value="1" class="bullet-count" id="bullet_count___prefix__">
+                        <div class="bullet-points space-y-2 p-4 bg-gradient-to-b from-gray-50 to-white rounded-lg border border-gray-200 shadow-inner" id="bullet_points_container___prefix__">
+                            {# Include the bullet point partial structure directly for the template's default bullet #}
+                            <div class="bullet-point-row flex items-start gap-3 group hover:bg-gray-50/80 dark:hover:bg-gray-800/20 p-2 rounded-md transition-colors">
+                                <div class="mt-3 text-indigo-600 dark:text-indigo-400">•</div>
+                                <div class="flex-1">
+                                    <div class="relative">
+                                        <textarea class="w-full min-h-24 p-2 border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                            id="bullet___prefix___0" name="bullet___prefix___0"
+                                            placeholder="Describe your achievement..."
+                                            onkeyup="updateBulletQualityUI(this)"
+                                            data-parent="__prefix__" data-index="0"></textarea>
+                                    </div>
+                                    <div class="flex justify-between mt-1">
+                                        <div class="bullet-quality text-xs"></div>
+                                        <div class="text-xs text-gray-500 char-counter"> <span class="current">0</span>/<span class="max">100-150 optimal</span> </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col gap-2">
+                                    <button type="button" class="mt-3 h-8 w-8 rounded-full text-red-600 bg-red-100 opacity-70 hover:opacity-100 hover:bg-red-200 flex items-center justify-center" onclick="removeBulletPoint(this, '__prefix__')"> <i class="fa-solid fa-times"></i> </button>
+                                    <button type="button" class="h-8 w-8 rounded-full text-indigo-600 bg-indigo-100 opacity-70 hover:opacity-100 hover:bg-indigo-200 flex items-center justify-center enhance-bullet-btn" data-parent="__prefix__" data-index="0"> <i class="fa-solid fa-wand-magic-sparkles"></i> </button>
+                                    <span id="enhance_indicator___prefix___0" class="htmx-indicator hidden flex items-center justify-center h-8 w-8"> <span class="animate-spin h-4 w-4 border-2 border-indigo-500 rounded-full border-t-transparent"></span> </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end mt-3"> <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" onclick="addBulletPoint('__prefix__')"> <i class="fa-solid fa-plus mr-1.5"></i> Add Bullet Point </button> </div>
+                    </div>
+                </div>
             </template>
 
-            {# Add Experience button (for JS) #}
+            {# Add Experience Button #}
             <div class="flex justify-center mt-6">
-                <button type="button" class="btn btn-primary add-another-btn" onclick="addForm(this, '{{ formset.prefix }}')">
+                <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 add-another-btn" onclick="addForm(this, '{{ formset.prefix }}')">
                     <i class="fa-solid fa-plus mr-2"></i> Add Another Experience
                 </button>
             </div>
+        </div>{# --- End Left Column --- #}
 
-        </div>
-
+        {# --- Right Sidebar --- #}
         <div class="w-full md:w-1/3 space-y-6">
-             {# ... Keep your Tips content here ... #}
-              <div class="bg-primary/5 border border-primary/10 rounded-lg p-4">
-                <div class="flex items-start">
-                    <div class="text-primary text-xl mr-4 mt-1">
-                        <i class="fa-solid fa-lightbulb"></i>
-                    </div>
-                    <div>
-                        <p class="text-base font-medium">Work Experience Tips</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                            <strong>Tips:</strong> Start with your most recent position. Use action verbs and quantify your achievements with specific numbers (e.g., "Increased sales by 25%" rather than "Improved sales").
-                        </p>
-                    </div>
-                </div>
-            </div>
-             <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-lg p-4">
-                 {# ... Keep Action Verbs content ... #}
-            </div>
-        </div>
-    </div>
-
-    {# Navigation buttons are likely in wizard_base.html #}
+            <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-4"> <div class="flex items-start"> <div class="text-indigo-600 text-xl mr-4 mt-1"> <i class="fa-solid fa-lightbulb"></i> </div> <div> <h4 class="text-base font-medium text-gray-900">Work Experience Tips</h4> <ul class="mt-2 space-y-2 text-sm text-gray-600"> <li class="flex items-start"> <i class="fa-solid fa-check text-indigo-500 mt-1 mr-2"></i> <span>Start with your most recent position</span> </li> <li class="flex items-start"> <i class="fa-solid fa-check text-indigo-500 mt-1 mr-2"></i> <span>Use action verbs (e.g., "Developed")</span> </li> <li class="flex items-start"> <i class="fa-solid fa-check text-indigo-500 mt-1 mr-2"></i> <span>Quantify achievements (e.g., "Increased sales by 25%")</span> </li> <li class="flex items-start"> <i class="fa-solid fa-check text-indigo-500 mt-1 mr-2"></i> <span>Focus on accomplishments</span> </li> <li class="flex items-start"> <i class="fa-solid fa-check text-indigo-500 mt-1 mr-2"></i> <span>Keep bullets concise (80-150 chars optimal)</span> </li> </ul> </div> </div> </div>
+            <div class="bg-white border border-gray-200 rounded-lg p-4"> <h4 class="font-medium text-gray-900 mb-3 flex items-center"> <i class="fa-solid fa-pen-fancy text-indigo-600 mr-2"></i> Strong Action Verbs </h4> <div class="flex flex-wrap gap-2 text-sm"> <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Achieved</span> <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Analyzed</span> <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Built</span> <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Coordinated</span> <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Created</span> <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Delivered</span> <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Developed</span> <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Established</span> <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Generated</span> <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Implemented</span> <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Improved</span> <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Led</span> <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Managed</span> <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Optimized</span> <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Reduced</span> <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Streamlined</span> </div> </div>
+            <div class="bg-green-50 border border-green-100 rounded-lg p-4"> <div class="flex items-start"> <div class="text-green-600 text-xl mr-4 mt-1"> <i class="fa-solid fa-robot"></i> </div> <div> <h4 class="text-base font-medium text-gray-900">AI-Powered Enhancement</h4> <p class="mt-2 text-sm text-gray-600"> Use <span class="font-semibold">AI Generate</span> to create new bullet points based on job title & skills. </p> <p class="mt-1 text-sm text-gray-600"> Use <i class="fa-solid fa-wand-magic-sparkles text-indigo-600"></i> to enhance individual bullets scoring ★★★☆☆ or better. </p> </div> </div> </div>
+        </div>{# --- End Sidebar --- #}
+    </div>{# --- End Main Layout --- #}
 </form>
 
-{# Modals and Scripts #}
-{% include 'resumes/partials/bullet_generation_modal.html' %}
-{% include 'resumes/partials/bullet_enhancement_modal.html' %}
-{# Ensure your JS file/block is included and handles formset logic (addForm, deleteForm, addBulletPoint etc.) correctly #}
+{# ========================================================================== #}
+{#                            MODALS                                          #}
+{# ========================================================================== #}
+
+{# Use the corrected include paths if using the subdirectory #}
+{% include 'resumes/partials/experience_ai/experience_bullet_generation_modal.html' %}
+{% include 'resumes/partials/experience_ai/experience_bullet_enhancement_modal.html' %}
+
+
+{# ========================================================================== #}
+{#                                  STYLES                                    #}
+{# ========================================================================== #}
+<style>
+/* Basic Modal Styles (Tailwind compatible) */
+#bullet-generation-modal,
+#bullet-enhancement-modal { z-index: 1050 !important; }
+#bullet-modal-backdrop,
+#enhance-modal-backdrop { z-index: 1040; }
+.fixed.inset-0.z-\[1050\]:not(.hidden) { display: flex !important; }
+#bullet-generation-modal:not(.hidden),
+#bullet-enhancement-modal:not(.hidden) { display: block !important; }
+#bullet-generation-modal .fixed.inset-0,
+#bullet-enhancement-modal .fixed.inset-0 { position: fixed; top: 0; right: 0; bottom: 0; left: 0; background-color: rgba(0, 0, 0, 0.5); }
+#bullet-generation-modal .inline-block,
+#bullet-enhancement-modal .inline-block { position: relative; z-index: 1050; margin: 1.5rem auto; }
+@keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95) translateY(-20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+#bullet-generation-modal .transform,
+#bullet-enhancement-modal .transform { animation: modalFadeIn 0.3s ease-out forwards; }
+#skills-selection option:checked { background-color: #e0e7ff; color: #4338ca; }
+/* Add any other necessary styles */
+</style>
+
+{# ========================================================================== #}
+{#                                JAVASCRIPT                                  #}
+{# ========================================================================== #}
 <script>
-    // Make sure your JS functions (addForm, deleteForm, toggleEndDate, addBulletPoint etc.)
-    // correctly handle the formset prefixes and indices.
-    // Example for addForm (ensure it uses the template correctly)
-    function addForm(button, prefix) {
-        const formContainer = document.getElementById('experiences_container'); // Target specific container
-        const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
-        const template = document.getElementById(prefix + '-form-template');
-        if (!formContainer || !totalFormsInput || !template) { return; }
-        const formNum = parseInt(totalFormsInput.value);
-        let newFormHtml = template.innerHTML.replace(/__prefix__/g, formNum);
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = newFormHtml;
-        const newFormElement = tempDiv.firstElementChild;
-        formContainer.appendChild(newFormElement);
-        totalFormsInput.value = formNum + 1;
-        // Add focus logic etc. if needed
+// Store skills data globally for modals
+let userSkillsData = [];
+// Store formset prefix globally
+const formsetPrefix = '{{ formset.prefix }}';
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Document loaded, initializing event handlers");
+    console.log("Formset prefix:", formsetPrefix);
+
+    // Parse skills data
+    const skillsJsonInput = document.getElementById('skills-data-json');
+    if (skillsJsonInput && skillsJsonInput.value) {
+        try {
+            let skillsJson = skillsJsonInput.value;
+            if (skillsJson.startsWith('"') && skillsJson.endsWith('"')) {
+                 skillsJson = skillsJson.substring(1, skillsJson.length - 1).replace(/\\"/g, '"');
+            }
+            userSkillsData = JSON.parse(skillsJson);
+            console.log("Parsed skills data:", userSkillsData.length);
+        } catch (e) {
+            console.error("Error parsing skills JSON:", e, "Raw value:", skillsJsonInput.value);
+            userSkillsData = [];
+        }
+    } else { console.warn("Skills data JSON input not found or empty."); }
+
+    // Init forms: checkboxes, quality checks, enhance listeners
+    document.querySelectorAll('.experience-entry').forEach(form => {
+        const isCurrentCheckbox = form.querySelector('input[name$="-is_current"]');
+        if (isCurrentCheckbox) { toggleEndDate(isCurrentCheckbox); }
+        form.querySelectorAll('.bullet-point-row textarea').forEach(textarea => {
+            updateBulletQualityUI(textarea); // Initial check
+            const enhanceBtn = textarea.closest('.bullet-point-row')?.querySelector('.enhance-bullet-btn');
+             if (enhanceBtn) {
+                const parentIndex = enhanceBtn.getAttribute('data-parent');
+                const bulletIndex = enhanceBtn.getAttribute('data-index');
+                // Remove previous listener if any (safer when re-attaching)
+                enhanceBtn.replaceWith(enhanceBtn.cloneNode(true));
+                // Find the new cloned button and attach listener
+                const newEnhanceBtn = textarea.closest('.bullet-point-row')?.querySelector('.enhance-bullet-btn');
+                if (newEnhanceBtn) {
+                    newEnhanceBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        openBulletEnhancementModal(parentIndex, bulletIndex);
+                    });
+                }
+            }
+        });
+    });
+
+    // Attach listener for AI Generate buttons
+    document.querySelectorAll('.ai-generate-btn').forEach(button => {
+        const parentIndex = button.getAttribute('data-index');
+        if (parentIndex !== null) {
+             console.log("Attaching AI Generate listener to button index:", parentIndex);
+            button.addEventListener('click', function(e) {
+                e.preventDefault(); e.stopPropagation();
+                console.log("AI Generate button clicked for index:", parentIndex);
+                try { openBulletGenerationModal(parentIndex); } catch (error) { console.error("Error in AI Generate click handler:", error); }
+            });
+        } else { console.warn("AI Generate button found without data-index:", button); }
+    });
+
+    // Setup Generation Modal Buttons
+    const generateBulletsBtn = document.getElementById('generate-bullets-btn');
+    if (generateBulletsBtn) { generateBulletsBtn.addEventListener('click', function(e) { e.preventDefault(); generateBullets(); }); } else { console.error("Button #generate-bullets-btn not found"); }
+    const applyBulletsBtn = document.getElementById('apply-bullets-btn');
+    if (applyBulletsBtn) { applyBulletsBtn.addEventListener('click', function(e) { e.preventDefault(); applyGeneratedBullets(); }); } else { console.error("Button #apply-bullets-btn not found"); }
+    const cancelGenerationBtn = document.getElementById('cancel-generation-btn');
+    if (cancelGenerationBtn) { cancelGenerationBtn.addEventListener('click', function(e) { e.preventDefault(); closeBulletGenerationModal(); }); } else { console.error("Button #cancel-generation-btn not found"); }
+
+    // Setup Enhancement Modal Buttons
+    const enhanceBulletBtn = document.getElementById('enhance-bullet-btn');
+    if (enhanceBulletBtn) { enhanceBulletBtn.addEventListener('click', function(e) { e.preventDefault(); enhanceBullet(); }); } else { console.error("Button #enhance-bullet-btn not found"); }
+    const applyEnhancementBtn = document.getElementById('apply-enhancement-btn');
+    if (applyEnhancementBtn) { applyEnhancementBtn.addEventListener('click', function(e) { e.preventDefault(); applyEnhancement(); }); } else { console.error("Button #apply-enhancement-btn not found"); }
+    const cancelEnhancementBtn = document.getElementById('cancel-enhancement-btn');
+    if (cancelEnhancementBtn) { cancelEnhancementBtn.addEventListener('click', function(e) { e.preventDefault(); closeBulletEnhancementModal(); }); } else { console.error("Button #cancel-enhancement-btn not found"); }
+
+    // Setup Modal Backdrops
+    const bulletModalBackdrop = document.getElementById('bullet-modal-backdrop');
+    if (bulletModalBackdrop) { bulletModalBackdrop.addEventListener('click', function(e) { e.preventDefault(); closeBulletGenerationModal(); }); } else { console.error("#bullet-modal-backdrop not found");}
+    const enhanceModalBackdrop = document.getElementById('enhance-modal-backdrop');
+    if (enhanceModalBackdrop) { enhanceModalBackdrop.addEventListener('click', function(e) { e.preventDefault(); closeBulletEnhancementModal(); }); } else { console.error("#enhance-modal-backdrop not found");}
+
+    // Job description toggle
+    const enhancementAtsRadio = document.getElementById('enhancement-ats');
+    const enhancementGeneralRadio = document.getElementById('enhancement-general');
+    const jobDescriptionContainer = document.getElementById('job-description-container');
+    function toggleJobDescription() { if (jobDescriptionContainer) { jobDescriptionContainer.classList.toggle('hidden', !enhancementAtsRadio?.checked); } }
+    if (enhancementAtsRadio) enhancementAtsRadio.addEventListener('change', toggleJobDescription);
+    if (enhancementGeneralRadio) enhancementGeneralRadio.addEventListener('change', toggleJobDescription);
+    toggleJobDescription();
+
+    // Move modals to body
+    moveModalToBody('bullet-generation-modal');
+    moveModalToBody('bullet-enhancement-modal');
+});
+
+function moveModalToBody(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal && modal.parentElement && !modal.parentElement.isSameNode(document.body)) {
+        document.body.appendChild(modal);
     }
-    // Add other JS functions here or ensure they are in an included static file
-     function deleteForm(button, prefix) {
-        const formRow = button.closest('.form-row'); // Use .form-row class
-        const deleteInput = formRow.querySelector('input[name$="-DELETE"]');
+}
 
-        if (deleteInput) { // Check if DELETE input exists
-             // We are using formset_factory, so no existing instance check needed like modelformset
-             // Always mark for potential deletion or remove directly if it's an extra form
-             const isExtra = formRow.id.includes('__prefix__') || !formRow.querySelector('input[name$="-id"]')?.value; // Heuristic to check if it's an unsaved extra form
+// ======= Bullet Quality Check (Refactored) =======
+function checkBulletQuality(textarea) {
+    const text = textarea.value.trim();
+    let score = 0;
+    const feedback = [];
+    const actionVerbs = ["Achieved", "Analyzed", "Built", "Coordinated", "Created", "Delivered", "Designed", "Developed", "Established", "Generated", "Implemented", "Improved", "Led", "Managed", "Optimized", "Reduced", "Spearheaded", "Launched", "Executed", "Streamlined", "Transformed", "Increased"];
+    if (text) {
+        const firstWord = text.split(' ')[0];
+        if (firstWord) {
+            const startsWithAction = actionVerbs.some(verb => firstWord.toLowerCase() === verb.toLowerCase());
+            if (startsWithAction) { score += 2; } else { feedback.push("Start with a strong action verb"); }
+        } else { feedback.push("Start with a strong action verb"); }
+        const hasNumbers = /\d/.test(text);
+        const hasPercentOrMoney = /%|\$|€|£|¥|₹/.test(text);
+        if (hasNumbers) { score += 1; if (hasPercentOrMoney) { score += 1; } } else { feedback.push("Add measurable results (numbers, %, $)"); }
+        if (text.length >= 80 && text.length <= 150) { score += 2; }
+        else if (text.length > 0 && text.length < 80) { feedback.push("Consider adding more detail/context"); score += 1; }
+        else if (text.length > 150) { feedback.push("Try to be more concise"); score += 1; }
+    }
+    let resultHtml = '';
+    if (score >= 5) { resultHtml = '<span class="text-green-600 font-semibold">Excellent! ★★★★★</span>'; }
+    else if (score >= 4) { resultHtml = '<span class="text-lime-600 font-medium">Good ★★★★☆</span>'; }
+    else if (score >= 3) { resultHtml = '<span class="text-yellow-600">Average ★★★☆☆</span>'; }
+    else if (score >= 2) { resultHtml = '<span class="text-yellow-600">Average ★★★☆☆</span>'; }
+    else { resultHtml = '<span class="text-red-500">Needs Improvement ★★☆☆☆</span>'; }
+    if (feedback.length > 0 && text) { resultHtml += ` <span class="text-gray-500 italic ml-1">Tip: ${feedback[0]}</span>`; }
+    const len = textarea.value.length;
+    let charCounterClass = 'current'; let charMaxClass = 'max';
+     if (len >= 80 && len <= 150) { charCounterClass = 'current text-green-600'; charMaxClass = 'max text-green-600'; }
+     else if (len > 0 && len < 80) { charCounterClass = 'current text-yellow-600'; charMaxClass = 'max text-yellow-600'; }
+     else if (len > 150) { charCounterClass = 'current text-red-600'; charMaxClass = 'max text-red-600'; }
+    return { score: score, qualityHtml: resultHtml, charCount: len, charCounterClass: charCounterClass, charMaxClass: charMaxClass };
+}
 
-             if (!isExtra && deleteInput) {
-                // Mark existing form for deletion
-                 deleteInput.checked = true;
-                 formRow.style.display = 'none'; // Hide instead of removing
-                 console.log(`Marked form ${formRow.id} for deletion.`);
-             } else {
-                 // Remove an extra, unsaved form row directly
-                 console.log(`Removing extra form row ${formRow.id}`);
-                 formRow.remove();
-                 // Optional: Renumber forms if needed by subsequent JS logic
-                 // Optional: Decrement TOTAL_FORMS if removing an extra row (formset should handle this on POST)
-                 // If you decrement here, ensure formset validation doesn't complain later
-             }
+function updateBulletQualityUI(textarea) {
+    const qualityInfo = checkBulletQuality(textarea);
+    const bulletRow = textarea.closest('.bullet-point-row');
+    if (!bulletRow) { console.warn("Could not find parent .bullet-point-row for textarea", textarea); return; }
+    const qualityDiv = bulletRow.querySelector('.bullet-quality');
+    if (qualityDiv) { qualityDiv.innerHTML = qualityInfo.qualityHtml; } else { console.warn("Could not find .bullet-quality in row");}
+    const charCounterSpan = bulletRow.querySelector('.char-counter .current');
+    const charMaxSpan = bulletRow.querySelector('.char-counter .max');
+     if (charCounterSpan) { charCounterSpan.textContent = qualityInfo.charCount; charCounterSpan.className = qualityInfo.charCounterClass; } else { console.warn("Could not find .char-counter .current in row");}
+     if (charMaxSpan) { charMaxSpan.className = qualityInfo.charMaxClass; } else { console.warn("Could not find .char-counter .max in row");}
+}
 
+// ======= Bullet Generation Modal Functions =======
+function openBulletGenerationModal(parentIndex) {
+    console.log("Opening bullet generation modal for index:", parentIndex);
+    const modal = document.getElementById('bullet-generation-modal');
+    if (!modal) { console.error("Modal element #bullet-generation-modal not found!"); return; }
+    const formRow = document.getElementById(`${formsetPrefix}-${parentIndex}-row`);
+    if (!formRow) { console.error(`Form row element #${formsetPrefix}-${parentIndex}-row not found!`); return; }
+    const jobTitleInput = formRow.querySelector(`input[name$="-job_title"]`);
+    if (!jobTitleInput) { console.error(`Job title input not found in form row ${parentIndex}`); alert('Could not find job title input.'); return; }
+    const jobTitle = jobTitleInput.value.trim();
+    if (!jobTitle) { alert('Please enter a job title first.'); return; }
+    const jobTitleSpan = modal.querySelector('#job-title-display');
+    if (jobTitleSpan) jobTitleSpan.textContent = jobTitle; else console.error("#job-title-display not found in modal");
+    const parentIndexInput = modal.querySelector('#parent-index-input');
+    if (parentIndexInput) parentIndexInput.value = parentIndex; else console.error("#parent-index-input not found in modal");
+    const targetJobTitleInput = document.getElementById('target-job-title');
+    if (targetJobTitleInput) { targetJobTitleInput.value = jobTitle; } else console.error("#target-job-title not found in modal");
+    const skillsSelect = document.getElementById('skills-selection');
+    if (skillsSelect) {
+        skillsSelect.innerHTML = '';
+        if (userSkillsData && userSkillsData.length > 0) {
+            userSkillsData.forEach(skill => {
+                const skillName = typeof skill === 'object' && skill !== null && skill.skill_name ? skill.skill_name : skill;
+                if (skillName) { const option = document.createElement('option'); option.value = skillName; option.textContent = skillName; skillsSelect.appendChild(option); }
+            });
         } else {
-             console.error("Could not find DELETE input for prefix:", prefix, "in row:", formRow);
-             // Fallback: Remove the row visually anyway if delete doesn't work
-             formRow.remove();
+            const option = document.createElement('option'); option.value = ""; option.textContent = "No skills found (Add skills in Step 3)"; option.disabled = true; skillsSelect.appendChild(option);
         }
-        // Optionally update UI or counts if needed
+    } else { console.error("#skills-selection not found in modal!"); return; }
+    try { resetBulletGenerationModal(); } catch(e) { console.error("Error during resetBulletGenerationModal:", e); return; }
+    modal.classList.remove('hidden'); modal.style.display = 'block';
+    document.body.classList.add('overflow-hidden');
+    console.log("Bullet generation modal should be visible now");
+}
+
+function closeBulletGenerationModal() {
+    const modal = document.getElementById('bullet-generation-modal');
+    if (modal) { modal.classList.add('hidden'); modal.style.display = 'none'; document.body.classList.remove('overflow-hidden'); }
+}
+
+function resetBulletGenerationModal() {
+    const responsibilities = document.getElementById('responsibilities');
+    if (responsibilities) responsibilities.value = ''; else console.error('#responsibilities not found for reset');
+    const bulletCount = document.getElementById('bullet-count');
+    if (bulletCount) bulletCount.value = '3'; else console.error('#bullet-count not found for reset');
+    const chatGptRadio = document.getElementById('ai-engine-chatgpt');
+    if (chatGptRadio) chatGptRadio.checked = true; else console.error('#ai-engine-chatgpt not found for reset');
+    const skillsSelect = document.getElementById('skills-selection');
+    if (skillsSelect) { Array.from(skillsSelect.options).forEach(option => option.selected = false); }
+    const loading = document.getElementById('generation-loading');
+    if (loading) loading.classList.add('hidden'); else console.error('#generation-loading not found for reset');
+    const results = document.getElementById('generation-results');
+    if (results) results.classList.add('hidden'); else console.error('#generation-results not found for reset');
+    const resultsContainer = document.getElementById('bullet-results-container');
+    if (resultsContainer) resultsContainer.innerHTML = ''; else console.error('#bullet-results-container not found for reset');
+    const applyBtn = document.getElementById('apply-bullets-btn');
+    if (applyBtn) applyBtn.classList.add('hidden'); else console.error('#apply-bullets-btn not found for reset');
+    const generateBtn = document.getElementById('generate-bullets-btn');
+    if (generateBtn) { generateBtn.classList.remove('hidden'); generateBtn.disabled = false; } else console.error('#generate-bullets-btn not found for reset');
+}
+
+function generateBullets() {
+    console.log("Generating bullets...");
+    const targetJobTitleInput = document.getElementById('target-job-title');
+    const skillsSelect = document.getElementById('skills-selection');
+    if (!targetJobTitleInput || !targetJobTitleInput.value.trim()) { alert('Please enter the Target Job Title.'); targetJobTitleInput?.focus(); return; }
+    if (!skillsSelect) { alert("Skill selection element is missing."); return; }
+    const loadingEl = document.getElementById('generation-loading');
+    const resultsEl = document.getElementById('generation-results');
+    const generateBtn = document.getElementById('generate-bullets-btn');
+    if(loadingEl) loadingEl.classList.remove('hidden');
+    if(resultsEl) resultsEl.classList.add('hidden');
+    if(generateBtn) generateBtn.disabled = true;
+    const parentIndex = document.getElementById('parent-index-input')?.value;
+    const formRow = parentIndex ? document.getElementById(`${formsetPrefix}-${parentIndex}-row`) : null;
+    const jobTitleInput = formRow ? formRow.querySelector(`input[name$="-job_title"]`) : null;
+    const targetJobTitle = targetJobTitleInput.value.trim();
+    const responsibilities = document.getElementById('responsibilities')?.value.trim() ?? '';
+    const bulletCount = document.getElementById('bullet-count')?.value ?? '3';
+    const aiEngine = document.querySelector('input[name="ai-engine"]:checked')?.value ?? 'chatgpt';
+    const jobTitle = jobTitleInput ? jobTitleInput.value.trim() : '';
+    if (!jobTitle) { alert('Current Job Title is required.'); if(loadingEl) loadingEl.classList.add('hidden'); if(generateBtn) generateBtn.disabled = false; return; }
+    const selectedSkills = Array.from(skillsSelect.selectedOptions).map(option => option.value);
+    const skillsText = selectedSkills.join(', ');
+    console.log(`Generating ${bulletCount} bullets for: ${jobTitle}, Target: ${targetJobTitle}, Skills: ${skillsText || 'None'}, Engine: ${aiEngine}`);
+    const requestData = { job_title: jobTitle, target_job_title: targetJobTitle, skills: skillsText, responsibilities: responsibilities, bullet_count: bulletCount, ai_engine: aiEngine, parent_index: parentIndex };
+    const url = "{% url 'job_portal:ai_generate_bullets' %}"; // Make sure this URL name is correct
+    const params = new URLSearchParams(requestData).toString();
+    htmx.ajax('GET', `${url}?${params}`, { target: '#bullet-results-container', swap: 'innerHTML', indicator: '#generation-loading', source: '#generate-bullets-btn' })
+    .then(data => {
+        console.log("HTMX bullet generation successful.");
+        if(resultsEl) resultsEl.classList.remove('hidden');
+        document.getElementById('apply-bullets-btn')?.classList.remove('hidden');
+        if(generateBtn) generateBtn.disabled = false;
+        // IMPORTANT: Ensure the HTML returned by the backend includes the bullet row structure
+        // from the 'experience_bullet_point_form_row.html' partial,
+        // including the '.enhance-bullet-btn' class and data attributes.
+        document.querySelectorAll('#bullet-results-container .bullet-point-row textarea').forEach(textarea => {
+            let val = textarea.value.trim();
+            if (val.startsWith('- ')) { val = val.substring(2).trim(); } else if (val.startsWith('-')) { val = val.substring(1).trim(); }
+            textarea.value = val;
+            updateBulletQualityUI(textarea);
+        });
+    }).catch(error => {
+        console.error("HTMX bullet generation failed:", error);
+        const container = document.getElementById('bullet-results-container');
+        if(container) container.innerHTML = '<p class="text-red-500">Error generating bullets. Please check console or try again.</p>';
+        if(loadingEl) loadingEl.classList.add('hidden');
+        if(resultsEl) resultsEl.classList.remove('hidden');
+        document.getElementById('apply-bullets-btn')?.classList.add('hidden');
+        if(generateBtn) generateBtn.disabled = false;
+    });
+}
+
+function applyGeneratedBullets() {
+    console.log("Applying generated bullets");
+    const parentIndex = document.getElementById('parent-index-input')?.value;
+    if (!parentIndex) { console.error("Parent index not found in modal"); return; }
+    const bulletContainer = document.getElementById(`bullet_points_container_${parentIndex}`);
+    const bulletCountInput = document.getElementById(`bullet_count_${parentIndex}`);
+    const resultsContainer = document.getElementById('bullet-results-container');
+    if (!bulletContainer || !bulletCountInput || !resultsContainer) { console.error("Could not find necessary elements for applying bullets"); return; }
+    const generatedBulletRows = resultsContainer.querySelectorAll('.bullet-point-row');
+    if (generatedBulletRows.length === 0) { console.log("No generated bullets to apply."); return; }
+    bulletContainer.innerHTML = ''; // Clear existing
+    generatedBulletRows.forEach((row, index) => {
+        const clonedRow = row.cloneNode(true);
+        const textarea = clonedRow.querySelector('textarea');
+        const removeBtn = clonedRow.querySelector('button[onclick*="removeBulletPoint"]');
+        const enhanceBtn = clonedRow.querySelector('.enhance-bullet-btn'); // Look for the correct class
+        const indicator = clonedRow.querySelector('.htmx-indicator');
+        if (textarea) {
+            textarea.id = `bullet_${parentIndex}_${index}`;
+            textarea.name = `bullet_${parentIndex}_${index}`;
+            textarea.dataset.parent = parentIndex;
+            textarea.dataset.index = index;
+            textarea.setAttribute('onkeyup', 'updateBulletQualityUI(this)');
+            updateBulletQualityUI(textarea);
+        }
+        if (removeBtn) { removeBtn.setAttribute('onclick', `removeBulletPoint(this, '${parentIndex}')`); }
+        if (enhanceBtn) {
+            enhanceBtn.dataset.parent = parentIndex;
+            enhanceBtn.dataset.index = index;
+            // Re-attach enhance listener - Clone & replace is safest
+            const newEnhanceBtn = enhanceBtn.cloneNode(true);
+            enhanceBtn.parentNode.replaceChild(newEnhanceBtn, enhanceBtn);
+             newEnhanceBtn.addEventListener('click', function(e) { e.preventDefault(); openBulletEnhancementModal(parentIndex, index); });
+        } else {
+            // If the enhance button IS MISSING from the generated HTML, this warning will appear.
+            // This confirms the backend needs to return the correct HTML fragment.
+            console.warn("Enhance button (.enhance-bullet-btn) not found in generated row HTML fragment.");
+        }
+        if (indicator) { indicator.id = `enhance_indicator_${parentIndex}_${index}`; }
+        bulletContainer.appendChild(clonedRow);
+    });
+    bulletCountInput.value = generatedBulletRows.length;
+    closeBulletGenerationModal();
+    bulletContainer.classList.add('bg-green-50', 'border-green-300');
+    setTimeout(() => { bulletContainer.classList.remove('bg-green-50', 'border-green-300'); }, 1500);
+    console.log("Successfully applied bullets");
+}
+
+// ======= Bullet Enhancement Modal Functions =======
+function openBulletEnhancementModal(parentIndex, bulletIndex) {
+    console.log("Opening enhancement modal for bullet:", parentIndex, bulletIndex);
+    const modal = document.getElementById('bullet-enhancement-modal');
+    if (!modal) { console.error("Enhancement modal not found!"); return; }
+    const formRow = document.getElementById(`${formsetPrefix}-${parentIndex}-row`);
+    const bulletTextarea = formRow ? formRow.querySelector(`#bullet_${parentIndex}_${bulletIndex}`) : null;
+    if (!bulletTextarea) { console.error("Bullet textarea not found:", `bullet_${parentIndex}_${bulletIndex}`); alert('Could not find the bullet point text area.'); return; }
+    const qualityInfo = checkBulletQuality(bulletTextarea);
+    const score = qualityInfo.score;
+    console.log(`Checking enhancement eligibility: Score = ${score}`);
+    if (score <= 2) {
+        alert("This bullet point could be stronger to get the best AI enhancement (Score: " + score + "/6). For helpful suggestions tailored to this role, try the 'AI Generate' button!");
+        console.log(`Enhancement blocked: Score (${score}) is not > 2.`);
+        return;
     }
-     function toggleEndDate(checkbox) {
-        const formRow = checkbox.closest('.form-row');
-        if (!formRow) return;
-        const endDateContainer = formRow.querySelector('.end-date-container'); // Find parent container
-        if (!endDateContainer) return;
-        const endDateInput = endDateContainer.querySelector('input[type="date"]');
-        if (endDateInput) {
-             endDateInput.disabled = checkbox.checked;
-             if (checkbox.checked) {
-                 endDateInput.value = ''; // Clear end date if current
-                 endDateInput.required = false; // Make not required
-             } else {
-                 endDateInput.required = false; // Set required status based on your form definition (might not be required anyway)
-             }
+    console.log(`Enhancement allowed: Score (${score}) is > 2.`);
+    const bulletText = bulletTextarea.value.trim();
+    document.getElementById('enhance-parent-index').value = parentIndex;
+    document.getElementById('enhance-bullet-index').value = bulletIndex;
+    document.getElementById('original-bullet').value = bulletText;
+    document.getElementById('enhancement-general').checked = true;
+    document.getElementById('enhance-engine-chatgpt').checked = true;
+    document.getElementById('job-description-container').classList.add('hidden');
+    document.getElementById('job-description').value = '';
+    document.getElementById('enhancement-loading').classList.add('hidden');
+    document.getElementById('enhancement-result').classList.add('hidden');
+    document.getElementById('enhanced-bullet').value = '';
+    document.getElementById('enhancement-quality').innerHTML = '';
+    document.getElementById('apply-enhancement-btn').classList.add('hidden');
+    document.getElementById('enhance-bullet-btn').classList.remove('hidden');
+    document.getElementById('enhance-bullet-btn').disabled = false;
+    modal.classList.remove('hidden'); modal.style.display = 'block';
+    document.body.classList.add('overflow-hidden');
+    console.log("Enhancement modal should be visible");
+}
+
+function closeBulletEnhancementModal() {
+     const modal = document.getElementById('bullet-enhancement-modal');
+    if (modal) { modal.classList.add('hidden'); modal.style.display = 'none'; document.body.classList.remove('overflow-hidden'); }
+}
+
+function enhanceBullet() {
+    console.log("Enhancing bullet point...");
+    const loadingEl = document.getElementById('enhancement-loading');
+    const resultEl = document.getElementById('enhancement-result');
+    const enhanceBtn = document.getElementById('enhance-bullet-btn');
+    const applyBtn = document.getElementById('apply-enhancement-btn');
+    const enhancedBulletTextarea = document.getElementById('enhanced-bullet');
+
+    if(loadingEl) loadingEl.classList.remove('hidden');
+    if(resultEl) resultEl.classList.add('hidden');
+    if(enhanceBtn) enhanceBtn.disabled = true;
+
+    const originalBullet = document.getElementById('original-bullet').value;
+    const enhancementType = document.querySelector('input[name="enhancement-type"]:checked').value;
+    const aiEngine = document.querySelector('input[name="enhance-engine"]:checked').value;
+    const jobDescription = document.getElementById('job-description').value;
+    const requestData = { bullet_text: originalBullet, enhancement_type: enhancementType, ai_engine: aiEngine, job_description: jobDescription };
+    const url = "{% url 'job_portal:enhance_bullet' %}"; // Make sure this URL name is correct
+    const params = new URLSearchParams(requestData).toString();
+
+    console.log("Sending enhancement request:", requestData);
+
+    htmx.ajax('GET', `${url}?${params}`, { target: '#enhanced-bullet', swap: 'value', indicator: '#enhancement-loading', source: '#enhance-bullet-btn' })
+    .then(data => {
+        console.log("DEBUG: HTMX enhancement request potentially successful (check network tab for response).");
+        // Use setTimeout to allow DOM swap to potentially complete
+        setTimeout(() => {
+            const enhancedValue = enhancedBulletTextarea?.value;
+            console.log("DEBUG: Enhanced textarea value after swap:", enhancedValue);
+
+            if (enhancedValue && enhancedValue.trim() !== "") {
+                 console.log("DEBUG: Enhanced value found, showing results.");
+                 if(resultEl) resultEl.classList.remove('hidden');
+                 if(applyBtn) applyBtn.classList.remove('hidden');
+            } else {
+                 console.warn("DEBUG: Enhanced textarea is empty after swap. Backend might have returned empty response.");
+                 document.getElementById('enhancement-quality').innerHTML = '<span class="text-orange-500">Enhancement returned empty result.</span>';
+                 if(resultEl) resultEl.classList.remove('hidden');
+                 if(applyBtn) applyBtn.classList.add('hidden');
+            }
+            if(enhanceBtn) enhanceBtn.disabled = false;
+        }, 100); // 100ms delay
+
+    }).catch(error => {
+        console.error("DEBUG: HTMX enhancement request failed:", error);
+        if(enhancedBulletTextarea) enhancedBulletTextarea.value = "Error enhancing bullet. Please try again.";
+        document.getElementById('enhancement-quality').innerHTML = '<span class="text-red-500">Error</span>';
+        if(loadingEl) loadingEl.classList.add('hidden');
+        if(resultEl) resultEl.classList.remove('hidden');
+        if(applyBtn) applyBtn.classList.add('hidden');
+        if(enhanceBtn) enhanceBtn.disabled = false;
+    });
+}
+
+function applyEnhancement() {
+    console.log("Applying enhancement to form");
+    const parentIndex = document.getElementById('enhance-parent-index').value;
+    const bulletIndex = document.getElementById('enhance-bullet-index').value;
+    const enhancedBullet = document.getElementById('enhanced-bullet').value;
+    const bulletTextarea = document.getElementById(`bullet_${parentIndex}_${bulletIndex}`);
+    if (bulletTextarea && enhancedBullet != null) {
+        bulletTextarea.value = enhancedBullet;
+        updateBulletQualityUI(bulletTextarea);
+        bulletTextarea.classList.add('bg-green-50', 'border-green-300');
+        setTimeout(() => { bulletTextarea.classList.remove('bg-green-50', 'border-green-300'); }, 1500);
+        closeBulletEnhancementModal();
+        console.log("Enhancement applied successfully");
+    } else { console.error("Could not find bullet textarea or enhanced text"); alert("Error applying enhancement."); }
+}
+
+// ======= Form Utility Functions =======
+function addBulletPoint(parentIndex) {
+    console.log("Adding bullet point for parent:", parentIndex);
+    const container = document.getElementById(`bullet_points_container_${parentIndex}`);
+    const bulletCountInput = document.getElementById(`bullet_count_${parentIndex}`);
+    if(!container || !bulletCountInput) { console.error("Container or count input not found for index:", parentIndex); return; }
+    let bulletIndex = parseInt(bulletCountInput.value);
+
+    const newBulletRow = document.createElement('div');
+    // Use the structure from the Tailwind partial
+    newBulletRow.className = 'bullet-point-row flex items-start gap-3 group hover:bg-gray-50/80 dark:hover:bg-gray-800/20 p-2 rounded-md transition-colors';
+    newBulletRow.innerHTML = `
+        <div class="mt-3 text-indigo-600 dark:text-indigo-400">•</div>
+        <div class="flex-1">
+            <div class="relative">
+                <textarea class="w-full min-h-24 p-2 border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    id="bullet_${parentIndex}_${bulletIndex}" name="bullet_${parentIndex}_${bulletIndex}"
+                    placeholder="Describe your achievement..."
+                    onkeyup="updateBulletQualityUI(this)"
+                    data-parent="${parentIndex}" data-index="${bulletIndex}"></textarea>
+            </div>
+            <div class="flex justify-between mt-1">
+                <div class="bullet-quality text-xs"></div>
+                <div class="text-xs text-gray-500 char-counter"> <span class="current">0</span>/<span class="max">100-150 optimal</span> </div>
+            </div>
+        </div>
+        <div class="flex flex-col gap-2">
+            <button type="button" class="mt-3 h-8 w-8 rounded-full text-red-600 bg-red-100 opacity-70 hover:opacity-100 hover:bg-red-200 flex items-center justify-center" onclick="removeBulletPoint(this, '${parentIndex}')"><i class="fa-solid fa-times"></i></button>
+            <button type="button" class="h-8 w-8 rounded-full text-indigo-600 bg-indigo-100 opacity-70 hover:opacity-100 hover:bg-indigo-200 flex items-center justify-center enhance-bullet-btn" data-parent="${parentIndex}" data-index="${bulletIndex}"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+            <span id="enhance_indicator_${parentIndex}_${bulletIndex}" class="htmx-indicator hidden flex items-center justify-center h-8 w-8"><span class="animate-spin h-4 w-4 border-2 border-indigo-500 rounded-full border-t-transparent"></span></span>
+        </div>
+    `;
+    container.appendChild(newBulletRow);
+    bulletCountInput.value = bulletIndex + 1;
+
+    const enhanceBtn = newBulletRow.querySelector('.enhance-bullet-btn');
+    if (enhanceBtn) {
+        // Clone and replace to ensure fresh listener
+        const newEnhanceBtn = enhanceBtn.cloneNode(true);
+        enhanceBtn.parentNode.replaceChild(newEnhanceBtn, enhanceBtn);
+        newEnhanceBtn.addEventListener('click', function(e) { e.preventDefault(); openBulletEnhancementModal(parentIndex, bulletIndex); });
+    }
+    const newTextarea = newBulletRow.querySelector('textarea');
+     if (newTextarea) { updateBulletQualityUI(newTextarea); newTextarea.focus(); }
+    newBulletRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    newBulletRow.classList.add('bg-indigo-50'); setTimeout(() => { newBulletRow.classList.remove('bg-indigo-50'); }, 1500);
+}
+
+function removeBulletPoint(button, parentIndex) {
+    const bulletRow = button.closest('.bullet-point-row'); if (!bulletRow) return;
+    bulletRow.style.transition = 'opacity 0.3s ease-out, max-height 0.3s ease-out, margin 0.3s ease-out, padding 0.3s ease-out, border-width 0.3s ease-out';
+    bulletRow.style.opacity = '0';
+    bulletRow.style.maxHeight = bulletRow.scrollHeight + 'px';
+    requestAnimationFrame(() => { bulletRow.style.maxHeight = '0px'; bulletRow.style.marginTop = '0'; bulletRow.style.marginBottom = '0'; bulletRow.style.paddingTop = '0'; bulletRow.style.paddingBottom = '0'; bulletRow.style.borderWidth = '0'; });
+    setTimeout(() => { bulletRow.remove(); renumberBulletPoints(parentIndex); }, 300);
+}
+
+function renumberBulletPoints(parentIndex) {
+    console.log("Renumbering bullets for parent:", parentIndex);
+    const container = document.getElementById(`bullet_points_container_${parentIndex}`);
+    const bulletCountInput = document.getElementById(`bullet_count_${parentIndex}`);
+    if (!container || !bulletCountInput) return;
+    const bulletRows = container.querySelectorAll('.bullet-point-row');
+    bulletRows.forEach((row, newIndex) => {
+        const textarea = row.querySelector('textarea');
+        const removeBtn = row.querySelector('button[onclick*="removeBulletPoint"]');
+        const enhanceBtn = row.querySelector('.enhance-bullet-btn');
+        const indicator = row.querySelector('.htmx-indicator');
+        if (textarea) { textarea.id = `bullet_${parentIndex}_${newIndex}`; textarea.name = `bullet_${parentIndex}_${newIndex}`; textarea.dataset.index = newIndex; }
+        if (removeBtn) { removeBtn.setAttribute('onclick', `removeBulletPoint(this, '${parentIndex}')`); }
+        if (enhanceBtn) {
+            enhanceBtn.dataset.index = newIndex;
+            // Re-attach listener using clone/replace
+            const newEnhanceBtn = enhanceBtn.cloneNode(true);
+            enhanceBtn.parentNode.replaceChild(newEnhanceBtn, enhanceBtn);
+             newEnhanceBtn.addEventListener('click', function(e) { e.preventDefault(); openBulletEnhancementModal(parentIndex, newIndex); });
         }
-     }
-    // Add functions for addBulletPoint, removeBulletPoint, etc. ensuring they
-    // use the correct parent index passed to them.
-     function addBulletPoint(parentIndex) {
-        const container = document.getElementById(`bullet_points_container_${parentIndex}`); // Target specific container
-        if(!container) return;
-        const bulletCountInput = document.getElementById(`bullet_count_${parentIndex}`);
-        let bulletIndex = parseInt(bulletCountInput.value);
+        if (indicator) { indicator.id = `enhance_indicator_${parentIndex}_${newIndex}`; }
+    });
+    bulletCountInput.value = bulletRows.length;
+    console.log("Renumbering complete. New count:", bulletRows.length);
+}
 
-         // You might need to fetch the template via HTMX or have it inline
-         // For simplicity, creating basic textarea:
-         const newBulletRow = document.createElement('div');
-         newBulletRow.className = 'bullet-point-row flex items-start gap-3'; // Add necessary classes
-         newBulletRow.innerHTML = `
-             <div class="mt-3 text-primary">•</div>
-             <div class="form-control flex-1">
-                 <textarea name="bullet_${parentIndex}_${bulletIndex}" class="textarea textarea-bordered w-full"></textarea>
-             </div>
-             <button type="button" class="btn btn-xs btn-ghost text-error" onclick="removeBulletPoint(this, '${parentIndex}')">X</button>
-         `; // Add appropriate classes and structure matching your partial
+function addForm(button, prefix) {
+    const formContainer = document.getElementById('experiences_container');
+    const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
+    const template = document.getElementById(prefix + '-form-template');
+    if (!formContainer || !totalFormsInput || !template) { console.error("Required elements not found for adding form"); return; }
+    const formNum = parseInt(totalFormsInput.value);
+    let newFormHtml = template.innerHTML.replace(/__prefix__/g, formNum);
+    const tempDiv = document.createElement('div'); tempDiv.innerHTML = newFormHtml;
+    const newFormElement = tempDiv.firstElementChild;
+    formContainer.appendChild(newFormElement);
+    totalFormsInput.value = formNum + 1;
+    const isCurrentCheckbox = newFormElement.querySelector('input[name$="-is_current"]');
+    if (isCurrentCheckbox) { toggleEndDate(isCurrentCheckbox); }
+    const aiGenBtn = newFormElement.querySelector('.ai-generate-btn');
+    if (aiGenBtn) { aiGenBtn.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); openBulletGenerationModal(formNum); }); }
 
-        container.appendChild(newBulletRow);
-        bulletCountInput.value = bulletIndex + 1;
-     }
-     // Add removeBulletPoint logic similar to deleteForm or your skills version
+    const enhanceButtons = newFormElement.querySelectorAll('.enhance-bullet-btn');
+    enhanceButtons.forEach((btn) => {
+         const parentIndex = btn.getAttribute('data-parent'); // Will be the new formNum
+         const bulletIndex = btn.getAttribute('data-index');
+         // Attach listener using clone/replace for safety
+         const newBtn = btn.cloneNode(true);
+         btn.parentNode.replaceChild(newBtn, btn);
+         newBtn.addEventListener('click', function(e) { e.preventDefault(); openBulletEnhancementModal(parentIndex, bulletIndex); });
+         const textarea = newBtn.closest('.bullet-point-row')?.querySelector('textarea');
+         if (textarea) { updateBulletQualityUI(textarea); }
+    });
+
+    newFormElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    newFormElement.classList.add('bg-indigo-50'); setTimeout(() => { newFormElement.classList.remove('bg-indigo-50'); }, 1500);
+    renumberForms(prefix);
+}
+
+function deleteForm(button, prefix) {
+    const formRow = button.closest('.form-row');
+    const deleteInput = formRow.querySelector('input[name$="-DELETE"]');
+    const idInput = formRow.querySelector('input[name$="-id"]');
+    if (deleteInput) {
+        const isExistingForm = idInput && idInput.value;
+        if (isExistingForm) {
+            deleteInput.checked = true; console.log(`Marked existing form ${formRow.id} for deletion.`);
+            formRow.style.transition = 'opacity 0.3s ease-out, max-height 0.3s ease-out, margin 0.3s ease-out, padding 0.3s ease-out, border-width 0.3s ease-out';
+            formRow.style.opacity = '0';
+            formRow.style.maxHeight = formRow.scrollHeight + 'px';
+            requestAnimationFrame(() => { formRow.style.maxHeight = '0px'; formRow.style.marginTop = '0'; formRow.style.marginBottom = '0'; formRow.style.paddingTop = '0'; formRow.style.paddingBottom = '0'; formRow.style.borderWidth = '0'; });
+        } else {
+            console.log(`Removing new form ${formRow.id} from DOM.`);
+             formRow.style.transition = 'opacity 0.3s ease-out, max-height 0.3s ease-out, margin 0.3s ease-out, padding 0.3s ease-out, border-width 0.3s ease-out';
+            formRow.style.opacity = '0';
+            formRow.style.maxHeight = formRow.scrollHeight + 'px';
+            requestAnimationFrame(() => { formRow.style.maxHeight = '0px'; formRow.style.marginTop = '0'; formRow.style.marginBottom = '0'; formRow.style.paddingTop = '0'; formRow.style.paddingBottom = '0'; formRow.style.borderWidth = '0'; });
+            setTimeout(() => { formRow.remove(); renumberForms(prefix); }, 300);
+        }
+    } else { console.warn("DELETE input not found, removing row directly:", formRow.id); formRow.remove(); }
+    setTimeout(() => renumberForms(prefix), 350);
+}
+
+function renumberForms(prefix) {
+    console.log("Renumbering visible forms with prefix:", prefix);
+    const forms = document.querySelectorAll(`#experiences_container .form-row:not([style*="max-height: 0px"])`);
+    let visibleIndex = 0;
+    forms.forEach((form) => {
+         const deleteInput = form.querySelector(`input[name$="-DELETE"]`);
+         if (!deleteInput || !deleteInput.checked) {
+             const numberSpan = form.querySelector('.experience-number');
+             if (numberSpan) { numberSpan.textContent = visibleIndex + 1; }
+             visibleIndex++;
+         }
+    });
+     console.log("Renumbering complete. Visible forms count:", visibleIndex);
+}
+
+function toggleEndDate(checkbox) {
+    const formRow = checkbox.closest('.form-row'); if (!formRow) return;
+    const endDateContainer = formRow.querySelector('.end-date-container'); if (!endDateContainer) return;
+    const endDateInput = endDateContainer.querySelector('input[type="date"]');
+    if (endDateInput) {
+        if (checkbox.checked) { endDateInput.disabled = true; endDateInput.value = ''; endDateInput.required = false; endDateInput.classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed'); }
+        else { endDateInput.disabled = false; endDateInput.required = false; endDateInput.classList.remove('bg-gray-100', 'text-gray-500', 'cursor-not-allowed'); }
+    }
+}
+
+// Add this function definition to handle potential calls from other sections
+function openProjectEnhanceModal(parentIndex, bulletIndex /*, other args if needed */) {
+    console.warn("openProjectEnhanceModal called - Likely from a non-experience section. Redirecting to standard bullet enhancement modal. Check the calling HTML element's onclick attribute.");
+    openBulletEnhancementModal(parentIndex, bulletIndex);
+}
 
 </script>
+
 {% endblock %}
+
+
+
+{#{% extends 'resumes/wizard_base.html' %}#}
+{#{% load static %}#}
+{#{% load widget_tweaks %}#}
+{##}
+{#{% block step_title %}Work Experience{% endblock %}#}
+{#{% block step_icon %}<i class="fa-solid fa-briefcase mr-3 text-indigo-600 opacity-80"></i>{% endblock %}#}
+{##}
+{#{% block step_content %}#}
+{#<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}">#}
+{#    {% csrf_token %}#}
+{##}
+    {# Management Form #}
+{#    {{ formset.management_form }}#}
+{##}
+    {# Hidden input to store skills data passed from the view #}
+{#    <input type="hidden" id="skills-data-json" value="{{ skills_data|escape }}">#}
+{##}
+{##}
+{#    <div class="flex flex-col md:flex-row gap-6">#}
+{#        <div class="w-full md:w-2/3">#}
+{#            <div id="experiences_container" class="space-y-6">#}
+{##}
+                {# Loop over formset.forms #}
+{#                {% for form in formset.forms %}#}
+{#                <div class="form-row bg-white border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 p-6 experience-entry" id="{{ form.prefix }}-row" data-index="{{ forloop.counter0 }}">#}
+                    {# Hidden fields #}
+{#                    {% if formset.can_delete %}#}
+{#                        <div class="hidden">{{ form.DELETE }}</div>#}
+{#                    {% endif %}#}
+                    {# Add hidden ID field if editing existing instance #}
+{#                    {% if form.instance.pk %}{{ form.id }}{% endif %}#}
+{##}
+{##}
+{#                    <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-200">#}
+{#                        <h3 class="text-lg font-medium flex items-center">#}
+{#                            <span class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center mr-3 shadow-sm">#}
+{#                                <i class="fa-solid fa-briefcase text-indigo-600 text-sm"></i>#}
+{#                            </span>#}
+{#                            <span class="text-gray-800">Experience #<span class="experience-number font-semibold">{{ forloop.counter }}</span></span>#}
+{#                        </h3>#}
+{#                        {% if formset.can_delete %}#}
+{#                        <button type="button" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors duration-200 formset-delete-btn" onclick="deleteForm(this, '{{ formset.prefix }}')">#}
+{#                            <i class="fa-solid fa-trash-can mr-1.5"></i> Remove#}
+{#                        </button>#}
+{#                        {% endif %}#}
+{#                    </div>#}
+{##}
+{#                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">#}
+{#                        <div class="form-control">#}
+{#                            <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ form.job_title.id_for_label }}">#}
+{#                                Job Title <span class="text-red-500">*</span>#}
+{#                            </label>#}
+{#                            <div class="relative">#}
+{#                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                                    <i class="fa-solid fa-id-badge text-gray-400"></i>#}
+{#                                </div>#}
+{#                                {% render_field form.job_title class+="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Senior Software Engineer" required="required" %}#}
+{#                            </div>#}
+{#                            {% if form.job_title.errors %}<div class="text-red-500 text-xs mt-1">{{ form.job_title.errors.0 }}</div>{% endif %}#}
+{#                        </div>#}
+{##}
+{#                        <div class="form-control">#}
+{#                            <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ form.employer.id_for_label }}">#}
+{#                                Employer/Company <span class="text-red-500">*</span>#}
+{#                            </label>#}
+{#                            <div class="relative">#}
+{#                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                                    <i class="fa-solid fa-building text-gray-400"></i>#}
+{#                                </div>#}
+{#                                {% render_field form.employer class+="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Google, Microsoft" required="required" %}#}
+{#                            </div>#}
+{#                            {% if form.employer.errors %}<div class="text-red-500 text-xs mt-1">{{ form.employer.errors.0 }}</div>{% endif %}#}
+{#                        </div>#}
+{##}
+{#                        <div class="form-control">#}
+{#                            <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ form.location.id_for_label }}">#}
+{#                                Location <span class="text-red-500">*</span>#}
+{#                            </label>#}
+{#                            <div class="relative">#}
+{#                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                                    <i class="fa-solid fa-map-marker-alt text-gray-400"></i>#}
+{#                                </div>#}
+{#                                {% render_field form.location class+="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="San Francisco, CA or Remote" required="required" %}#}
+{#                            </div>#}
+{#                            {% if form.location.errors %}<div class="text-red-500 text-xs mt-1">{{ form.location.errors.0 }}</div>{% endif %}#}
+{#                        </div>#}
+{##}
+{#                        <div class="form-control">#}
+{#                            <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ form.start_date.id_for_label }}">#}
+{#                                Start Date <span class="text-red-500">*</span>#}
+{#                            </label>#}
+                            {# Ensure date format is YYYY-MM-DD for consistency #}
+{#                            <div class="relative">#}
+{#                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                                    <i class="fa-solid fa-calendar-alt text-gray-400"></i>#}
+{#                                </div>#}
+{#                                {% render_field form.start_date type="date"  class+="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required="required" %}#}
+{#                            </div>#}
+{#                            {% if form.start_date.errors %}<div class="text-red-500 text-xs mt-1">{{ form.start_date.errors.0 }}</div>{% endif %}#}
+{#                        </div>#}
+{##}
+{#                        <div class="form-control end-date-container">#}
+{#                            <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ form.end_date.id_for_label }}">#}
+{#                                End Date <span class="text-gray-500 text-xs font-normal">(Leave blank if current)</span>#}
+{#                            </label>#}
+                            {# Ensure date format is YYYY-MM-DD for consistency #}
+{#                            <div class="relative">#}
+{#                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                                    <i class="fa-solid fa-calendar-check text-gray-400"></i>#}
+{#                                </div>#}
+{#                                {% render_field form.end_date type="date" class+="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" %}#}
+{#                            </div>#}
+{#                            {% if form.end_date.errors %}<div class="text-red-500 text-xs mt-1">{{ form.end_date.errors.0 }}</div>{% endif %}#}
+{##}
+{#                            <div class="mt-2 flex items-center">#}
+{#                                <label class="inline-flex items-center cursor-pointer">#}
+{#                                    {% render_field form.is_current class+="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" onchange="toggleEndDate(this)" %}#}
+{#                                    <span class="ml-2 text-sm text-gray-700">I currently work here</span>#}
+{#                                </label>#}
+{#                            </div>#}
+{#                        </div>#}
+{#                    </div>#}
+                    {# Navigation Buttons #}
+{#                    <div class="mt-6 bullet-points-container">#}
+{#                        <div class="flex justify-between items-center mb-2">#}
+{#                            <span class="text-sm font-medium text-gray-700 flex items-center">#}
+{#                                <i class="fa-solid fa-list-ul text-indigo-600 mr-2"></i>#}
+{#                                Responsibilities and Achievements <span class="text-red-500 ml-1">*</span>#}
+{#                            </span>#}
+{#                            <button type="button" class="ai-generate-btn inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" data-index="{{ forloop.counter0 }}">#}
+{#                                <i class="fa-solid fa-magic mr-1.5"></i> AI Generate#}
+{#                            </button>#}
+{#                        </div>#}
+{##}
+                        {# Hidden field for bullet count (used by JS) #}
+{#                        <input type="hidden" name="bullet_count_{{ forloop.counter0 }}" value="{{ form.initial.bullet_points|length|default:0 }}" class="bullet-count" id="bullet_count_{{ forloop.counter0 }}">#}
+{##}
+{#                        <div class="bullet-points space-y-2 p-4 bg-gradient-to-b from-gray-50 to-white rounded-lg border border-gray-200 shadow-inner" id="bullet_points_container_{{ forloop.counter0 }}">#}
+                            {# Render existing bullet points from initial data #}
+{#                            {% for bullet_item in form.initial.bullet_points %}#}
+                                {# Include partial, passing correct indices #}
+{#                                {% with parent_index=forloop.parentloop.counter0 index=forloop.counter0 bullet_text=bullet_item.description %}#}
+{#                                <div class="bullet-point-row flex items-start gap-3 group hover:bg-gray-50 p-2 rounded-md transition-colors">#}
+{#                                    <div class="mt-3 text-indigo-600">•</div>#}
+{#                                    <div class="form-control flex-1">#}
+                                        {# *** UPDATED onkeyup *** #}
+{#                                        <textarea name="bullet_{{ parent_index }}_{{ index }}"#}
+{#                                                  id="bullet_{{ parent_index }}_{{ index }}"#}
+{#                                                  class="w-full min-h-24 py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"#}
+{#                                                  placeholder="Describe your achievement with action verbs and measurable results (e.g., 'Increased customer satisfaction by 20% through implementation of new service protocols')"#}
+{#                                                  onkeyup="updateBulletQualityUI(this)"#}
+{#                                                  data-parent="{{ parent_index }}"#}
+{#                                                  data-index="{{ index }}">{{ bullet_text }}</textarea>#}
+{#                                        <div class="flex justify-between mt-1">#}
+{#                                            <div class="bullet-quality text-xs"></div>#}
+{#                                            <div class="text-xs char-counter text-gray-500">#}
+{#                                                <span class="current">0</span>/<span class="max">100-150 optimal</span>#}
+{#                                            </div>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                    <div class="flex flex-col gap-2">#}
+{#                                        <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 bg-white text-red-500 hover:bg-red-50 hover:text-red-700 mt-3" onclick="removeBulletPoint(this, '{{ parent_index }}')">#}
+{#                                            <i class="fa-solid fa-times"></i>#}
+{#                                        </button>#}
+{#                                        <button type="button" class="enhance-bullet-btn inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 bg-white text-indigo-500 hover:bg-indigo-50 hover:text-indigo-700" data-parent="{{ parent_index }}" data-index="{{ index }}">#}
+{#                                            <i class="fa-solid fa-wand-magic-sparkles"></i>#}
+{#                                        </button>#}
+{#                                        <span id="enhance_indicator_{{ parent_index }}_{{ index }}" class="htmx-indicator hidden flex items-center justify-center h-8 w-8">#}
+{#                                            <span class="animate-spin h-4 w-4 border-2 border-indigo-500 rounded-full border-t-transparent"></span>#}
+{#                                        </span>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                                {% endwith %}#}
+{#                            {% empty %}#}
+                                {# Render exactly one empty bullet row if no initial bullets #}
+{#                                {% with parent_index=forloop.counter0 index=0 %}#}
+{#                                 <div class="bullet-point-row flex items-start gap-3 group hover:bg-gray-50 p-2 rounded-md transition-colors">#}
+{#                                    <div class="mt-3 text-indigo-600">•</div>#}
+{#                                    <div class="form-control flex-1">#}
+                                        {# *** UPDATED onkeyup *** #}
+{#                                        <textarea name="bullet_{{ parent_index }}_{{ index }}"#}
+{#                                                  id="bullet_{{ parent_index }}_{{ index }}"#}
+{#                                                  class="w-full min-h-24 py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"#}
+{#                                                  placeholder="Describe your achievement with action verbs and measurable results (e.g., 'Increased customer satisfaction by 20% through implementation of new service protocols')"#}
+{#                                                  onkeyup="updateBulletQualityUI(this)"#}
+{#                                                  data-parent="{{ parent_index }}"#}
+{#                                                  data-index="{{ index }}"></textarea>#}
+{#                                        <div class="flex justify-between mt-1">#}
+{#                                            <div class="bullet-quality text-xs"></div>#}
+{#                                            <div class="text-xs char-counter text-gray-500">#}
+{#                                                <span class="current">0</span>/<span class="max">100-150 optimal</span>#}
+{#                                            </div>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                    <div class="flex flex-col gap-2">#}
+{#                                        <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 bg-white text-red-500 hover:bg-red-50 hover:text-red-700 mt-3" onclick="removeBulletPoint(this, '{{ parent_index }}')">#}
+{#                                            <i class="fa-solid fa-times"></i>#}
+{#                                        </button>#}
+{#                                        <button type="button" class="enhance-bullet-btn inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 bg-white text-indigo-500 hover:bg-indigo-50 hover:text-indigo-700" data-parent="{{ parent_index }}" data-index="{{ index }}">#}
+{#                                            <i class="fa-solid fa-wand-magic-sparkles"></i>#}
+{#                                        </button>#}
+{#                                        <span id="enhance_indicator_{{ parent_index }}_{{ index }}" class="htmx-indicator hidden flex items-center justify-center h-8 w-8">#}
+{#                                            <span class="animate-spin h-4 w-4 border-2 border-indigo-500 rounded-full border-t-transparent"></span>#}
+{#                                        </span>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                                {% endwith %}#}
+{#                            {% endfor %}#}
+{#                        </div>#}
+{##}
+{#                        <div class="flex justify-end mt-3">#}
+{#                            <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" onclick="addBulletPoint('{{ forloop.counter0 }}')">#}
+{#                                <i class="fa-solid fa-plus mr-1.5"></i> Add Bullet Point#}
+{#                            </button>#}
+{#                        </div>#}
+{#                    </div>#}
+                    {# End Bullet Points #}
+{##}
+{#                </div>#}
+{#                {% empty %}#}
+{#                <div class="bg-white border border-gray-200 rounded-xl shadow p-8 text-center">#}
+{#                    <div class="text-gray-500">#}
+{#                        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 mb-4">#}
+{#                            <i class="fa-solid fa-briefcase text-gray-400 text-xl"></i>#}
+{#                        </div>#}
+{#                        <p class="text-lg font-medium text-gray-900 mb-1">No work experience yet</p>#}
+{#                        <p class="text-sm">Use the button below to add your work experience.</p>#}
+{#                    </div>#}
+{#                </div>#}
+{#                {% endfor %}#}
+{#            </div>#}
+{##}
+            {# Template for adding new experience forms via JS #}
+{#            <template id="{{ formset.prefix }}-form-template">#}
+{#                <div class="form-row bg-white border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 p-6 experience-entry" id="{{ formset.prefix }}-__prefix__-row" data-index="__prefix__">#}
+{#                    <div class="hidden"><input type="checkbox" name="{{ formset.prefix }}-__prefix__-DELETE" id="id_{{ formset.prefix }}-__prefix__-DELETE"></div>#}
+                    {# Add hidden ID field for new forms (will be empty) #}
+{#                    <input type="hidden" name="{{ formset.prefix }}-__prefix__-id" id="id_{{ formset.prefix }}-__prefix__-id">#}
+{##}
+{#                    <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-200">#}
+{#                        <h3 class="text-lg font-medium flex items-center">#}
+{#                            <span class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center mr-3 shadow-sm">#}
+{#                                <i class="fa-solid fa-briefcase text-indigo-600 text-sm"></i>#}
+{#                            </span>#}
+{#                            <span class="text-gray-800">New Experience</span>#}
+{#                        </h3>#}
+{#                        <button type="button" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors duration-200" onclick="deleteForm(this, '{{ formset.prefix }}')">#}
+{#                            <i class="fa-solid fa-trash-can mr-1.5"></i> Remove#}
+{#                        </button>#}
+{#                    </div>#}
+{##}
+{#                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">#}
+                        {# --- Job Title, Employer, Location, Dates --- #}
+{#                        <div class="form-control">#}
+{#                            <label class="block text-sm font-medium text-gray-700 mb-1">#}
+{#                                Job Title <span class="text-red-500">*</span>#}
+{#                            </label>#}
+{#                            <div class="relative">#}
+{#                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                                    <i class="fa-solid fa-id-badge text-gray-400"></i>#}
+{#                                </div>#}
+{#                                <input type="text" name="{{ formset.prefix }}-__prefix__-job_title" id="id_{{ formset.prefix }}-__prefix__-job_title" required class="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Senior Software Engineer">#}
+{#                            </div>#}
+{#                        </div>#}
+{#                        <div class="form-control">#}
+{#                            <label class="block text-sm font-medium text-gray-700 mb-1">#}
+{#                                Employer/Company <span class="text-red-500">*</span>#}
+{#                            </label>#}
+{#                            <div class="relative">#}
+{#                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                                    <i class="fa-solid fa-building text-gray-400"></i>#}
+{#                                </div>#}
+{#                                <input type="text" name="{{ formset.prefix }}-__prefix__-employer" id="id_{{ formset.prefix }}-__prefix__-employer" required class="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Google, Microsoft">#}
+{#                            </div>#}
+{#                        </div>#}
+{#                        <div class="form-control">#}
+{#                            <label class="block text-sm font-medium text-gray-700 mb-1">#}
+{#                                Location <span class="text-red-500">*</span>#}
+{#                            </label>#}
+{#                            <div class="relative">#}
+{#                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                                    <i class="fa-solid fa-map-marker-alt text-gray-400"></i>#}
+{#                                </div>#}
+{#                                <input type="text" name="{{ formset.prefix }}-__prefix__-location" id="id_{{ formset.prefix }}-__prefix__-location" required class="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="San Francisco, CA or Remote">#}
+{#                            </div>#}
+{#                        </div>#}
+{#                        <div class="form-control">#}
+{#                            <label class="block text-sm font-medium text-gray-700 mb-1">#}
+{#                                Start Date <span class="text-red-500">*</span>#}
+{#                            </label>#}
+{#                            <div class="relative">#}
+{#                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                                    <i class="fa-solid fa-calendar-alt text-gray-400"></i>#}
+{#                                </div>#}
+{#                                <input type="date" name="{{ formset.prefix }}-__prefix__-start_date" id="id_{{ formset.prefix }}-__prefix__-start_date" required class="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">#}
+{#                            </div>#}
+{#                        </div>#}
+{#                        <div class="form-control end-date-container">#}
+{#                            <label class="block text-sm font-medium text-gray-700 mb-1">#}
+{#                                End Date <span class="text-gray-500 text-xs font-normal">(Leave blank if current)</span>#}
+{#                            </label>#}
+{#                            <div class="relative">#}
+{#                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                                    <i class="fa-solid fa-calendar-check text-gray-400"></i>#}
+{#                                </div>#}
+{#                                <input type="date" name="{{ formset.prefix }}-__prefix__-end_date" id="id_{{ formset.prefix }}-__prefix__-end_date" class="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">#}
+{#                            </div>#}
+{#                            <div class="mt-2 flex items-center">#}
+{#                                <label class="inline-flex items-center cursor-pointer">#}
+{#                                    <input type="checkbox" name="{{ formset.prefix }}-__prefix__-is_current" id="id_{{ formset.prefix }}-__prefix__-is_current" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" onchange="toggleEndDate(this)">#}
+{#                                    <span class="ml-2 text-sm text-gray-700">I currently work here</span>#}
+{#                                </label>#}
+{#                            </div>#}
+{#                        </div>#}
+{#                    </div>{# --- End Basic Fields Grid --- #}
+{##}
+{##}
+{#                    <div class="mt-6 bullet-points-container">#}
+{#                        <div class="flex justify-between items-center mb-2">#}
+{#                            <span class="text-sm font-medium text-gray-700 flex items-center">#}
+{#                                <i class="fa-solid fa-list-ul text-indigo-600 mr-2"></i>#}
+{#                                Responsibilities and Achievements <span class="text-red-500 ml-1">*</span>#}
+{#                            </span>#}
+{#                            <button type="button" class="ai-generate-btn inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" data-index="__prefix__">#}
+{#                                <i class="fa-solid fa-magic mr-1.5"></i> AI Generate#}
+{#                            </button>#}
+{#                        </div>#}
+{##}
+{#                        <input type="hidden" name="bullet_count___prefix__" value="1" class="bullet-count" id="bullet_count___prefix__">#}
+{##}
+{#                        <div class="bullet-points space-y-2 p-4 bg-gradient-to-b from-gray-50 to-white rounded-lg border border-gray-200 shadow-inner" id="bullet_points_container___prefix__">#}
+                             {# Just one default bullet point #}
+{#                            <div class="bullet-point-row flex items-start gap-3 group hover:bg-gray-50 p-2 rounded-md transition-colors">#}
+{#                                <div class="mt-3 text-indigo-600">•</div>#}
+{#                                <div class="form-control flex-1">#}
+                                    {# *** UPDATED onkeyup *** #}
+{#                                    <textarea name="bullet___prefix___0" id="bullet___prefix___0" class="w-full min-h-24 py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Describe your achievement with action verbs and measurable results (e.g., 'Increased customer satisfaction by 20% through implementation of new service protocols')" onkeyup="updateBulletQualityUI(this)" data-parent="__prefix__" data-index="0"></textarea>#}
+{#                                    <div class="flex justify-between mt-1">#}
+{#                                        <div class="bullet-quality text-xs"></div>#}
+{#                                        <div class="text-xs char-counter text-gray-500">#}
+{#                                            <span class="current">0</span>/<span class="max">100-150 optimal</span>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                                <div class="flex flex-col gap-2">#}
+{#                                    <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 bg-white text-red-500 hover:bg-red-50 hover:text-red-700 mt-3" onclick="removeBulletPoint(this, '__prefix__')">#}
+{#                                        <i class="fa-solid fa-times"></i>#}
+{#                                    </button>#}
+{#                                    <button type="button" class="enhance-bullet-btn inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 bg-white text-indigo-500 hover:bg-indigo-50 hover:text-indigo-700" data-parent="__prefix__" data-index="0">#}
+{#                                        <i class="fa-solid fa-wand-magic-sparkles"></i>#}
+{#                                    </button>#}
+{#                                    <span id="enhance_indicator___prefix___0" class="htmx-indicator hidden flex items-center justify-center h-8 w-8">#}
+{#                                        <span class="animate-spin h-4 w-4 border-2 border-indigo-500 rounded-full border-t-transparent"></span>#}
+{#                                    </span>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                        </div>#}
+{##}
+{#                        <div class="flex justify-end mt-3">#}
+{#                            <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" onclick="addBulletPoint('__prefix__')">#}
+{#                                <i class="fa-solid fa-plus mr-1.5"></i> Add Bullet Point#}
+{#                            </button>#}
+{#                        </div>#}
+{#                    </div> {# --- End Bullet Points Section --- #}
+{#                </div> {# --- End Form Row Template --- #}
+{#            </template>#}
+{##}
+            {# Add Experience button #}
+{#            <div class="flex justify-center mt-6">#}
+{#                <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 add-another-btn" onclick="addForm(this, '{{ formset.prefix }}')">#}
+{#                    <i class="fa-solid fa-plus mr-2"></i> Add Another Experience#}
+{#                </button>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+        {# Right Sidebar with Tips and AI Info #}
+{#        <div class="w-full md:w-1/3 space-y-6">#}
+            {# Tips Section #}
+{#            <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-4">#}
+{#                <div class="flex items-start">#}
+{#                    <div class="text-indigo-600 text-xl mr-4 mt-1">#}
+{#                        <i class="fa-solid fa-lightbulb"></i>#}
+{#                    </div>#}
+{#                    <div>#}
+{#                        <h4 class="text-base font-medium text-gray-900">Work Experience Tips</h4>#}
+{#                        <ul class="mt-2 space-y-2 text-sm text-gray-600">#}
+{#                            <li class="flex items-start">#}
+{#                                <i class="fa-solid fa-check text-indigo-500 mt-1 mr-2"></i>#}
+{#                                <span>Start with your most recent position and work backwards</span>#}
+{#                            </li>#}
+{#                            <li class="flex items-start">#}
+{#                                <i class="fa-solid fa-check text-indigo-500 mt-1 mr-2"></i>#}
+{#                                <span>Use action verbs to start each bullet point (e.g., "Developed," "Managed," "Led")</span>#}
+{#                            </li>#}
+{#                            <li class="flex items-start">#}
+{#                                <i class="fa-solid fa-check text-indigo-500 mt-1 mr-2"></i>#}
+{#                                <span>Quantify achievements with specific numbers (e.g., "Increased sales by 25%")</span>#}
+{#                            </li>#}
+{#                            <li class="flex items-start">#}
+{#                                <i class="fa-solid fa-check text-indigo-500 mt-1 mr-2"></i>#}
+{#                                <span>Focus on accomplishments rather than just listing responsibilities</span>#}
+{#                            </li>#}
+{#                            <li class="flex items-start">#}
+{#                                <i class="fa-solid fa-check text-indigo-500 mt-1 mr-2"></i>#}
+{#                                <span>Keep bullet points concise (80-150 characters is optimal)</span>#}
+{#                            </li>#}
+{#                        </ul>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+            {# Action Verbs Section #}
+{#            <div class="bg-white border border-gray-200 rounded-lg p-4">#}
+{#                <h4 class="font-medium text-gray-900 mb-3 flex items-center">#}
+{#                    <i class="fa-solid fa-pen-fancy text-indigo-600 mr-2"></i>#}
+{#                    Strong Action Verbs#}
+{#                </h4>#}
+{#                <div class="flex flex-wrap gap-2 text-sm">#}
+{#                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Achieved</span>#}
+{#                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Analyzed</span>#}
+{#                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Built</span>#}
+{#                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Coordinated</span>#}
+{#                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Created</span>#}
+{#                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Delivered</span>#}
+{#                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Developed</span>#}
+{#                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Established</span>#}
+{#                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Generated</span>#}
+{#                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Implemented</span>#}
+{#                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Improved</span>#}
+{#                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Led</span>#}
+{#                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Managed</span>#}
+{#                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Optimized</span>#}
+{#                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Reduced</span>#}
+{#                    <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">Streamlined</span>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+            {# AI Enhancement Note #}
+{#            <div class="bg-green-50 border border-green-100 rounded-lg p-4">#}
+{#                <div class="flex items-start">#}
+{#                    <div class="text-green-600 text-xl mr-4 mt-1">#}
+{#                        <i class="fa-solid fa-robot"></i>#}
+{#                    </div>#}
+{#                    <div>#}
+{#                        <h4 class="text-base font-medium text-gray-900">AI-Powered Enhancement</h4>#}
+{#                        <p class="mt-2 text-sm text-gray-600">#}
+{#                            Use the <span class="font-semibold">AI Generate</span> button to automatically create professional bullet points based on your job title and skills for the entire experience entry.#}
+{#                        </p>#}
+{#                        <p class="mt-1 text-sm text-gray-600">#}
+{#                            You can enhance individual bullet points that score well (★★★☆☆ or higher) by clicking the <i class="fa-solid fa-wand-magic-sparkles text-indigo-600"></i> icon next to them. Bullet points needing more work should be edited manually or regenerated using 'AI Generate'.#}
+{#                        </p>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>{# End Sidebar #}
+{#    </div>#}
+{##}
+    {# Navigation Buttons (commented out in original, kept same) #}
+    {# <div class="mt-8 pt-5 border-t border-gray-200 flex justify-between"> ... </div> #}
+{#</form>#}
+{##}
+{# ========================================================================== #}
+{#                            MODALS (Unchanged)                              #}
+{# ========================================================================== #}
+{# --- Bullet Generation Modal --- (Keep As Is) #}
+{#<div id="bullet-generation-modal" class="fixed inset-0 z-[1050] overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">#}
+    {# ... Modal Content ... #}
+{#</div>#}
+{##}
+{# --- Bullet Enhancement Modal --- (Keep As Is - Logic changed in JS only) #}
+{#<div id="bullet-enhancement-modal" class="fixed inset-0 z-[1050] overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">#}
+    {# ... Modal Content ... #}
+{#</div>#}
+{##}
+{# ========================================================================== #}
+{#                                  STYLES (Unchanged)                          #}
+{# ========================================================================== #}
+{#<style>#}
+{#/* ... Styles ... (Keep As Is) */#}
+{#</style>#}
+{##}
+{# ========================================================================== #}
+{#                                JAVASCRIPT (Updated)                         #}
+{# ========================================================================== #}
+{#<script>#}
+{#// Store skills data globally for modals#}
+{#let userSkillsData = [];#}
+{#// Store formset prefix globally#}
+{#const formsetPrefix = '{{ formset.prefix }}'; // Get prefix from Django context#}
+{##}
+{#// Initialize event listeners when document is loaded#}
+{#document.addEventListener('DOMContentLoaded', function() {#}
+{#    console.log("Document loaded, initializing event handlers");#}
+{#    console.log("Formset prefix:", formsetPrefix); // Log the prefix#}
+{##}
+{#    // Parse skills data from hidden input#}
+{#    const skillsJsonInput = document.getElementById('skills-data-json');#}
+{#    if (skillsJsonInput && skillsJsonInput.value) {#}
+{#        try {#}
+{#            let skillsJson = skillsJsonInput.value;#}
+{#            if (skillsJson.startsWith('"') && skillsJson.endsWith('"')) {#}
+{#                 skillsJson = skillsJson.substring(1, skillsJson.length - 1).replace(/\\"/g, '"');#}
+{#            }#}
+{#            userSkillsData = JSON.parse(skillsJson);#}
+{#            console.log("Parsed skills data:", userSkillsData);#}
+{#        } catch (e) {#}
+{#            console.error("Error parsing skills JSON:", e, "Raw value:", skillsJsonInput.value);#}
+{#            userSkillsData = []; // Fallback to empty array#}
+{#        }#}
+{#    } else {#}
+{#        console.warn("Skills data JSON input not found or empty.");#}
+{#    }#}
+{##}
+{##}
+{#    // Initialize all experience forms#}
+{#    document.querySelectorAll('.experience-entry').forEach(form => {#}
+{#        const isCurrentCheckbox = form.querySelector('input[name$="-is_current"]');#}
+{#        if (isCurrentCheckbox) {#}
+{#            toggleEndDate(isCurrentCheckbox); // Initialize state based on checkbox#}
+{#        }#}
+{##}
+{#        // Initialize bullet quality checks and enhance listeners for existing bullets#}
+{#        form.querySelectorAll('.bullet-point-row textarea').forEach(textarea => {#}
+{#            updateBulletQualityUI(textarea); // *** Use new UI update function ***#}
+{#            const enhanceBtn = textarea.closest('.bullet-point-row').querySelector('.enhance-bullet-btn');#}
+{#             if (enhanceBtn) {#}
+{#                const parentIndex = enhanceBtn.getAttribute('data-parent');#}
+{#                const bulletIndex = enhanceBtn.getAttribute('data-index');#}
+{#                enhanceBtn.addEventListener('click', function(e) {#}
+{#                    e.preventDefault();#}
+{#                    console.log("Enhance button clicked for existing bullet:", parentIndex, bulletIndex);#}
+{#                    openBulletEnhancementModal(parentIndex, bulletIndex); // This function now contains the logic check#}
+{#                });#}
+{#            }#}
+{#        });#}
+{#    });#}
+{##}
+{#    // Add explicit event listeners to AI Generate buttons#}
+{#    document.querySelectorAll('.ai-generate-btn').forEach(button => {#}
+{#        const parentIndex = button.getAttribute('data-index');#}
+{#        if (parentIndex !== null) {#}
+{#             console.log("Adding click handler for AI Generate button with index:", parentIndex);#}
+{#            button.addEventListener('click', function(e) {#}
+{#                e.preventDefault();#}
+{#                e.stopPropagation();#}
+{#                console.log("AI Generate button clicked for index:", parentIndex);#}
+{#                openBulletGenerationModal(parentIndex);#}
+{#            });#}
+{#        } else {#}
+{#            console.warn("AI Generate button found without data-index:", button);#}
+{#        }#}
+{#    });#}
+{##}
+{#    // Set up generation modal buttons#}
+{#    const generateBulletsBtn = document.getElementById('generate-bullets-btn');#}
+{#    if (generateBulletsBtn) {#}
+{#        generateBulletsBtn.addEventListener('click', function(e) { e.preventDefault(); generateBullets(); });#}
+{#    }#}
+{#    const applyBulletsBtn = document.getElementById('apply-bullets-btn');#}
+{#    if (applyBulletsBtn) {#}
+{#        applyBulletsBtn.addEventListener('click', function(e) { e.preventDefault(); applyGeneratedBullets(); });#}
+{#    }#}
+{#    const cancelGenerationBtn = document.getElementById('cancel-generation-btn');#}
+{#    if (cancelGenerationBtn) {#}
+{#        cancelGenerationBtn.addEventListener('click', function(e) { e.preventDefault(); closeBulletGenerationModal(); });#}
+{#    }#}
+{##}
+{#    // Set up enhancement modal buttons#}
+{#    const enhanceBulletBtn = document.getElementById('enhance-bullet-btn');#}
+{#    if (enhanceBulletBtn) {#}
+{#        enhanceBulletBtn.addEventListener('click', function(e) { e.preventDefault(); enhanceBullet(); });#}
+{#    }#}
+{#    const applyEnhancementBtn = document.getElementById('apply-enhancement-btn');#}
+{#    if (applyEnhancementBtn) {#}
+{#        applyEnhancementBtn.addEventListener('click', function(e) { e.preventDefault(); applyEnhancement(); });#}
+{#    }#}
+{#    const cancelEnhancementBtn = document.getElementById('cancel-enhancement-btn');#}
+{#    if (cancelEnhancementBtn) {#}
+{#        cancelEnhancementBtn.addEventListener('click', function(e) { e.preventDefault(); closeBulletEnhancementModal(); });#}
+{#    }#}
+{##}
+{#    // Set up modal backdrop click handlers#}
+{#    const bulletModalBackdrop = document.getElementById('bullet-modal-backdrop');#}
+{#    if (bulletModalBackdrop) {#}
+{#        bulletModalBackdrop.addEventListener('click', function(e) { e.preventDefault(); closeBulletGenerationModal(); });#}
+{#    }#}
+{#    const enhanceModalBackdrop = document.getElementById('enhance-modal-backdrop');#}
+{#    if (enhanceModalBackdrop) {#}
+{#        enhanceModalBackdrop.addEventListener('click', function(e) { e.preventDefault(); closeBulletEnhancementModal(); });#}
+{#    }#}
+{##}
+{#    // Job description toggle in enhancement modal (ATS)#}
+{#    const enhancementAtsRadio = document.getElementById('enhancement-ats');#}
+{#    const enhancementGeneralRadio = document.getElementById('enhancement-general');#}
+{#    const jobDescriptionContainer = document.getElementById('job-description-container');#}
+{#    function toggleJobDescription() {#}
+{#        if (jobDescriptionContainer) {#}
+{#            jobDescriptionContainer.classList.toggle('hidden', !enhancementAtsRadio.checked);#}
+{#        }#}
+{#    }#}
+{#    if (enhancementAtsRadio) enhancementAtsRadio.addEventListener('change', toggleJobDescription);#}
+{#    if (enhancementGeneralRadio) enhancementGeneralRadio.addEventListener('change', toggleJobDescription);#}
+{#    toggleJobDescription(); // Initial check#}
+{##}
+{#    // Move modals to body#}
+{#    moveModalToBody('bullet-generation-modal');#}
+{#    moveModalToBody('bullet-enhancement-modal');#}
+{#});#}
+{##}
+{#function moveModalToBody(modalId) {#}
+{#    const modal = document.getElementById(modalId);#}
+{#    if (modal && !modal.parentElement.isSameNode(document.body)) {#}
+{#        console.log(`Moving ${modalId} to body`);#}
+{#        document.body.appendChild(modal);#}
+{#    }#}
+{#}#}
+{##}
+{#// ======= Bullet Quality Check (Refactored) =======#}
+{##}
+{#/**#}
+{# * Calculates the quality score and UI display information for a bullet point.#}
+{# * Does NOT update the DOM directly.#}
+{# * @param {HTMLTextAreaElement} textarea - The textarea element containing the bullet point.#}
+{# * @returns {object} An object containing score, qualityHtml, charCount, charCounterClass, charMaxClass.#}
+{# */#}
+{#function checkBulletQuality(textarea) {#}
+{#    // *** This is the refactored function from the previous response ***#}
+{#    // *** It calculates score based on Action Verb, Metrics, Length ***#}
+{#    // *** and returns an object: { score, qualityHtml, charCount, ... } ***#}
+{#    const text = textarea.value.trim();#}
+{#    let score = 0;#}
+{#    const feedback = [];#}
+{#    const actionVerbs = ["Achieved", "Analyzed", "Built", "Coordinated", "Created", "Delivered",#}
+{#                      "Designed", "Developed", "Established", "Generated", "Implemented",#}
+{#                      "Improved", "Led", "Managed", "Optimized", "Reduced", "Spearheaded",#}
+{#                      "Launched", "Executed", "Streamlined", "Transformed", "Increased"];#}
+{##}
+{#    // --- Calculate Score and Feedback ---#}
+{#    if (text) {#}
+{#        // Action Verb Check#}
+{#        const firstWord = text.split(' ')[0];#}
+{#        const startsWithAction = actionVerbs.some(verb =>#}
+{#            firstWord.toLowerCase() === verb.toLowerCase()#}
+{#        );#}
+{#        if (startsWithAction) { score += 2; } else { feedback.push("Start with a strong action verb"); }#}
+{##}
+{#        // Metrics Check#}
+{#        const hasNumbers = /\d/.test(text);#}
+{#        const hasPercentOrMoney = /%|\$|€|£|¥|₹/.test(text);#}
+{#        if (hasNumbers) {#}
+{#            score += 1;#}
+{#            if (hasPercentOrMoney) { score += 1; }#}
+{#        } else { feedback.push("Add measurable results (numbers, %, $)"); }#}
+{##}
+{#        // Length Check#}
+{#        if (text.length >= 80 && text.length <= 150) {#}
+{#            score += 2;#}
+{#        } else if (text.length > 0 && text.length < 80) {#}
+{#            feedback.push("Consider adding more detail/context");#}
+{#            score += 1;#}
+{#        } else if (text.length > 150) {#}
+{#            feedback.push("Try to be more concise");#}
+{#            score += 1;#}
+{#        }#}
+{#    }#}
+{#    // --- End Score Calculation ---#}
+{##}
+{#    // --- Prepare UI Data ---#}
+{#    let resultHtml = '';#}
+{#    if (score >= 5) { resultHtml = '<span class="text-green-600 font-semibold">Excellent! ★★★★★</span>'; }#}
+{#    else if (score >= 4) { resultHtml = '<span class="text-lime-600 font-medium">Good ★★★★☆</span>'; }#}
+{#    else if (score >= 3) { resultHtml = '<span class="text-yellow-600">Average ★★★☆☆</span>'; }#}
+{#    else if (score >= 2) { resultHtml = '<span class="text-yellow-600">Average ★★★☆☆</span>'; }#}
+{#    else { resultHtml = '<span class="text-red-500">Needs Improvement ★★☆☆☆</span>'; }#}
+{##}
+{#    if (feedback.length > 0 && text) { resultHtml += ` <span class="text-gray-500 italic ml-1">Tip: ${feedback[0]}</span>`; }#}
+{##}
+{#    const len = textarea.value.length;#}
+{#    let charCounterClass = 'current'; let charMaxClass = 'max';#}
+{#     if (len >= 80 && len <= 150) { charCounterClass = 'current text-green-600'; charMaxClass = 'max text-green-600'; }#}
+{#     else if (len > 0 && len < 80) { charCounterClass = 'current text-yellow-600'; charMaxClass = 'max text-yellow-600'; }#}
+{#     else if (len > 150) { charCounterClass = 'current text-red-600'; charMaxClass = 'max text-red-600'; }#}
+{##}
+{#    return { score: score, qualityHtml: resultHtml, charCount: len, charCounterClass: charCounterClass, charMaxClass: charMaxClass };#}
+{#}#}
+{##}
+{#/**#}
+{# * Updates the bullet quality UI elements based on the textarea content.#}
+{# * Called by onkeyup.#}
+{# * @param {HTMLTextAreaElement} textarea - The textarea element.#}
+{# */#}
+{#function updateBulletQualityUI(textarea) {#}
+{#    // *** This is the new UI update helper function ***#}
+{#    const qualityInfo = checkBulletQuality(textarea); // Get the data object#}
+{#    const formControl = textarea.closest('.form-control');#}
+{#    if (!formControl) return;#}
+{##}
+{#    const qualityDiv = formControl.querySelector('.bullet-quality');#}
+{#    if (qualityDiv) { qualityDiv.innerHTML = qualityInfo.qualityHtml; }#}
+{##}
+{#    const charCounter = formControl.querySelector('.char-counter .current');#}
+{#    const charMax = formControl.querySelector('.char-counter .max');#}
+{#     if (charCounter) { charCounter.textContent = qualityInfo.charCount; charCounter.className = qualityInfo.charCounterClass; }#}
+{#     if (charMax) { charMax.className = qualityInfo.charMaxClass; }#}
+{#}#}
+{##}
+{##}
+{#// ======= Bullet Generation Modal Functions =======#}
+{##}
+{#function openBulletGenerationModal(parentIndex) {#}
+{#    // ... (Function remains unchanged from original) ...#}
+{#    console.log("Opening bullet generation modal for index:", parentIndex);#}
+{#    const modal = document.getElementById('bullet-generation-modal');#}
+{#    if (!modal) { console.error("Modal element not found!"); return; }#}
+{#    const formRow = document.getElementById(`${formsetPrefix}-${parentIndex}-row`);#}
+{#    const jobTitleInput = formRow ? formRow.querySelector(`input[name$="-job_title"]`) : null;#}
+{#    if (jobTitleInput) {#}
+{#        const jobTitle = jobTitleInput.value.trim();#}
+{#        if (!jobTitle) { alert('Please enter a job title first.'); return; }#}
+{#        const jobTitleSpan = modal.querySelector('#job-title-display');#}
+{#        const parentIndexInput = modal.querySelector('#parent-index-input');#}
+{#        if (jobTitleSpan) jobTitleSpan.textContent = jobTitle;#}
+{#        if (parentIndexInput) parentIndexInput.value = parentIndex;#}
+{#        const targetJobTitleInput = document.getElementById('target-job-title');#}
+{#        if (targetJobTitleInput) { targetJobTitleInput.value = jobTitle; }#}
+{#        const skillsSelect = document.getElementById('skills-selection');#}
+{#        if (skillsSelect) {#}
+{#            skillsSelect.innerHTML = '';#}
+{#            if (userSkillsData && userSkillsData.length > 0) {#}
+{#                 userSkillsData.forEach(skill => {#}
+{#                    const skillName = typeof skill === 'object' && skill !== null && skill.skill_name ? skill.skill_name : skill;#}
+{#                    if (skillName) {#}
+{#                        const option = document.createElement('option');#}
+{#                        option.value = skillName; option.textContent = skillName;#}
+{#                        skillsSelect.appendChild(option);#}
+{#                    }#}
+{#                });#}
+{#            } else {#}
+{#                const option = document.createElement('option'); option.value = "";#}
+{#                option.textContent = "No skills found (Add skills in Step 3)"; option.disabled = true;#}
+{#                skillsSelect.appendChild(option);#}
+{#            }#}
+{#        } else { console.error("Skills selection dropdown not found!"); }#}
+{#        resetBulletGenerationModal();#}
+{#        modal.classList.remove('hidden'); modal.style.display = 'block';#}
+{#        document.body.classList.add('overflow-hidden');#}
+{#        console.log("Modal should be visible now");#}
+{#    } else {#}
+{#        console.error(`Could not find job title input for index ${parentIndex} using prefix ${formsetPrefix}`);#}
+{#        alert('Could not find job title input. Please ensure the job title field is filled.');#}
+{#    }#}
+{#}#}
+{##}
+{#function closeBulletGenerationModal() {#}
+{#    // ... (Function remains unchanged from original) ...#}
+{#    const modal = document.getElementById('bullet-generation-modal');#}
+{#    if (modal) { modal.classList.add('hidden'); modal.style.display = 'none'; document.body.classList.remove('overflow-hidden'); }#}
+{#}#}
+{##}
+{#function resetBulletGenerationModal() {#}
+{#    // ... (Function remains unchanged from original) ...#}
+{#    document.getElementById('responsibilities').value = '';#}
+{#    document.getElementById('bullet-count').value = '3';#}
+{#    document.getElementById('ai-engine-chatgpt').checked = true;#}
+{#    const skillsSelect = document.getElementById('skills-selection');#}
+{#    if (skillsSelect) { Array.from(skillsSelect.options).forEach(option => option.selected = false); }#}
+{#    document.getElementById('generation-loading').classList.add('hidden');#}
+{#    document.getElementById('generation-results').classList.add('hidden');#}
+{#    document.getElementById('bullet-results-container').innerHTML = '';#}
+{#    document.getElementById('apply-bullets-btn').classList.add('hidden');#}
+{#    document.getElementById('generate-bullets-btn').classList.remove('hidden');#}
+{#    document.getElementById('generate-bullets-btn').disabled = false;#}
+{#}#}
+{##}
+{#function generateBullets() {#}
+{#    // ... (Function remains unchanged from original) ...#}
+{#    console.log("Generating bullets...");#}
+{#    const targetJobTitleInput = document.getElementById('target-job-title');#}
+{#    const skillsSelect = document.getElementById('skills-selection');#}
+{#    if (!targetJobTitleInput.value.trim()) { alert('Please enter the Target Job Title.'); targetJobTitleInput.focus(); return; }#}
+{#    console.warn("Skills selected:", skillsSelect.selectedOptions.length);#}
+{#    document.getElementById('generation-loading').classList.remove('hidden');#}
+{#    document.getElementById('generation-results').classList.add('hidden');#}
+{#    document.getElementById('generate-bullets-btn').disabled = true;#}
+{#    const parentIndex = document.getElementById('parent-index-input').value;#}
+{#    const formRow = document.getElementById(`${formsetPrefix}-${parentIndex}-row`);#}
+{#    const jobTitleInput = formRow ? formRow.querySelector(`input[name$="-job_title"]`) : null;#}
+{#    const targetJobTitle = targetJobTitleInput.value.trim();#}
+{#    const responsibilities = document.getElementById('responsibilities').value.trim();#}
+{#    const bulletCount = document.getElementById('bullet-count').value;#}
+{#    const aiEngine = document.querySelector('input[name="ai-engine"]:checked').value;#}
+{#    const jobTitle = jobTitleInput ? jobTitleInput.value.trim() : '';#}
+{#     if (!jobTitle) { alert('Current Job Title is required.'); document.getElementById('generation-loading').classList.add('hidden'); document.getElementById('generate-bullets-btn').disabled = false; return; }#}
+{#    const selectedSkills = Array.from(skillsSelect.selectedOptions).map(option => option.value);#}
+{#    const skillsText = selectedSkills.join(', ');#}
+{#    console.log("Generating bullets for:", jobTitle, "Target:", targetJobTitle, "Skills:", skillsText, "Count:", bulletCount);#}
+{#    const requestData = { job_title: jobTitle, target_job_title: targetJobTitle, skills: skillsText, responsibilities: responsibilities, bullet_count: bulletCount, ai_engine: aiEngine, parent_index: parentIndex };#}
+{#    const url = "{% url 'job_portal:ai_generate_bullets' %}";#}
+{#    const params = new URLSearchParams(requestData).toString();#}
+{#    htmx.ajax('GET', `${url}?${params}`, {#}
+{#        target: '#bullet-results-container', swap: 'innerHTML', indicator: '#generation-loading', source: '#generate-bullets-btn'#}
+{#    }).then(data => {#}
+{#        console.log("HTMX request successful, content swapped.");#}
+{#        document.getElementById('generation-results').classList.remove('hidden');#}
+{#        document.getElementById('apply-bullets-btn').classList.remove('hidden');#}
+{#        document.getElementById('generate-bullets-btn').disabled = false;#}
+{#        document.querySelectorAll('#bullet-results-container textarea').forEach(textarea => {#}
+{#            if (textarea.value.startsWith('- ')) { textarea.value = textarea.value.substring(2).trim(); }#}
+{#            else if (textarea.value.startsWith('-')) { textarea.value = textarea.value.substring(1).trim(); }#}
+{#            updateBulletQualityUI(textarea); // Update quality for generated bullets#}
+{#        });#}
+{#    }).catch(error => {#}
+{#        console.error("HTMX request failed:", error);#}
+{#        document.getElementById('bullet-results-container').innerHTML = '<p class="text-red-500">Error generating bullets. Please try again.</p>';#}
+{#        document.getElementById('generation-loading').classList.add('hidden');#}
+{#        document.getElementById('generation-results').classList.remove('hidden');#}
+{#        document.getElementById('apply-bullets-btn').classList.add('hidden');#}
+{#        document.getElementById('generate-bullets-btn').disabled = false;#}
+{#    });#}
+{#}#}
+{##}
+{#function applyGeneratedBullets() {#}
+{#    // ... (Function is mostly unchanged, but ensure enhance listeners and quality check are added) ...#}
+{#    console.log("Applying generated bullets");#}
+{#    const parentIndex = document.getElementById('parent-index-input').value;#}
+{#    const bulletContainer = document.getElementById(`bullet_points_container_${parentIndex}`);#}
+{#    const bulletCountInput = document.getElementById(`bullet_count_${parentIndex}`);#}
+{#    const resultsContainer = document.getElementById('bullet-results-container');#}
+{#    if (!bulletContainer || !bulletCountInput || !resultsContainer) { console.error("Could not find necessary elements for applying bullets"); return; }#}
+{#    const generatedBulletRows = resultsContainer.querySelectorAll('.bullet-point-row');#}
+{#    if (generatedBulletRows.length === 0) return;#}
+{#    bulletContainer.innerHTML = ''; // Clear existing#}
+{#    generatedBulletRows.forEach((row, index) => {#}
+{#        const clonedRow = row.cloneNode(true);#}
+{#        const textarea = clonedRow.querySelector('textarea');#}
+{#        const removeBtn = clonedRow.querySelector('button[onclick*="removeBulletPoint"]');#}
+{#        const enhanceBtn = clonedRow.querySelector('.enhance-bullet-btn');#}
+{#        const indicator = clonedRow.querySelector('.htmx-indicator');#}
+{##}
+{#        if (textarea) {#}
+{#            textarea.id = `bullet_${parentIndex}_${index}`;#}
+{#            textarea.name = `bullet_${parentIndex}_${index}`;#}
+{#            textarea.dataset.parent = parentIndex;#}
+{#            textarea.dataset.index = index;#}
+{#            textarea.setAttribute('onkeyup', 'updateBulletQualityUI(this)'); // *** Ensure correct onkeyup ***#}
+{#            updateBulletQualityUI(textarea); // Initial quality check#}
+{#        }#}
+{#        if (removeBtn) { removeBtn.setAttribute('onclick', `removeBulletPoint(this, '${parentIndex}')`); }#}
+{#        if (enhanceBtn) {#}
+{#            enhanceBtn.dataset.parent = parentIndex;#}
+{#            enhanceBtn.dataset.index = index;#}
+{#            // *** Re-attach enhance listener ***#}
+{#            enhanceBtn.addEventListener('click', function(e) {#}
+{#                 e.preventDefault();#}
+{#                 console.log("Enhance button clicked for applied bullet:", parentIndex, index);#}
+{#                 openBulletEnhancementModal(parentIndex, index);#}
+{#            });#}
+{#        }#}
+{#         if (indicator) { indicator.id = `enhance_indicator_${parentIndex}_${index}`; }#}
+{#        bulletContainer.appendChild(clonedRow);#}
+{#    });#}
+{#    bulletCountInput.value = generatedBulletRows.length;#}
+{#    closeBulletGenerationModal();#}
+{#    bulletContainer.classList.add('bg-green-50', 'border-green-300');#}
+{#    setTimeout(() => { bulletContainer.classList.remove('bg-green-50', 'border-green-300'); }, 1500);#}
+{#    console.log("Successfully applied bullets to the form");#}
+{#}#}
+{##}
+{##}
+{#// ======= Bullet Enhancement Modal Functions (Updated Logic) =======#}
+{##}
+{#function openBulletEnhancementModal(parentIndex, bulletIndex) {#}
+{#    // *** This function now includes the score check logic ***#}
+{#    console.log("Opening enhancement modal for bullet:", parentIndex, bulletIndex);#}
+{#    const modal = document.getElementById('bullet-enhancement-modal');#}
+{#    if (!modal) { console.error("Enhancement modal not found!"); return; }#}
+{##}
+{#    const formRow = document.getElementById(`${formsetPrefix}-${parentIndex}-row`);#}
+{#    const bulletTextarea = formRow ? formRow.querySelector(`#bullet_${parentIndex}_${bulletIndex}`) : null;#}
+{#    if (!bulletTextarea) { console.error("Bullet textarea not found:", `bullet_${parentIndex}_${bulletIndex}`); alert('Could not find the bullet point text area.'); return; }#}
+{##}
+{#    // --- START: Use Quality Score for Validation ---#}
+{#    const qualityInfo = checkBulletQuality(bulletTextarea); // Get score and other info#}
+{#    const score = qualityInfo.score;#}
+{#    console.log(`Checking enhancement eligibility for bullet ${parentIndex}_${bulletIndex}: Score = ${score}`); // Log score#}
+{##}
+{#    // --- Your requested logic: Allow enhance only if score is > 2 ---#}
+{#    if (score <= 2) {#}
+{#        // *** Use the alert message guiding towards 'AI Generate' ***#}
+{#        alert("This bullet point could be stronger to get the best AI enhancement (Score: " + score + "/6). For helpful suggestions tailored to this role, try the 'AI Generate' button!");#}
+{#        console.log(`Enhancement blocked: Score (${score}) is not > 2.`);#}
+{#        return; // Prevent modal opening#}
+{#    }#}
+{#    // --- END: Use Quality Score for Validation ---#}
+{##}
+{#    // --- Score is > 2, proceed with opening the modal ---#}
+{#    console.log(`Enhancement allowed: Score (${score}) is > 2.`);#}
+{#    const bulletText = bulletTextarea.value.trim();#}
+{##}
+{#    document.getElementById('enhance-parent-index').value = parentIndex;#}
+{#    document.getElementById('enhance-bullet-index').value = bulletIndex;#}
+{#    document.getElementById('original-bullet').value = bulletText;#}
+{##}
+{#    // Reset modal state (as before)#}
+{#    document.getElementById('enhancement-general').checked = true;#}
+{#    document.getElementById('enhance-engine-chatgpt').checked = true;#}
+{#    document.getElementById('job-description-container').classList.add('hidden');#}
+{#    document.getElementById('job-description').value = '';#}
+{#    document.getElementById('enhancement-loading').classList.add('hidden');#}
+{#    document.getElementById('enhancement-result').classList.add('hidden');#}
+{#    document.getElementById('enhanced-bullet').value = '';#}
+{#    document.getElementById('enhancement-quality').innerHTML = '';#}
+{#    document.getElementById('apply-enhancement-btn').classList.add('hidden');#}
+{#    document.getElementById('enhance-bullet-btn').classList.remove('hidden');#}
+{#    document.getElementById('enhance-bullet-btn').disabled = false;#}
+{##}
+{#    // Show the modal#}
+{#    modal.classList.remove('hidden'); modal.style.display = 'block';#}
+{#    document.body.classList.add('overflow-hidden');#}
+{#    console.log("Enhancement modal should be visible now");#}
+{#}#}
+{##}
+{#function closeBulletEnhancementModal() {#}
+{#    // ... (Function remains unchanged from original) ...#}
+{#     const modal = document.getElementById('bullet-enhancement-modal');#}
+{#    if (modal) { modal.classList.add('hidden'); modal.style.display = 'none'; document.body.classList.remove('overflow-hidden'); }#}
+{#}#}
+{##}
+{#function enhanceBullet() {#}
+{#    // ... (Function remains unchanged from original - assumes modal only opens if bullet is eligible) ...#}
+{#    console.log("Enhancing bullet point...");#}
+{#    document.getElementById('enhancement-loading').classList.remove('hidden');#}
+{#    document.getElementById('enhancement-result').classList.add('hidden');#}
+{#    document.getElementById('enhance-bullet-btn').disabled = true;#}
+{#    const originalBullet = document.getElementById('original-bullet').value;#}
+{#    const enhancementType = document.querySelector('input[name="enhancement-type"]:checked').value;#}
+{#    const aiEngine = document.querySelector('input[name="enhance-engine"]:checked').value;#}
+{#    const jobDescription = document.getElementById('job-description').value;#}
+{#    console.log("Enhancement options:", { type: enhancementType, engine: aiEngine, hasJobDescription: !!jobDescription });#}
+{#    const requestData = { bullet_text: originalBullet, enhancement_type: enhancementType, ai_engine: aiEngine, job_description: jobDescription };#}
+{#    const url = "{% url 'job_portal:enhance_bullet' %}";#}
+{#    const params = new URLSearchParams(requestData).toString();#}
+{#    htmx.ajax('GET', `${url}?${params}`, {#}
+{#        target: '#enhanced-bullet', swap: 'value', indicator: '#enhancement-loading', source: '#enhance-bullet-btn'#}
+{#    }).then(data => {#}
+{#        console.log("HTMX enhancement request successful.");#}
+{#        const enhancedBulletText = document.getElementById('enhanced-bullet').value;#}
+{#        // Evaluate enhanced quality (optional display)#}
+{#        // const tempTextArea = document.createElement('textarea'); tempTextArea.value = enhancedBulletText;#}
+{#        // const enhancedQualityInfo = checkBulletQuality(tempTextArea);#}
+{#        // document.getElementById('enhancement-quality').innerHTML = enhancedQualityInfo.qualityHtml;#}
+{##}
+{#        document.getElementById('enhancement-result').classList.remove('hidden');#}
+{#        document.getElementById('apply-enhancement-btn').classList.remove('hidden');#}
+{#        document.getElementById('enhance-bullet-btn').disabled = false;#}
+{#    }).catch(error => {#}
+{#        console.error("HTMX enhancement request failed:", error);#}
+{#        document.getElementById('enhanced-bullet').value = "Error enhancing bullet. Please try again.";#}
+{#        document.getElementById('enhancement-quality').innerHTML = '<span class="text-red-500">Error</span>';#}
+{#        document.getElementById('enhancement-loading').classList.add('hidden');#}
+{#        document.getElementById('enhancement-result').classList.remove('hidden');#}
+{#        document.getElementById('apply-enhancement-btn').classList.add('hidden');#}
+{#        document.getElementById('enhance-bullet-btn').disabled = false;#}
+{#    });#}
+{#}#}
+{##}
+{#function applyEnhancement() {#}
+{#    // ... (Function remains unchanged from original) ...#}
+{#    console.log("Applying enhancement to form");#}
+{#    const parentIndex = document.getElementById('enhance-parent-index').value;#}
+{#    const bulletIndex = document.getElementById('enhance-bullet-index').value;#}
+{#    const enhancedBullet = document.getElementById('enhanced-bullet').value;#}
+{#    const bulletTextarea = document.getElementById(`bullet_${parentIndex}_${bulletIndex}`);#}
+{#    if (bulletTextarea && enhancedBullet) {#}
+{#        bulletTextarea.value = enhancedBullet;#}
+{#        updateBulletQualityUI(bulletTextarea); // *** Update quality display after applying ***#}
+{#        bulletTextarea.classList.add('bg-green-50', 'border-green-300');#}
+{#        setTimeout(() => { bulletTextarea.classList.remove('bg-green-50', 'border-green-300'); }, 1500);#}
+{#        closeBulletEnhancementModal();#}
+{#        console.log("Enhancement applied successfully");#}
+{#    } else {#}
+{#        console.error("Could not find bullet textarea or enhanced text");#}
+{#        alert("Error applying enhancement. Could not find the original bullet point field.");#}
+{#    }#}
+{#}#}
+{##}
+{##}
+{#// ======= Form Utility Functions (Ensure enhance listeners are added correctly) =======#}
+{##}
+{#function addBulletPoint(parentIndex) {#}
+{#    // ... (Function mostly unchanged, ensure new bullet uses correct onkeyup and enhance listener) ...#}
+{#    console.log("Adding bullet point for parent:", parentIndex);#}
+{#    const container = document.getElementById(`bullet_points_container_${parentIndex}`);#}
+{#    if(!container) { console.error("Bullet container not found for index:", parentIndex); return; }#}
+{#    const bulletCountInput = document.getElementById(`bullet_count_${parentIndex}`);#}
+{#    let bulletIndex = parseInt(bulletCountInput.value);#}
+{##}
+{#    const newBulletRow = document.createElement('div');#}
+{#    newBulletRow.className = 'bullet-point-row flex items-start gap-3 group hover:bg-gray-50 p-2 rounded-md transition-colors';#}
+{#    newBulletRow.innerHTML = `#}
+{#        <div class="mt-3 text-indigo-600">•</div>#}
+{#        <div class="form-control flex-1">#}
+{#            <textarea name="bullet_${parentIndex}_${bulletIndex}" id="bullet_${parentIndex}_${bulletIndex}" class="w-full min-h-24 py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Describe your achievement..." onkeyup="updateBulletQualityUI(this)" data-parent="${parentIndex}" data-index="${bulletIndex}"></textarea> {# *** Ensure correct onkeyup *** #}
+{#            <div class="flex justify-between mt-1"> <div class="bullet-quality text-xs"></div> <div class="text-xs char-counter text-gray-500"> <span class="current">0</span>/<span class="max">100-150 optimal</span> </div> </div>#}
+{#        </div>#}
+{#        <div class="flex flex-col gap-2">#}
+{#            <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 bg-white text-red-500 hover:bg-red-50 hover:text-red-700 mt-3" onclick="removeBulletPoint(this, '${parentIndex}')"><i class="fa-solid fa-times"></i></button>#}
+{#            <button type="button" class="enhance-bullet-btn inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 bg-white text-indigo-500 hover:bg-indigo-50 hover:text-indigo-700" data-parent="${parentIndex}" data-index="${bulletIndex}"><i class="fa-solid fa-wand-magic-sparkles"></i></button>#}
+{#            <span id="enhance_indicator_${parentIndex}_${bulletIndex}" class="htmx-indicator hidden flex items-center justify-center h-8 w-8"><span class="animate-spin h-4 w-4 border-2 border-indigo-500 rounded-full border-t-transparent"></span></span>#}
+{#        </div>#}
+{#    `;#}
+{#    container.appendChild(newBulletRow);#}
+{#    bulletCountInput.value = bulletIndex + 1;#}
+{##}
+{#    // *** Add enhance button click handler for the new bullet ***#}
+{#    const enhanceBtn = newBulletRow.querySelector('.enhance-bullet-btn');#}
+{#    if (enhanceBtn) {#}
+{#        enhanceBtn.addEventListener('click', function(e) {#}
+{#             e.preventDefault();#}
+{#             console.log("Enhance button clicked for new bullet:", parentIndex, bulletIndex);#}
+{#             openBulletEnhancementModal(parentIndex, bulletIndex);#}
+{#        });#}
+{#    }#}
+{##}
+{#    // *** Initial quality check for the new bullet ***#}
+{#    const newTextarea = newBulletRow.querySelector('textarea');#}
+{#     if (newTextarea) {#}
+{#         updateBulletQualityUI(newTextarea); // Set initial quality display#}
+{#         newTextarea.focus();#}
+{#     }#}
+{##}
+{#    newBulletRow.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#    newBulletRow.classList.add('bg-indigo-50'); setTimeout(() => { newBulletRow.classList.remove('bg-indigo-50'); }, 1500);#}
+{#    console.log("Added bullet point successfully, new index:", bulletIndex);#}
+{#}#}
+{##}
+{#function removeBulletPoint(button, parentIndex) {#}
+{#    // ... (Function remains unchanged from original) ...#}
+{#    const bulletRow = button.closest('.bullet-point-row'); if (!bulletRow) return;#}
+{#    bulletRow.classList.add('opacity-50', 'transition-opacity', 'duration-300');#}
+{#    bulletRow.style.maxHeight = bulletRow.scrollHeight + 'px';#}
+{#    requestAnimationFrame(() => { bulletRow.style.maxHeight = '0px'; bulletRow.style.overflow = 'hidden'; bulletRow.style.paddingTop = '0'; bulletRow.style.paddingBottom = '0'; bulletRow.style.marginTop = '0'; bulletRow.style.marginBottom = '0'; bulletRow.style.border = 'none'; });#}
+{#    setTimeout(() => { bulletRow.remove(); renumberBulletPoints(parentIndex); }, 300);#}
+{#}#}
+{##}
+{#function renumberBulletPoints(parentIndex) {#}
+{#    // ... (Function remains unchanged from original, but ensure enhance listeners are correctly handled) ...#}
+{#    console.log("Renumbering bullets for parent:", parentIndex);#}
+{#    const container = document.getElementById(`bullet_points_container_${parentIndex}`);#}
+{#    const bulletCountInput = document.getElementById(`bullet_count_${parentIndex}`);#}
+{#    if (!container || !bulletCountInput) return;#}
+{#    const bulletRows = container.querySelectorAll('.bullet-point-row');#}
+{#    bulletRows.forEach((row, newIndex) => {#}
+{#        const textarea = row.querySelector('textarea');#}
+{#        const removeBtn = row.querySelector('button[onclick*="removeBulletPoint"]');#}
+{#        const enhanceBtn = row.querySelector('.enhance-bullet-btn');#}
+{#        const indicator = row.querySelector('.htmx-indicator');#}
+{#        if (textarea) { textarea.id = `bullet_${parentIndex}_${newIndex}`; textarea.name = `bullet_${parentIndex}_${newIndex}`; textarea.dataset.index = newIndex; console.log(` > Updated textarea: id=${textarea.id}, name=${textarea.name}`); }#}
+{#        if (removeBtn) { removeBtn.setAttribute('onclick', `removeBulletPoint(this, '${parentIndex}')`); }#}
+{#        if (enhanceBtn) {#}
+{#            enhanceBtn.dataset.index = newIndex;#}
+{#            // *** Re-attach listener to ensure correct index closure ***#}
+{#            const newEnhanceBtn = enhanceBtn.cloneNode(true);#}
+{#            enhanceBtn.parentNode.replaceChild(newEnhanceBtn, enhanceBtn);#}
+{#             newEnhanceBtn.addEventListener('click', function(e) {#}
+{#                 e.preventDefault();#}
+{#                 console.log("Enhance button clicked after renumber:", parentIndex, newIndex);#}
+{#                 openBulletEnhancementModal(parentIndex, newIndex);#}
+{#            });#}
+{#        }#}
+{#         if (indicator) { indicator.id = `enhance_indicator_${parentIndex}_${newIndex}`; }#}
+{#    });#}
+{#    bulletCountInput.value = bulletRows.length;#}
+{#    console.log("Renumbering complete. New count:", bulletRows.length);#}
+{#}#}
+{##}
+{#function addForm(button, prefix) {#}
+{#    // ... (Function mostly unchanged, ensure new form enhance listeners are added) ...#}
+{#    const formContainer = document.getElementById('experiences_container');#}
+{#    const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');#}
+{#    const template = document.getElementById(prefix + '-form-template');#}
+{#    if (!formContainer || !totalFormsInput || !template) { console.error("Required elements not found for adding form"); return; }#}
+{#    const formNum = parseInt(totalFormsInput.value);#}
+{#    let newFormHtml = template.innerHTML.replace(/__prefix__/g, formNum);#}
+{#    const tempDiv = document.createElement('div'); tempDiv.innerHTML = newFormHtml;#}
+{#    const newFormElement = tempDiv.firstElementChild;#}
+{#    formContainer.appendChild(newFormElement);#}
+{#    totalFormsInput.value = formNum + 1;#}
+{#    const isCurrentCheckbox = newFormElement.querySelector('input[name$="-is_current"]');#}
+{#    if (isCurrentCheckbox) { toggleEndDate(isCurrentCheckbox); }#}
+{#    const aiGenBtn = newFormElement.querySelector('.ai-generate-btn');#}
+{#    if (aiGenBtn) { aiGenBtn.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); openBulletGenerationModal(formNum); }); }#}
+{##}
+{#    // *** Add listeners for enhance buttons in the NEW form's bullets ***#}
+{#    const enhanceButtons = newFormElement.querySelectorAll('.enhance-bullet-btn');#}
+{#    enhanceButtons.forEach((btn) => {#}
+{#         const parentIndex = btn.getAttribute('data-parent'); // Should be formNum string#}
+{#         const bulletIndex = btn.getAttribute('data-index');#}
+{#         btn.addEventListener('click', function(e) {#}
+{#             e.preventDefault();#}
+{#             console.log("Enhance button clicked for newly added form:", parentIndex, bulletIndex);#}
+{#             openBulletEnhancementModal(parentIndex, bulletIndex); // Use string index here#}
+{#         });#}
+{#         // Initialize quality for the default bullet in the new form#}
+{#         const textarea = btn.closest('.bullet-point-row').querySelector('textarea');#}
+{#         if (textarea) { updateBulletQualityUI(textarea); }#}
+{#    });#}
+{##}
+{#    newFormElement.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#    newFormElement.classList.add('bg-indigo-50'); setTimeout(() => { newFormElement.classList.remove('bg-indigo-50'); }, 1500);#}
+{#    renumberForms(prefix);#}
+{#}#}
+{##}
+{#function deleteForm(button, prefix) {#}
+{#    // ... (Function remains unchanged from original) ...#}
+{#    const formRow = button.closest('.form-row');#}
+{#    const deleteInput = formRow.querySelector('input[name$="-DELETE"]');#}
+{#    const idInput = formRow.querySelector('input[name$="-id"]');#}
+{#    if (deleteInput) {#}
+{#        const isExistingForm = idInput && idInput.value;#}
+{#        if (isExistingForm) {#}
+{#            deleteInput.checked = true; console.log(`Marked existing form ${formRow.id} for deletion.`);#}
+{#            formRow.classList.add('opacity-50', 'transition-opacity', 'duration-300');#}
+{#            formRow.style.maxHeight = formRow.scrollHeight + 'px';#}
+{#            requestAnimationFrame(() => { formRow.style.maxHeight = '0px'; formRow.style.overflow = 'hidden'; formRow.style.paddingTop = '0'; formRow.style.paddingBottom = '0'; formRow.style.marginTop = '0'; formRow.style.marginBottom = '0'; formRow.style.border = 'none'; });#}
+{#        } else {#}
+{#            console.log(`Removing new form ${formRow.id} from DOM.`);#}
+{#            formRow.classList.add('opacity-50', 'transition-opacity', 'duration-300');#}
+{#            formRow.style.maxHeight = formRow.scrollHeight + 'px';#}
+{#            requestAnimationFrame(() => { formRow.style.maxHeight = '0px'; formRow.style.overflow = 'hidden'; formRow.style.paddingTop = '0'; formRow.style.paddingBottom = '0'; formRow.style.marginTop = '0'; formRow.style.marginBottom = '0'; formRow.style.border = 'none'; });#}
+{#            setTimeout(() => { formRow.remove(); renumberForms(prefix); }, 300);#}
+{#        }#}
+{#    } else {#}
+{#        console.warn("DELETE input not found, removing row directly:", formRow.id);#}
+{#        formRow.remove(); renumberForms(prefix);#}
+{#    }#}
+{#    setTimeout(() => renumberForms(prefix), 350);#}
+{#}#}
+{##}
+{#function renumberForms(prefix) {#}
+{#    // ... (Function remains unchanged from original) ...#}
+{#    console.log("Renumbering visible forms with prefix:", prefix);#}
+{#    const forms = document.querySelectorAll(`#experiences_container .form-row:not([style*="max-height: 0px"])`);#}
+{#    let visibleIndex = 0;#}
+{#    forms.forEach((form) => {#}
+{#         const deleteInput = form.querySelector(`input[name$="-DELETE"]`);#}
+{#         if (!deleteInput || !deleteInput.checked) {#}
+{#             const numberSpan = form.querySelector('.experience-number');#}
+{#             if (numberSpan) { numberSpan.textContent = visibleIndex + 1; console.log(` > Renumbered form ${form.id} to #${visibleIndex + 1}`); }#}
+{#             visibleIndex++;#}
+{#         } else { console.log(` > Skipping renumbering for hidden/deleted form ${form.id}`); }#}
+{#    });#}
+{#     console.log("Renumbering complete. Visible forms:", visibleIndex);#}
+{#}#}
+{##}
+{#function toggleEndDate(checkbox) {#}
+{#    // ... (Function remains unchanged from original) ...#}
+{#    const formRow = checkbox.closest('.form-row'); if (!formRow) { console.error("Could not find parent form row for checkbox:", checkbox); return; }#}
+{#    const endDateContainer = formRow.querySelector('.end-date-container'); if (!endDateContainer) { console.error("Could not find end date container in form row:", formRow.id); return; }#}
+{#    const endDateInput = endDateContainer.querySelector('input[type="date"]');#}
+{#    if (endDateInput) {#}
+{#        if (checkbox.checked) { endDateInput.disabled = true; endDateInput.value = ''; endDateInput.required = false; endDateInput.classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed'); console.log(`End date disabled for ${formRow.id}`); }#}
+{#        else { endDateInput.disabled = false; endDateInput.required = false; endDateInput.classList.remove('bg-gray-100', 'text-gray-500', 'cursor-not-allowed'); console.log(`End date enabled for ${formRow.id}`); }#}
+{#    } else { console.error("Could not find end date input within container for:", formRow.id); }#}
+{#}#}
+{##}
+{#</script>#}
+{##}
+{#{% endblock %}#}

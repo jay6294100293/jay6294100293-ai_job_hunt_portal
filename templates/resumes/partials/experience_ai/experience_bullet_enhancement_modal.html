@@ -1,0 +1,36 @@
+{% comment %}
+This is the Tailwind CSS version of the bullet enhancement modal.
+Save as 'resumes/partials/experience_bullet_enhancement_modal.html'
+{% endcomment %}
+
+<div id="bullet-enhancement-modal" class="fixed inset-0 z-[1050] overflow-y-auto hidden" aria-labelledby="modal-title-enhance" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" id="enhance-modal-backdrop"></div>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10"> <i class="fas fa-wand-magic-sparkles text-indigo-600"></i> </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title-enhance"> Enhance Bullet Point </h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500"> Let AI enhance your bullet point for maximum impact. </p>
+                            <input type="hidden" id="enhance-parent-index" value="">
+                            <input type="hidden" id="enhance-bullet-index" value="">
+                            <div class="mt-4"> <label for="original-bullet" class="block text-sm font-medium text-gray-700">Original Bullet Point</label> <div class="mt-1 relative rounded-md shadow-sm"> <textarea id="original-bullet" rows="3" class="block w-full pr-10 border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 rounded-md sm:text-sm bg-gray-50" readonly></textarea> </div> </div>
+                            <div class="mt-4"> <label class="block text-sm font-medium text-gray-700">Enhancement Type</label> <div class="mt-2 grid grid-cols-2 gap-3"> <div> <input type="radio" id="enhancement-general" name="enhancement-type" value="general" class="hidden peer" checked> <label for="enhancement-general" class="flex items-center justify-center w-full p-2 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer peer-checked:border-indigo-600 peer-checked:text-indigo-600 hover:text-gray-600 hover:bg-gray-100"> <div class="block"> <div class="w-full text-sm font-semibold">General</div> <div class="w-full text-xs">Overall improvements</div> </div> </label> </div> <div> <input type="radio" id="enhancement-ats" name="enhancement-type" value="ats" class="hidden peer"> <label for="enhancement-ats" class="flex items-center justify-center w-full p-2 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer peer-checked:border-indigo-600 peer-checked:text-indigo-600 hover:text-gray-600 hover:bg-gray-100"> <div class="block"> <div class="w-full text-sm font-semibold">ATS Optimized</div> <div class="w-full text-xs">For keyword matching</div> </div> </label> </div> </div> </div>
+                            <div class="mt-4"> <label class="block text-sm font-medium text-gray-700">AI Engine</label> <div class="mt-2 grid grid-cols-2 gap-3"> <div> <input type="radio" id="enhance-engine-chatgpt" name="enhance-engine" value="chatgpt" class="hidden peer" checked> <label for="enhance-engine-chatgpt" class="flex items-center justify-center w-full p-2 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer peer-checked:border-indigo-600 peer-checked:text-indigo-600 hover:text-gray-600 hover:bg-gray-100"> <div class="block"> <div class="w-full text-sm font-semibold">ChatGPT</div> </div> </label> </div> <div> <input type="radio" id="enhance-engine-gemini" name="enhance-engine" value="gemini" class="hidden peer"> <label for="enhance-engine-gemini" class="flex items-center justify-center w-full p-2 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer peer-checked:border-indigo-600 peer-checked:text-indigo-600 hover:text-gray-600 hover:bg-gray-100"> <div class="block"> <div class="w-full text-sm font-semibold">Gemini</div> </div> </label> </div> </div> </div>
+                            <div id="job-description-container" class="mt-4 hidden"> <label for="job-description" class="block text-sm font-medium text-gray-700">Job Description (Optional for ATS)</label> <div class="mt-1 relative rounded-md shadow-sm"> <textarea id="job-description" rows="3" class="block w-full border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 rounded-md sm:text-sm" placeholder="Paste relevant portions of the job description..."></textarea> </div> <p class="mt-1 text-xs text-gray-500">Adding a job description helps tailor the bullet point to match specific job requirements</p> </div>
+                            <div id="enhancement-loading" class="mt-4 text-center hidden"> <div class="inline-block animate-spin h-8 w-8 border-4 border-indigo-500 rounded-full border-t-transparent"></div> <p class="mt-2 text-sm text-gray-600">Enhancing your bullet point...</p> </div>
+                            <div id="enhancement-result" class="mt-4 hidden"> <label for="enhanced-bullet" class="block text-sm font-medium text-gray-700">Enhanced Bullet Point</label> <div class="mt-1 relative rounded-md shadow-sm"> <textarea id="enhanced-bullet" rows="3" class="block w-full border-green-300 bg-green-50 focus:ring-green-500 focus:border-green-500 rounded-md sm:text-sm"></textarea> </div> <div class="mt-2 flex items-center text-sm text-gray-500"> <div id="enhancement-quality" class="ml-1"></div> </div> </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="enhance-bullet-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"> Enhance Bullet </button>
+                <button type="button" id="apply-enhancement-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm hidden"> Apply Enhancement </button>
+                <button type="button" id="cancel-enhancement-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"> Cancel </button>
+            </div>
+        </div>
+    </div>
+</div>

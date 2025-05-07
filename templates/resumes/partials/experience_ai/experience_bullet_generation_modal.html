@@ -1,0 +1,419 @@
+{% comment %}
+This is the Tailwind CSS version of the bullet generation modal,
+compatible with the JavaScript in experience.html.
+Save as 'resumes/partials/experience_bullet_generation_modal.html'
+{% endcomment %}
+
+<div id="bullet-generation-modal" class="fixed inset-0 z-[1050] overflow-y-auto hidden" aria-labelledby="modal-title-gen" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" id="bullet-modal-backdrop"></div>
+
+         <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fas fa-magic text-indigo-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title-gen">
+                            Generate AI Bullet Points
+                        </h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500">
+                                Let AI help you create professional bullet points for your position as
+                                <span id="job-title-display" class="font-semibold">[Job Title Here]</span>. {# JS will fill this #}
+                            </p>
+
+                            {# Hidden input for parent index #}
+                            <input type="hidden" id="parent-index-input" value="">
+
+                            {# Form Content with Tailwind styling & Correct IDs #}
+                            <div class="mt-4 space-y-4">
+                                 <div>
+                                    <label for="target-job-title" class="block text-sm font-medium text-gray-700">Target Job Title <span class="text-red-500">*</span></label>
+                                    <input type="text" id="target-job-title" name="target-job-title" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Senior Software Engineer" required>
+                                    <p class="mt-1 text-xs text-gray-500">The job role you're targeting with this resume</p>
+                                </div>
+
+                                 <div>
+                                    <label for="skills-selection" class="block text-sm font-medium text-gray-700">Select Skills to Highlight <span class="text-red-500">*</span></label>
+                                    <select id="skills-selection" name="skills-selection" multiple class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm h-32" required>
+                                        <option value="" disabled>Loading skills...</option> {# JS will populate #}
+                                    </select>
+                                    <p class="mt-1 text-xs text-gray-500">Hold Ctrl/Cmd to select multiple skills. These skills are from Step 3.</p>
+                                </div>
+
+                                 <div>
+                                    <label for="responsibilities" class="block text-sm font-medium text-gray-700">Brief Description of Responsibilities (Optional)</label>
+                                    <textarea id="responsibilities" name="responsibilities" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Describe what you did in this role..."></textarea>
+                                </div>
+
+                                 <div>
+                                    <label for="bullet-count" class="block text-sm font-medium text-gray-700">Number of Bullet Points <span class="text-red-500">*</span></label>
+                                    <select id="bullet-count" name="bullet-count" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                                        <option value="3" selected>3 bullet points</option>
+                                        <option value="4">4 bullet points</option>
+                                        <option value="5">5 bullet points</option>
+                                    </select>
+                                </div>
+
+                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700">AI Engine <span class="text-red-500">*</span></label>
+                                    <div class="mt-1 grid grid-cols-2 gap-3">
+                                        <div> <input type="radio" id="ai-engine-chatgpt" name="ai-engine" value="chatgpt" class="hidden peer" checked> <label for="ai-engine-chatgpt" class="flex items-center justify-center w-full p-3 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer peer-checked:border-indigo-600 peer-checked:text-indigo-600 hover:text-gray-600 hover:bg-gray-100"> <div class="flex items-center"> <i class="fas fa-robot mr-2"></i> <div> <div class="w-full text-sm font-semibold">ChatGPT</div> <div class="w-full text-xs">OpenAI's language model</div> </div> </div> </label> </div>
+                                        <div> <input type="radio" id="ai-engine-gemini" name="ai-engine" value="gemini" class="hidden peer"> <label for="ai-engine-gemini" class="flex items-center justify-center w-full p-3 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer peer-checked:border-indigo-600 peer-checked:text-indigo-600 hover:text-gray-600 hover:bg-gray-100"> <div class="flex items-center"> <i class="fas fa-atom mr-2"></i> <div> <div class="w-full text-sm font-semibold">Gemini</div> <div class="w-full text-xs">Google's language model</div> </div> </div> </label> </div>
+                                    </div>
+                                </div>
+                            </div>{# --- End Modal Form --- #}
+
+                             <div id="generation-loading" class="mt-4 text-center hidden">
+                                <div class="inline-block animate-spin h-8 w-8 border-4 border-indigo-500 rounded-full border-t-transparent"></div>
+                                <p class="mt-2 text-sm text-gray-600">Generating bullet points...</p>
+                            </div>
+
+                             <div id="generation-results" class="mt-4 hidden">
+                                <h4 class="text-sm font-medium text-gray-900 mb-2">Generated Bullet Points:</h4>
+                                <div id="bullet-results-container" class="space-y-2 bg-gray-50 p-3 rounded-md text-sm">
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="generate-bullets-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"> Generate Bullets </button>
+                <button type="button" id="apply-bullets-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm hidden"> Apply to Resume </button>
+                <button type="button" id="cancel-generation-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"> Cancel </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+{#{% comment %}#}
+{#This is the Tailwind CSS version of the bullet generation modal,#}
+{#compatible with the JavaScript in experience.html.#}
+{#Save as 'resumes/partials/experience_bullet_generation_modal.html'#}
+{#{% endcomment %}#}
+{##}
+{#<div id="bullet-generation-modal" class="fixed inset-0 z-[1050] overflow-y-auto hidden" aria-labelledby="modal-title-gen" role="dialog" aria-modal="true">#}
+{#    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">#}
+{#         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" id="bullet-modal-backdrop"></div>#}
+{##}
+{#         <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">#}
+{#            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">#}
+{#                <div class="sm:flex sm:items-start">#}
+{#                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10">#}
+{#                        <i class="fas fa-magic text-indigo-600"></i>#}
+{#                    </div>#}
+{#                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">#}
+{#                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title-gen">#}
+{#                            Generate AI Bullet Points#}
+{#                        </h3>#}
+{#                        <div class="mt-2">#}
+{#                            <p class="text-sm text-gray-500">#}
+{#                                Let AI help you create professional bullet points for your position as#}
+{#                                <span id="job-title-display" class="font-semibold">[Job Title Here]</span>. {# JS will fill this #}
+{#                            </p>#}
+{##}
+                            {# Hidden input for parent index #}
+{#                            <input type="hidden" id="parent-index-input" value="">#}
+{##}
+                            {# Form Content with Tailwind styling & Correct IDs #}
+{#                            <div class="mt-4 space-y-4">#}
+{#                                 <div>#}
+{#                                    <label for="target-job-title" class="block text-sm font-medium text-gray-700">Target Job Title <span class="text-red-500">*</span></label>#}
+{#                                    <input type="text" id="target-job-title" name="target-job-title" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Senior Software Engineer" required>#}
+{#                                    <p class="mt-1 text-xs text-gray-500">The job role you're targeting with this resume</p>#}
+{#                                </div>#}
+{##}
+{#                                 <div>#}
+{#                                    <label for="skills-selection" class="block text-sm font-medium text-gray-700">Select Skills to Highlight <span class="text-red-500">*</span></label>#}
+{#                                    <select id="skills-selection" name="skills-selection" multiple class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm h-32" required>#}
+{#                                        <option value="" disabled>Loading skills...</option> {# JS will populate #}
+{#                                    </select>#}
+{#                                    <p class="mt-1 text-xs text-gray-500">Hold Ctrl/Cmd to select multiple skills. These skills are from Step 3.</p>#}
+{#                                </div>#}
+{##}
+{#                                 <div>#}
+{#                                    <label for="responsibilities" class="block text-sm font-medium text-gray-700">Brief Description of Responsibilities (Optional)</label>#}
+{#                                    <textarea id="responsibilities" name="responsibilities" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Describe what you did in this role..."></textarea>#}
+{#                                </div>#}
+{##}
+{#                                 <div>#}
+{#                                    <label for="bullet-count" class="block text-sm font-medium text-gray-700">Number of Bullet Points <span class="text-red-500">*</span></label>#}
+{#                                    <select id="bullet-count" name="bullet-count" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>#}
+{#                                        <option value="3" selected>3 bullet points</option>#}
+{#                                        <option value="4">4 bullet points</option>#}
+{#                                        <option value="5">5 bullet points</option>#}
+{#                                    </select>#}
+{#                                </div>#}
+{##}
+{#                                 <div>#}
+{#                                    <label class="block text-sm font-medium text-gray-700">AI Engine <span class="text-red-500">*</span></label>#}
+{#                                    <div class="mt-1 grid grid-cols-2 gap-3">#}
+{#                                        <div> <input type="radio" id="ai-engine-chatgpt" name="ai-engine" value="chatgpt" class="hidden peer" checked> <label for="ai-engine-chatgpt" class="flex items-center justify-center w-full p-3 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer peer-checked:border-indigo-600 peer-checked:text-indigo-600 hover:text-gray-600 hover:bg-gray-100"> <div class="flex items-center"> <i class="fas fa-robot mr-2"></i> <div> <div class="w-full text-sm font-semibold">ChatGPT</div> <div class="w-full text-xs">OpenAI's language model</div> </div> </div> </label> </div>#}
+{#                                        <div> <input type="radio" id="ai-engine-gemini" name="ai-engine" value="gemini" class="hidden peer"> <label for="ai-engine-gemini" class="flex items-center justify-center w-full p-3 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer peer-checked:border-indigo-600 peer-checked:text-indigo-600 hover:text-gray-600 hover:bg-gray-100"> <div class="flex items-center"> <i class="fas fa-atom mr-2"></i> <div> <div class="w-full text-sm font-semibold">Gemini</div> <div class="w-full text-xs">Google's language model</div> </div> </div> </label> </div>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                            </div>{# --- End Modal Form --- #}
+{##}
+{#                             <div id="generation-loading" class="mt-4 text-center hidden">#}
+{#                                <div class="inline-block animate-spin h-8 w-8 border-4 border-indigo-500 rounded-full border-t-transparent"></div>#}
+{#                                <p class="mt-2 text-sm text-gray-600">Generating bullet points...</p>#}
+{#                            </div>#}
+{##}
+{#                             <div id="generation-results" class="mt-4 hidden">#}
+{#                                <h4 class="text-sm font-medium text-gray-900 mb-2">Generated Bullet Points:</h4>#}
+{#                                <div id="bullet-results-container" class="space-y-2 bg-gray-50 p-3 rounded-md text-sm">#}
+{#                                    </div>#}
+{#                            </div>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#             <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">#}
+{#                <button type="button" id="generate-bullets-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"> Generate Bullets </button>#}
+{#                <button type="button" id="apply-bullets-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm hidden"> Apply to Resume </button>#}
+{#                <button type="button" id="cancel-generation-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"> Cancel </button>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
+{#<div id="bullet-generation-modal" class="modal">#}
+{#  <div class="modal-box max-w-2xl">#}
+{#    <h3 class="font-bold text-lg flex items-center">#}
+{#      <i class="fa-solid fa-wand-magic-sparkles text-primary mr-2"></i>#}
+{#      AI Generate Bullet Points#}
+{#    </h3>#}
+{##}
+{##}
+{#    <p class="py-2 text-sm text-gray-600">#}
+{#      Provide details to generate ATS-optimized bullet points tailored to your experience#}
+{#    </p>#}
+{##}
+{#    <form id="bullet-generation-form" hx-get="{% url 'job_portal:ai_generate_bullets' %}"#}
+{#          hx-target="#bullet_points_container_{{ parent_index }}"#}
+{#          hx-swap="innerHTML"#}
+{#          hx-indicator="#bullet_ai_indicator_{{ parent_index }}">#}
+{##}
+{#      <input type="hidden" name="parent_index" value="{{ parent_index }}" id="parent_index_input">#}
+{##}
+{#      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">#}
+{#        <!-- Current Job Title -->#}
+{#        <div class="form-control">#}
+{#          <label class="label">#}
+{#            <span class="label-text font-medium">Current Job Title</span>#}
+{#            <span class="label-text-alt text-error">*</span>#}
+{#          </label>#}
+{#          <input type="text" name="job_title" id="job_title_modal" required#}
+{#                 value="{{ job_title }}"#}
+{#                 class="input input-bordered w-full focus:border-primary">#}
+{#        </div>#}
+{##}
+{#        <!-- Target Job Title (Separate Field) -->#}
+{#        <div class="form-control">#}
+{#          <label class="label">#}
+{#            <span class="label-text font-medium">Target Job Title</span>#}
+{#            <span class="label-text-alt text-error">*</span>#}
+{#          </label>#}
+{#          <input type="text" name="target_job_title" id="target_job_title_modal" required#}
+{#                 class="input input-bordered w-full focus:border-primary"#}
+{#                 placeholder="e.g., Senior Software Engineer">#}
+{#        </div>#}
+{#      </div>#}
+{##}
+{#      <!-- Company Name -->#}
+{#      <div class="form-control mt-2">#}
+{#        <label class="label">#}
+{#          <span class="label-text font-medium">Company Name</span>#}
+{#          <span class="label-text-alt text-error">*</span>#}
+{#        </label>#}
+{#        <input type="text" name="employer" id="employer_modal" required#}
+{#               value="{{ employer }}"#}
+{#               class="input input-bordered w-full focus:border-primary">#}
+{#      </div>#}
+{##}
+{#      <!-- Key Skills -->#}
+{#      <div class="form-control mt-2">#}
+{#        <label class="label">#}
+{#          <span class="label-text font-medium">Key Skills (comma separated)</span>#}
+{#          <span class="label-text-alt text-error">*</span>#}
+{#        </label>#}
+{#        <textarea name="skills" id="skills" class="textarea textarea-bordered min-h-20" required#}
+{#                  placeholder="Enter skills separated by commas (e.g., Python, Project Management, Data Analysis)"></textarea>#}
+{#        <p class="text-xs text-gray-500 mt-1">These skills will be incorporated into your bullet points</p>#}
+{#      </div>#}
+{##}
+{#      <!-- Number of Bullet Points -->#}
+{#      <div class="form-control mt-2">#}
+{#        <label class="label">#}
+{#          <span class="label-text font-medium">Number of Bullet Points</span>#}
+{#        </label>#}
+{#        <div class="flex items-center space-x-4">#}
+{#          <input type="range" name="bullet_count" id="bullet_count_slider"#}
+{#                 min="1" max="5" value="3" class="range range-primary"#}
+{#                 oninput="document.getElementById('bullet_count_value').innerText = this.value">#}
+{#          <span id="bullet_count_value" class="px-2 py-1 bg-primary text-white rounded-md">3</span>#}
+{#        </div>#}
+{#      </div>#}
+{##}
+{#      <!-- Job Responsibilities -->#}
+{#      <div class="form-control mt-2">#}
+{#        <label class="label">#}
+{#          <span class="label-text font-medium">Key Responsibilities/Achievements</span>#}
+{#          <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#        </label>#}
+{#        <textarea name="responsibilities" class="textarea textarea-bordered min-h-20"#}
+{#                  placeholder="Briefly describe your main responsibilities and achievements in this role"></textarea>#}
+{#      </div>#}
+{##}
+{#      <!-- AI Model Selection -->#}
+{#      <div class="form-control mt-4">#}
+{#        <label class="label">#}
+{#          <span class="label-text font-medium">AI Model</span>#}
+{#        </label>#}
+{#        <div class="flex gap-4">#}
+{#          <label class="cursor-pointer flex items-center gap-2">#}
+{#            <input type="radio" name="ai_engine" value="chatgpt" class="radio radio-primary" checked>#}
+{#            <span class="label-text">ChatGPT</span>#}
+{#          </label>#}
+{#          <label class="cursor-pointer flex items-center gap-2">#}
+{#            <input type="radio" name="ai_engine" value="gemini" class="radio radio-primary">#}
+{#            <span class="label-text">Gemini</span>#}
+{#          </label>#}
+{#        </div>#}
+{#      </div>#}
+{##}
+{#      <div class="modal-action mt-6">#}
+{#        <button type="button" onclick="closeModal('bullet-generation-modal')" class="btn btn-outline">Cancel</button>#}
+{#        <button type="submit" class="btn btn-primary" onclick="closeModal('bullet-generation-modal')">#}
+{#          <i class="fa-solid fa-magic mr-2"></i> Generate Bullet Points#}
+{#        </button>#}
+{#      </div>#}
+{#    </form>#}
+{#  </div>#}
+{#  <label class="modal-backdrop" for="bullet-generation-modal" onclick="closeModal('bullet-generation-modal')"></label>#}
+{#</div>#}
+{##}
+{#{% comment %}#}
+{#This is a partial template for the bullet generation modal form#}
+{#Save as 'resumes/partials/experience_bullet_generation_modal.html'#}
+{#{% endcomment %}#}
+{##}
+{#<div id="bullet-generation-modal" class="modal">#}
+{#  <div class="modal-box max-w-2xl">#}
+{#    <h3 class="font-bold text-lg flex items-center">#}
+{#      <i class="fa-solid fa-wand-magic-sparkles text-primary mr-2"></i>#}
+{#      AI Generate Bullet Points#}
+{#    </h3>#}
+{#    <p class="py-2 text-sm text-gray-600">#}
+{#      Provide details to generate ATS-optimized bullet points tailored to your experience#}
+{#    </p>#}
+{##}
+{#    <form id="bullet-generation-form" hx-get="{% url 'job_portal:ai_generate_bullets' %}"#}
+{#          hx-target="#bullet_points_container_{{ parent_index }}"#}
+{#          hx-swap="innerHTML"#}
+{#          hx-indicator="#bullet_ai_indicator_{{ parent_index }}">#}
+{##}
+{#      <input type="hidden" name="parent_index" value="{{ parent_index }}">#}
+{##}
+{#      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">#}
+{#        <!-- Current Job Title -->#}
+{#        <div class="form-control">#}
+{#          <label class="label">#}
+{#            <span class="label-text font-medium">Current Job Title</span>#}
+{#            <span class="label-text-alt text-error">*</span>#}
+{#          </label>#}
+{#          <input type="text" name="job_title" id="job_title_modal" required#}
+{#                 value="{{ job_title }}"#}
+{#                 class="input input-bordered w-full focus:border-primary">#}
+{#        </div>#}
+{##}
+{#        <!-- Target Job Title -->#}
+{#        <div class="form-control">#}
+{#          <label class="label">#}
+{#            <span class="label-text font-medium">Target Job Title</span>#}
+{#            <span class="label-text-alt text-error">*</span>#}
+{#          </label>#}
+{#          <input type="text" name="target_job_title" required#}
+{#                 class="input input-bordered w-full focus:border-primary"#}
+{#                 placeholder="e.g., Senior Software Engineer">#}
+{#        </div>#}
+{#      </div>#}
+{##}
+{#      <!-- Company Name -->#}
+{#      <div class="form-control mt-2">#}
+{#        <label class="label">#}
+{#          <span class="label-text font-medium">Company Name</span>#}
+{#          <span class="label-text-alt text-error">*</span>#}
+{#        </label>#}
+{#        <input type="text" name="employer" id="employer_modal" required#}
+{#               value="{{ employer }}"#}
+{#               class="input input-bordered w-full focus:border-primary">#}
+{#      </div>#}
+{##}
+{#      <!-- Number of Bullet Points -->#}
+{#      <div class="form-control mt-2">#}
+{#        <label class="label">#}
+{#          <span class="label-text font-medium">Number of Bullet Points</span>#}
+{#        </label>#}
+{#        <div class="flex items-center space-x-4">#}
+{#          <input type="range" name="bullet_count" id="bullet_count_slider"#}
+{#                 min="1" max="5" value="3" class="range range-primary"#}
+{#                 oninput="document.getElementById('bullet_count_value').innerText = this.value">#}
+{#          <span id="bullet_count_value" class="px-2 py-1 bg-primary text-white rounded-md">3</span>#}
+{#        </div>#}
+{#      </div>#}
+{##}
+{#      <!-- Key Skills -->#}
+{#      <div class="form-control mt-2">#}
+{#        <label class="label">#}
+{#          <span class="label-text font-medium">Key Skills (at least 5)</span>#}
+{#          <span class="label-text-alt text-error">*</span>#}
+{#        </label>#}
+{#        <textarea name="skills" class="textarea textarea-bordered min-h-20" required#}
+{#                  placeholder="Enter at least 5 skills separated by commas (e.g., Python, Project Management, Data Analysis, JavaScript, AWS)"></textarea>#}
+{#        <p class="text-xs text-gray-500 mt-1">These skills will be incorporated into your bullet points</p>#}
+{#      </div>#}
+{##}
+{#      <!-- Job Responsibilities -->#}
+{#      <div class="form-control mt-2">#}
+{#        <label class="label">#}
+{#          <span class="label-text font-medium">Key Responsibilities/Achievements</span>#}
+{#          <span class="label-text-alt text-gray-500">(Optional)</span>#}
+{#        </label>#}
+{#        <textarea name="responsibilities" class="textarea textarea-bordered min-h-20"#}
+{#                  placeholder="Briefly describe your main responsibilities and achievements in this role"></textarea>#}
+{#      </div>#}
+{##}
+{#      <!-- AI Model Selection -->#}
+{#      <div class="form-control mt-4">#}
+{#        <label class="label">#}
+{#          <span class="label-text font-medium">AI Model</span>#}
+{#        </label>#}
+{#        <div class="flex gap-4">#}
+{#          <label class="cursor-pointer flex items-center gap-2">#}
+{#            <input type="radio" name="ai_engine" value="chatgpt" class="radio radio-primary" checked>#}
+{#            <span class="label-text">ChatGPT</span>#}
+{#          </label>#}
+{#          <label class="cursor-pointer flex items-center gap-2">#}
+{#            <input type="radio" name="ai_engine" value="gemini" class="radio radio-primary">#}
+{#            <span class="label-text">Gemini</span>#}
+{#          </label>#}
+{#        </div>#}
+{#      </div>#}
+{##}
+{#      <div class="modal-action mt-6">#}
+{#        <button type="button" onclick="closeModal('bullet-generation-modal')" class="btn btn-outline">Cancel</button>#}
+{#        <button type="submit" class="btn btn-primary" onclick="closeModal('bullet-generation-modal')">#}
+{#          <i class="fa-solid fa-magic mr-2"></i> Generate Bullet Points#}
+{#        </button>#}
+{#      </div>#}
+{#    </form>#}
+{#  </div>#}
+{#  <label class="modal-backdrop" for="bullet-generation-modal" onclick="closeModal('bullet-generation-modal')"></label>#}
+{#</div>#}

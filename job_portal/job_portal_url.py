@@ -7,6 +7,7 @@ from job_portal.views.download_resume_view import download_resume
 from job_portal.views.generate_resume_view import generate_resume
 from job_portal.views.modification_resume_view import resume_list, edit_resume, delete_resume, update_resume_ajax
 from job_portal.views.preview_current_resume_view import preview_current_resume
+from job_portal.views.project_enhancement_view import enhance_project_bullet, project_bullet_enhancement_form
 from job_portal.views.resume_create_choice import resume_creation_choice
 from job_portal.views.resume_upload_view import upload_resume, edit_resume_section, \
     save_resume_section, preview_upload_data
@@ -19,7 +20,8 @@ app_name = 'job_portal'
 urlpatterns = [
 
     path('', resume_creation_choice, name='resume_creation_choice'),
-
+    path('enhance-project-bullet/', enhance_project_bullet, name='enhance_project_bullet'),
+    path('project-enhancement-form/', project_bullet_enhancement_form, name='project_bullet_enhancement_form'),
     # Add these new paths
     path('upload-resume/', upload_resume, name='upload_resume'),
     #path('create-from-upload/', create_resume_from_upload, name='create_resume_from_upload'),

@@ -401,4 +401,3 @@ def preview_upload_data(request):
         print(f"ERROR during preview generation: {str(e)}")
         messages.error(request, f"An error occurred while generating the preview: {str(e)}")
         return redirect('job_portal:upload_resume')
-

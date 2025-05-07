@@ -1,0 +1,108 @@
+{% comment %}
+This is a partial template for the project bullet enhancement modal form
+Save as 'resumes/partials/project_enhancement_modal.html'
+{% endcomment %}
+
+<div id="project-enhancement-modal" class="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center hidden">
+  <div class="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full mx-4 p-6 shadow-xl">
+    <h3 class="font-bold text-lg flex items-center text-gray-800 dark:text-gray-100">
+      <i class="fa-solid fa-wand-magic-sparkles text-blue-500 mr-2"></i>
+      Enhance Project Bullet Point
+    </h3>
+    <p class="py-2 text-sm text-gray-600 dark:text-gray-400">
+      Make your project bullet point more impactful with AI enhancement
+    </p>
+
+    {# Ensure your Django view URL exists and is correct #}
+    <form id="project-enhancement-form" hx-post="{% url 'job_portal:enhance_project_bullet' %}" {# Changed to hx-post as it likely modifies data/makes requests #}
+          hx-target="#enhanced_bullet_result"
+          hx-swap="innerHTML"
+          hx-indicator="#enhancement_in_progress">
+      {% csrf_token %} {# Added CSRF token for POST requests #}
+
+      <input type="hidden" name="parent_index" value="" id="parent_index_modal">
+      <input type="hidden" name="bullet_index" value="" id="bullet_index_modal">
+      <input type="hidden" name="project_name" value="" id="project_name_modal">
+      {# Removed project_title hidden input #}
+      <input type="hidden" name="project_summary" value="" id="project_summary_modal">
+
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="original_bullet_modal"> {# Added 'for' attribute #}
+          Original Bullet Point
+        </label>
+        <textarea id="original_bullet_modal" name="bullet_text" class="w-full min-h-24 p-2 border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" readonly></textarea>
+      </div>
+
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Project Context
+        </label>
+        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-md text-sm space-y-2 border border-gray-200 dark:border-gray-600"> {# Added border #}
+          {# --- CORRECTED SECTION (Project Title line removed) --- #}
+          <p><strong>Project Name:</strong> <span id="project_name_display" class="text-gray-800 dark:text-gray-200"></span></p>
+          <p><strong>Project Summary:</strong> <span id="project_summary_display" class="italic text-gray-600 dark:text-gray-400"></span></p>
+           {# --- END CORRECTION --- #}
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Enhancement Type
+        </label>
+        <div class="flex flex-wrap gap-x-4 gap-y-2"> {# Added flex-wrap for smaller screens #}
+          <label class="cursor-pointer flex items-center gap-2">
+            <input type="radio" name="enhancement_type" value="general" class="text-blue-600 border-gray-300 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-600 dark:checked:bg-blue-500 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800" checked>
+            <span class="text-gray-700 dark:text-gray-300">General Enhancement</span>
+          </label>
+          <label class="cursor-pointer flex items-center gap-2">
+            <input type="radio" name="enhancement_type" value="ats" class="text-blue-600 border-gray-300 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-600 dark:checked:bg-blue-500 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800">
+            <span class="text-gray-700 dark:text-gray-300">ATS Optimization</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          AI Model
+        </label>
+        <div class="flex flex-wrap gap-x-4 gap-y-2"> {# Added flex-wrap #}
+          <label class="cursor-pointer flex items-center gap-2">
+            <input type="radio" name="ai_engine" value="chatgpt" class="text-blue-600 border-gray-300 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-600 dark:checked:bg-blue-500 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800" checked>
+            <span class="text-gray-700 dark:text-gray-300">ChatGPT</span>
+          </label>
+          <label class="cursor-pointer flex items-center gap-2">
+            <input type="radio" name="ai_engine" value="gemini" class="text-blue-600 border-gray-300 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-600 dark:checked:bg-blue-500 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800">
+            <span class="text-gray-700 dark:text-gray-300">Gemini</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <label class="flex justify-between items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"> {# Added items-center #}
+          <span>Enhanced Result</span>
+          <span id="enhancement_in_progress" class="htmx-indicator text-xs text-gray-600 dark:text-gray-400 hidden">
+            {# Improved spinner #}
+            <svg class="animate-spin -ml-1 mr-1 h-4 w-4 inline-block text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+             Enhancing...
+          </span>
+        </label>
+        <div id="enhanced_bullet_result" class="p-4 min-h-24 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-900/50 dark:text-gray-200 shadow-inner"> {# Adjusted styling #}
+          <p class="text-gray-400 dark:text-gray-500 italic">Enhanced bullet point will appear here</p>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 mt-6"> {# Increased gap slightly #}
+        <button type="button" onclick="closeModal('project-enhancement-modal')" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800">Cancel</button>
+        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">
+          <i class="fa-solid fa-wand-magic-sparkles -ml-1 mr-2 h-5 w-5"></i> Enhance
+        </button>
+        <button type="button" id="apply_enhancement_btn" disabled class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 opacity-50 cursor-not-allowed dark:focus:ring-offset-gray-800" onclick="applyProjectEnhancement()">
+          <i class="fa-solid fa-check -ml-1 mr-2 h-5 w-5"></i> Apply
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,127 @@
+{% comment %} {% extends 'resumes/wizard_base.html' %} {% endcomment %}
+{% load widget_tweaks %}
+{# *** Skill Card Design - Inspired by work_experience.html card style *** #}
+<div class="skill-card bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 p-4 mb-3 flex items-center relative group"
+     id="skill_card_{{ index }}">
+
+    {# Hidden fields to store data #}
+    <input type="hidden" name="skill_name_{{ index }}" value="{{ skill_name }}">
+    <input type="hidden" name="skill_type_{{ index }}" value="{{ skill_type }}">
+    <input type="hidden" name="proficiency_level_{{ index }}" value="{{ proficiency }}">
+    <input type="hidden" name="years_{{ index }}" value="{{ years }}">
+
+    {# Leading icon/indicator #}
+    <div class="flex-shrink-0 w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center mr-4 shadow-sm">
+        <i class="fa-solid fa-star text-indigo-600 text-sm"></i> {# Or use fa-code, fa-check, etc. #}
+    </div>
+
+    {# Skill Name #}
+    <div class="font-medium text-gray-800 group-hover:text-indigo-700 transition-colors duration-200 flex-grow mr-4 min-w-0">
+        <span class="truncate">{{ skill_name }}</span> {# Added truncate for long names #}
+    </div>
+
+    {# Skill Type Badge #}
+    <div class="flex-shrink-0 w-32 mr-4">
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 whitespace-nowrap">
+            {% for type_value, type_label in skill_types.items %}
+                {% if skill_type == type_value %}{{ type_label }}{% endif %}
+            {% endfor %}
+        </span>
+    </div>
+
+    {# --- Proficiency Bar and Percentage Text --- #}
+    <div class="flex-grow flex items-center min-w-[150px] mr-4">
+        {# Background of the progress bar #}
+        <div class="w-full bg-gray-200 rounded-full h-2.5 mr-3 relative overflow-hidden">
+            {# Actual progress fill - Width driven by proficiency %} #}
+            <div class="bg-gradient-to-r from-indigo-500 to-blue-500 h-2.5 rounded-full"
+                 style="width: {{ proficiency }}%">
+            </div>
+        </div>
+        {# Percentage Text - Displayed next to the bar #}
+        <div class="flex-shrink-0 text-sm font-semibold text-indigo-700 w-10 text-right">
+            {{ proficiency }}%
+        </div>
+    </div>
+    {# --- End Proficiency Section --- #}
+
+    {# Years Experience (Optional) #}
+    {% if years %}
+    <div class="flex-shrink-0 w-24 text-sm text-gray-500 mr-4 text-right">
+        {{ years }} year{% if years != 1 %}s{% endif %}
+    </div>
+    {% else %}
+    <div class="flex-shrink-0 w-24 mr-4"></div> {# Spacer #}
+    {% endif %}
+
+    {# Action Buttons (Edit/Delete) - Appear on hover #}
+    <div class="flex-shrink-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 bg-white text-indigo-500 hover:bg-indigo-50 hover:text-indigo-700 tooltip tooltip-left"
+                data-tip="Edit skill"
+                onclick="editSkill({{ index }})">
+            <i class="fa-solid fa-pen-to-square text-xs"></i>
+        </button>
+        <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 bg-white text-red-500 hover:bg-red-50 hover:text-red-700 tooltip tooltip-left"
+                data-tip="Remove skill"
+                onclick="removeSkill({{ index }})">
+            <i class="fa-solid fa-times text-xs"></i>
+        </button>
+    </div>
+</div>
+
+{#<!-- Enhanced Skill Card with Proper Spacing and Progress Bar -->#}
+{#<div class="skill-card bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-4 mb-4 flex items-center relative group"#}
+{#     id="skill_card_{{ index }}">#}
+{#    <input type="hidden" name="skill_name_{{ index }}" value="{{ skill_name }}">#}
+{#    <input type="hidden" name="skill_type_{{ index }}" value="{{ skill_type }}">#}
+{#    <input type="hidden" name="proficiency_level_{{ index }}" value="{{ proficiency }}">#}
+{#    <input type="hidden" name="years_{{ index }}" value="{{ years }}">#}
+{##}
+{#    <!-- Bullet point instead of star -->#}
+{#    <div class="flex-shrink-0 ml-2 mr-6">#}
+{#        <div class="w-3 h-3 rounded-full bg-primary"></div>#}
+{#    </div>#}
+{##}
+{#    <!-- Skill name with hover effect -->#}
+{#    <div class="font-medium text-gray-800 group-hover:text-primary transition-colors duration-200 w-36 mr-6">#}
+{#        {{ skill_name }}#}
+{#    </div>#}
+{##}
+{#    <!-- Skill type with enhanced badge -->#}
+{#    <div class="flex-shrink-0 w-32 mr-6">#}
+{#        <span class="px-4 py-2 rounded-md text-xs font-medium bg-indigo-50 text-indigo-600 transition-colors duration-200">#}
+{#            {% for type_value, type_label in skill_types.items %}#}
+{#                {% if skill_type == type_value %}{{ type_label }}{% endif %}#}
+{#            {% endfor %}#}
+{#        </span>#}
+{#    </div>#}
+{##}
+{#    <!-- Proficiency level with enhanced progress bar -->#}
+{#    <div class="flex-grow flex items-center">#}
+{##}
+{#        <div class="flex-shrink-0 text-sm font-medium text-gray-600 w-14 text-right mr-6">#}
+{#            {{ proficiency }}%#}
+{#        </div>#}
+{#    </div>#}
+{#    <!-- Years experience (integrated into layout instead of floating) -->#}
+{#    {% if years %}#}
+{#    <div class="flex-shrink-0 w-24 text-sm text-gray-600 mr-10">#}
+{#        {{ years }} year{% if years != 1 %}s{% endif %}#}
+{#    </div>#}
+{#    {% else %}#}
+{#    <div class="flex-shrink-0 w-24 mr-12"></div> <!-- Empty spacer when no years -->#}
+{#    {% endif %}#}
+{#    <!-- Enhanced controls with tooltip text -->#}
+{#    <div class="flex-shrink-0 flex items-center gap-3">#}
+{#        <button type="button" class="p-2 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-all duration-200 tooltip tooltip-left"#}
+{#                data-tip="Edit skill"#}
+{#                onclick="editSkill({{ index }})">#}
+{#            <i class="fa-solid fa-pen-to-square"></i>#}
+{#        </button>#}
+{#        <button type="button" class="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200 tooltip tooltip-left"#}
+{#                data-tip="Remove skill"#}
+{#                onclick="removeSkill({{ index }})">#}
+{#            <i class="fa-solid fa-trash-can"></i>#}
+{#        </button>#}
+{#    </div>#}
+{#</div>#}

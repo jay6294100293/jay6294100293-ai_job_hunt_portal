@@ -1344,9 +1344,8 @@ def get_language_template(request):
     }
 
     # Render the language form template
-    return render(request, 'resumes/partials/language_form_row.html', {
+    return render(request, 'resumes/partials/form_rows/language_form_row.html', {
         'index': index,
         'proficiency_levels': proficiency_levels,
         'forloop': {'counter0': index, 'counter': int(index) + 1}  # Simulate forloop context for the template
     })
-
