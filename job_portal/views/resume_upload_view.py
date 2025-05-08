@@ -1,21 +1,17 @@
 # job_portal/views/resume_upload_view.py
 
-import os
-import tempfile
 import time
 import json
 import traceback # Import traceback for detailed error logging
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.http import HttpResponse, JsonResponse # Keep JsonResponse if used elsewhere
 # from django.core.files.storage import FileSystemStorage # Likely not needed now
 from django.conf import settings
-from django.db import transaction # Keep if used elsewhere
 from django.views.decorators.http import require_http_methods # Keep if used elsewhere
 
 # Ensure correct import path
-from services.resume_parser_service import extract_text_from_resume, parse_resume_with_ai, basic_resume_parsing
+from services.parser.resume_parser_service import extract_text_from_resume, parse_resume_with_ai
 from services.supporting_codes.resume_support_code import save_section # Keep if used
 
 from ..forms.resume_upload_form import ResumeUploadForm

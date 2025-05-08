@@ -3,8 +3,11 @@ from django.urls import path
 
 from ai_job_hunt_portal import settings
 from job_portal.forms.resume_creation_form import load_more_skills
+from job_portal.views.api_usage_status_view import get_ai_usage_stats
 from job_portal.views.download_resume_view import download_resume
+from job_portal.views.experience_enhancement_view import ai_generate_bullets, enhance_bullet, check_bullet_strength
 from job_portal.views.generate_resume_view import generate_resume
+from job_portal.views.htmx_add_form_view import htmx_add_form_row
 from job_portal.views.modification_resume_view import resume_list, edit_resume, delete_resume, update_resume_ajax
 from job_portal.views.preview_current_resume_view import preview_current_resume
 from job_portal.views.project_enhancement_view import enhance_project_bullet, project_bullet_enhancement_form
@@ -13,8 +16,7 @@ from job_portal.views.resume_upload_view import upload_resume, edit_resume_secti
     save_resume_section, preview_upload_data
 from job_portal.views.template_selection_view import template_selection, select_template, resume_wizard
 from job_portal.views.view_resume_view import view_resume
-from services.supporting_codes.resume_support_code import ai_generate_bullets, enhance_bullet, check_bullet_strength, \
-    get_ai_usage_stats, get_language_template, htmx_add_form_row, preview_template
+from services.supporting_codes.resume_support_code import get_language_template, preview_template
 
 app_name = 'job_portal'
 urlpatterns = [

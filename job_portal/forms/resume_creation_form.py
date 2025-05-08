@@ -543,7 +543,7 @@ LanguageFormSet = modelformset_factory(
 #     offset = int(request.GET.get('offset', 0))
 #     limit = 20  # Number of skills to load each time
 #     skills = Skill.objects.filter(user=request.user)[offset:offset+limit]
-#     return render(request, 'resumes/partials/skill_form_row.html', {'skills': skills})
+#     return render(request, 'resumes/theme_partials/skill_form_row.html', {'skills': skills})
 #
 #
 # class CustomDataForm(forms.ModelForm):

@@ -25,7 +25,7 @@ from ..models import (
 
 # Import helper functions from resume_parser_service
 try:
-    from services.resume_parser_service import format_date, format_url, format_location, safe_strip
+    from services.parser.resume_parser_service import format_date, format_url, format_location, safe_strip
 except ImportError:
     print("Warning: Could not import helper functions from services.resume_parser_service.")
     # Define fallback functions if import fails

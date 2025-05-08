@@ -2,13 +2,11 @@
 
 import time
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods
-from django.http import HttpResponse, JsonResponse, HttpResponseNotAllowed # Added HttpResponseNotAllowed
+from django.http import HttpResponse, HttpResponseNotAllowed # Added HttpResponseNotAllowed
 from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt # Or ensure CSRF token is handled correctly
 
 from job_portal.models import APIUsage
-from services.project_bullet_point_service import enhance_project_bullet_chatgpt, enhance_project_bullet_gemini
+from services.project.project_bullet_point_service import enhance_project_bullet_chatgpt, enhance_project_bullet_gemini
 
 
 @login_required
