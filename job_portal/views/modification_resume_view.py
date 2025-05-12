@@ -17,7 +17,7 @@ from job_portal.models import (
 )
 from services.bullets_ai_services import generate_bullets_chatgpt, get_template_bullets, generate_bullets_gemini, \
     enhance_bullet_chatgpt, enhance_bullet_gemini, enhance_bullet_basic, ats_optimize_chatgpt, ats_optimize_gemini
-from ..forms.resume_creation_form import ResumeBasicInfoForm, ResumeSummaryForm
+# from ..forms.resume_creation_form import ResumeBasicInfoForm, ResumeSummaryForm
 from ..forms.resume_upload_form import ResumeUploadForm
 from ..models import (
     JobInput

@@ -12,7 +12,7 @@ from django.views.decorators.http import require_http_methods # Keep if used els
 
 # Ensure correct import path
 from services.parser.resume_parser_service import extract_text_from_resume, parse_resume_with_ai
-from services.supporting_codes.resume_support_code import save_section # Keep if used
+from .resume_save_section_view import save_section
 
 from ..forms.resume_upload_form import ResumeUploadForm
 from ..models import Resume, APIUsage # Keep other models if used in other functions in this file
