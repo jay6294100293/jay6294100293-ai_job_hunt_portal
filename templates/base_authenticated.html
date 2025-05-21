@@ -31,7 +31,7 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="bg-gray-100 antialiased"
-      x-data="{ sidebarOpen: window.innerWidth >= 1024 }"
+      x-data="{ sidebarOpen: window.innerWidth >= 1024, userMenuOpen: false }"
       @resize.window="if (window.innerWidth < 1024 && sidebarOpen) {
                           /* Optionally close sidebar on resize to mobile if it was open */
                           /* sidebarOpen = false; */
@@ -39,11 +39,83 @@
                           /* Optionally open sidebar on resize to desktop if it was closed */
                           /* sidebarOpen = true; */
                       }"
+      @click.away="userMenuOpen = false"
       x-cloak>
 
-    <div class="flex h-screen overflow-hidden"> {% include "_sidebar.html" %}
+    <div class="flex h-screen overflow-hidden">
+        {% include "_sidebar.html" %}
 
-        <div class="flex-1 flex flex-col overflow-hidden"> {% include "_topbar.html" %}
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Modified _topbar.html to include user profile dropdown -->
+            <header class="bg-white shadow-sm z-10">
+                <div class="px-4 sm:px-6 lg:px-8 py-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <button @click="sidebarOpen = !sidebarOpen" class="text-gray-500 focus:outline-none lg:hidden">
+                                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4 6H20M4 12H20M4 18H11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                </svg>
+                            </button>
+                            <div class="text-xl font-semibold text-gray-800 lg:hidden ml-3">
+                                AI Job Portal
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-4">
+                            <div class="relative" x-data="{ userMenuOpen: false }">
+                                <button @click="userMenuOpen = !userMenuOpen" class="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+                                    <span class="sr-only">Open user menu</span>
+                                    {% if user.profile_picture %}
+                                        <img class="h-8 w-8 rounded-full object-cover" src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name|default:user.username }}">
+                                    {% else %}
+                                        <div class="h-8 w-8 rounded-full bg-primary-500 flex items-center justify-center text-white">
+                                            {{ user.username.0|upper }}
+                                        </div>
+                                    {% endif %}
+                                </button>
+
+                                <!-- Dropdown menu -->
+                                <div x-show="userMenuOpen"
+                                     x-transition:enter="transition ease-out duration-100"
+                                     x-transition:enter-start="transform opacity-0 scale-95"
+                                     x-transition:enter-end="transform opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-75"
+                                     x-transition:leave-start="transform opacity-100 scale-100"
+                                     x-transition:leave-end="transform opacity-0 scale-95"
+                                     class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                                     role="menu"
+                                     aria-orientation="vertical"
+                                     aria-labelledby="user-menu-button"
+                                     tabindex="-1"
+                                     @click.away="userMenuOpen = false">
+
+                                    <div class="px-4 py-2 border-b border-gray-100">
+                                        <p class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</p>
+                                        <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
+                                    </div>
+
+                                    <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                                        <i class="fa-solid fa-user mr-2"></i> My Profile
+                                    </a>
+                                    <a href="{% url 'edit_profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                                        <i class="fa-solid fa-user-edit mr-2"></i> Edit Profile
+                                    </a>
+                                    <a href="{% url 'update_api_keys' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                                        <i class="fa-solid fa-key mr-2"></i> API Keys
+                                    </a>
+                                    <a href="{% url 'dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                                        <i class="fa-solid fa-chart-pie mr-2"></i> Dashboard
+                                    </a>
+                                    <div class="border-t border-gray-100 my-1"></div>
+                                    <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                                        <i class="fa-solid fa-sign-out-alt mr-2"></i> Sign out
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
 
             <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 sm:p-6 lg:p-8">
                 {% if messages %}
@@ -80,119 +152,13 @@
 
 {#{% load static %}#}
 {#<!DOCTYPE html>#}
-{# REMOVED dark class logic from html tag below #}
-{#<html lang="en" class="h-full">#}
+{#<html lang="en">#}
 {#<head>#}
 {#    <meta charset="UTF-8">#}
 {#    <meta name="viewport" content="width=device-width, initial-scale=1.0">#}
-{#    <title>{% block title %}AI Job Portal / Resume Builder{% endblock %}</title>#}
-{##}
-    {# Loads the compiled CSS generated by django-tailwind #}
-{#    <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">#}
-{##}
-    {# Font Awesome #}
-{#    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">#}
-{##}
-    {# Google Fonts (Ensure these match your tailwind.config.js) #}
-{#    <link rel="preconnect" href="https://fonts.googleapis.com">#}
-{#    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>#}
-    {# Using Inter as an example - match your config #}
-{#    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">#}
-{##}
-    {# Alpine.js for UI interactions like sidebar #}
-{#    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>#}
-    {# HTMX (if used) #}
-{#    <script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js"></script>#}
-{##}
-{#    <style>#}
-{#        /* Base font (should ideally be set in tailwind.config.js) */#}
-{#        body { font-family: 'Plus Jakarta Sans', sans-serif; } /* Match config */#}
-{#        h1, h2, h3, h4, h5, h6 { font-family: 'Outfit', sans-serif; } /* Match config */#}
-{#        html, body { height: 100%; margin: 0; padding: 0; }#}
-{##}
-{#        /* Optional: Custom scrollbar styles - Light mode only now */#}
-{#        ::-webkit-scrollbar { width: 8px; height: 8px; }#}
-{#        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }#}
-{#        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; } /* slate-300 */#}
-{#        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; } /* slate-400 */#}
-{##}
-{#        /* Keep necessary animations */#}
-{#        .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }#}
-{#        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }#}
-{#        .highlight-new { animation: highlight-pulse 1.5s ease-in-out; }#}
-{#        @keyframes highlight-pulse { 0% { background-color: rgba(96, 165, 250, 0.1); } 50% { background-color: rgba(96, 165, 250, 0.2); } 100% { background-color: transparent; } }#}
-{#        .fade-out { opacity: 0; transform: translateY(-10px); transition: opacity 0.3s ease, transform 0.3s ease; }#}
-{##}
-{#    </style>#}
-{##}
-{#    {% block extra_css %}{% endblock %}#}
-{#</head>#}
-{# Removed dark: classes from body, relying on default light styles now #}
-{#<body class="h-full font-sans bg-slate-100 text-gray-800">#}
-{#    <div class="flex h-full" x-data="{ sidebarOpen: true }">#}
-{##}
-{#        {% include 'theme_partials/_sidebar.html' %} {# Ensure this partial uses Tailwind #}
-{##}
-{#        <div class="flex-1 flex flex-col overflow-hidden">#}
-{##}
-{#            {% include 'theme_partials/_topbar.html' %} {# Ensure this partial uses Tailwind #}
-{##}
-{#            <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6"> {# Main content area #}
-{##}
-{#                {% if messages %}#}
-{#                <div class="mb-6 space-y-4">#}
-{#                    {% for message in messages %}#}
-                         {# Light mode alert styling #}
-{#                        {% if message.tags == 'error' %}#}
-{#                        <div class="flex items-center justify-between p-4 rounded-lg bg-red-100 text-red-700 border-l-4 border-red-500" >#}
-{#                            <div class="flex items-center"> <i class="fa-solid fa-circle-exclamation mr-3 text-lg"></i> <span>{{ message }}</span> </div>#}
-{#                            <button type="button" onclick="this.parentElement.remove()" class="ml-4 text-red-600 hover:text-red-800"><i class="fa-solid fa-times"></i></button>#}
-{#                        </div>#}
-{#                        {% elif message.tags == 'success' %}#}
-{#                        <div class="flex items-center justify-between p-4 rounded-lg bg-green-100 text-green-700 border-l-4 border-green-500" >#}
-{#                            <div class="flex items-center"> <i class="fa-solid fa-check-circle mr-3 text-lg"></i> <span>{{ message }}</span> </div>#}
-{#                            <button type="button" onclick="this.parentElement.remove()" class="ml-4 text-green-600 hover:text-green-800"><i class="fa-solid fa-times"></i></button>#}
-{#                        </div>#}
-{#                        {% elif message.tags == 'warning' %}#}
-{#                        <div class="flex items-center justify-between p-4 rounded-lg bg-yellow-100 text-yellow-700 border-l-4 border-yellow-500" >#}
-{#                            <div class="flex items-center"> <i class="fa-solid fa-triangle-exclamation mr-3 text-lg"></i> <span>{{ message }}</span> </div>#}
-{#                            <button type="button" onclick="this.parentElement.remove()" class="ml-4 text-yellow-600 hover:text-yellow-800"><i class="fa-solid fa-times"></i></button>#}
-{#                        </div>#}
-{#                        {% else %} {# Default/Info styling #}
-{#                        <div class="flex items-center justify-between p-4 rounded-lg bg-sky-100 text-sky-700 border-l-4 border-sky-500" >#}
-{#                            <div class="flex items-center"> <i class="fa-solid fa-info-circle mr-3 text-lg"></i> <span>{{ message }}</span> </div>#}
-{#                            <button type="button" onclick="this.parentElement.remove()" class="ml-4 text-sky-600 hover:text-sky-800"><i class="fa-solid fa-times"></i></button>#}
-{#                        </div>#}
-{#                        {% endif %}#}
-{#                    {% endfor %}#}
-{#                </div>#}
-{#                {% endif %}#}
-{##}
-{#                {% block content %}#}
-                {# Content from child templates (like wizard_base) goes here #}
-{#                {% endblock %}#}
-{##}
-{#             </main>#}
-             {# Footer removed previously - Add back if needed, ensuring it uses light mode Tailwind styles #}
-{#        </div> {# End flex-1 flex-col #}
-{#    </div> {# End flex h-full #}
-{##}
-{#    {% block extra_js %}{% endblock %}#}
-{##}
-{#</body>#}
-{#</html>#}
-{##}
-{#{% load static %}#}
-{#<!DOCTYPE html>#}
-{#<html lang="en" class="h-full"> {# Use h-full for flex layout #}
-{#<head>#}
-{#    <meta charset="UTF-8">#}
-{#    <meta name="viewport" content="width=device-width, initial-scale=1.0">#}
-{#    <title>{% block title %}AI Job Portal / Resume Builder{% endblock %}</title> {# Generic title #}
+{#    <title>{% block title %}Dashboard - AI Job Portal{% endblock %}</title>#}
 {##}
 {#    <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">#}
-{##}
-{#    <script src="https://cdn.tailwindcss.com"></script>#}
 {##}
 {#    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">#}
 {##}
@@ -200,187 +166,54 @@
 {#    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>#}
 {#    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">#}
 {##}
-{#    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script> {# For sidebar/topbar #}
-{#    <script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js"></script> {# From base.html #}
+{#    <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>#}
+{#    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>#}
 {##}
 {#    <style>#}
-{#        /* Base font */#}
-{#        body { font-family: 'Inter', sans-serif; }#}
-{#        /* Ensure full height for flex */#}
-{#        html, body { height: 100%; margin: 0; padding: 0; }#}
-{##}
-{#        /* Scrollbar styles */#}
-{#        ::-webkit-scrollbar { width: 8px; height: 8px; }#}
-{#        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }#}
-{#        ::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 10px; }#}
-{#        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }#}
-{##}
-{#        /* Specific styles from base.html likely NOT in styles.css */#}
-{#        .card { border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); transition: all 0.3s ease; overflow: hidden; border: 1px solid rgba(0, 0, 0, 0.05); }#}
-{#        .card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); transform: translateY(-5px); }#}
-{##}
-{#        .template-preview { position: relative; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); transition: all 0.3s ease; }#}
-{#        .template-preview img { transition: transform 0.4s ease, filter 0.4s ease; width: 100%; height: auto; }#}
-{#        .template-preview:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }#}
-{#        .template-preview:hover img { transform: scale(1.05); }#}
-{#        .template-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%); padding: 1.5rem; transform: translateY(100%); transition: transform 0.3s ease; display: flex; justify-content: center; }#}
-{#        .template-preview:hover .template-overlay { transform: translateY(0); }#}
-{##}
-{#        .social-icon { transition: all 0.3s ease; opacity: 0.8; }#}
-{#        .social-icon:hover { opacity: 1; transform: translateY(-3px); }#}
-{##}
-{#        /* Add other specific, non-conflicting styles from base.html if needed */#}
-{##}
+{#        /* Base font family */#}
+{#        body {#}
+{#            font-family: 'Inter', sans-serif;#}
+{#        }#}
+{#        /* Optional: hide elements managed by Alpine until it's initialized to prevent FOUC */#}
+{#        [x-cloak] {#}
+{#            display: none !important;#}
+{#        }#}
 {#    </style>#}
 {##}
 {#    {% block extra_css %}{% endblock %}#}
 {#</head>#}
-{#<body class="h-full font-sans text-gray-800">#}
-{#    <div class="flex h-full" x-data="{ sidebarOpen: true }">#}
+{#<body class="bg-gray-100 antialiased"#}
+{#      x-data="{ sidebarOpen: window.innerWidth >= 1024 }"#}
+{#      @resize.window="if (window.innerWidth < 1024 && sidebarOpen) {#}
+{#                          /* Optionally close sidebar on resize to mobile if it was open */#}
+{#                          /* sidebarOpen = false; */#}
+{#                      } else if (window.innerWidth >= 1024 && !sidebarOpen) {#}
+{#                          /* Optionally open sidebar on resize to desktop if it was closed */#}
+{#                          /* sidebarOpen = true; */#}
+{#                      }"#}
+{#      x-cloak>#}
 {##}
-{#        {% include 'theme_partials/_sidebar.html' %} {# Relies on styles.css and Alpine.js #}
+{#    <div class="flex h-screen overflow-hidden"> {% include "_sidebar.html" %}#}
 {##}
-{#        <div class="flex-1 flex flex-col overflow-hidden">#}
+{#        <div class="flex-1 flex flex-col overflow-hidden"> {% include "_topbar.html" %}#}
 {##}
-{#            {% include 'theme_partials/_topbar.html' %} {# Relies on styles.css and Alpine.js #}
-{##}
-{#            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 p-6"> {# Added bg-slate-100 #}
-{##}
+{#            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 sm:p-6 lg:p-8">#}
 {#                {% if messages %}#}
 {#                <div class="mb-6 space-y-4">#}
 {#                    {% for message in messages %}#}
-                         {# Tailwind alert styling #}
-{#                        {% if message.tags == 'error' %}#}
-{#                        <div class="flex items-center justify-between p-4 rounded-lg bg-red-100 text-red-700 border-l-4 border-red-500" >#}
-{#                            <div class="flex items-center"> <i class="fa-solid fa-circle-exclamation mr-3 text-lg"></i> <span>{{ message }}</span> </div>#}
-{#                            <button type="button" onclick="this.parentElement.remove()" class="text-red-600 hover:text-red-800"><i class="fa-solid fa-times"></i></button>#}
-{#                        </div>#}
-{#                        {% elif message.tags == 'success' %}#}
-{#                        <div class="flex items-center justify-between p-4 rounded-lg bg-green-100 text-green-700 border-l-4 border-green-500" >#}
-{#                            <div class="flex items-center"> <i class="fa-solid fa-check-circle mr-3 text-lg"></i> <span>{{ message }}</span> </div>#}
-{#                            <button type="button" onclick="this.parentElement.remove()" class="text-green-600 hover:text-green-800"><i class="fa-solid fa-times"></i></button>#}
-{#                        </div>#}
-{#                        {% elif message.tags == 'warning' %}#}
-{#                        <div class="flex items-center justify-between p-4 rounded-lg bg-yellow-100 text-yellow-700 border-l-4 border-yellow-500" >#}
-{#                            <div class="flex items-center"> <i class="fa-solid fa-triangle-exclamation mr-3 text-lg"></i> <span>{{ message }}</span> </div>#}
-{#                            <button type="button" onclick="this.parentElement.remove()" class="text-yellow-600 hover:text-yellow-800"><i class="fa-solid fa-times"></i></button>#}
-{#                        </div>#}
-{#                        {% else %} {# Default/Info styling #}
-{#                        <div class="flex items-center justify-between p-4 rounded-lg bg-sky-100 text-sky-700 border-l-4 border-sky-500" >#}
-{#                            <div class="flex items-center"> <i class="fa-solid fa-info-circle mr-3 text-lg"></i> <span>{{ message }}</span> </div>#}
-{#                            <button type="button" onclick="this.parentElement.remove()" class="text-sky-600 hover:text-sky-800"><i class="fa-solid fa-times"></i></button>#}
-{#                        </div>#}
-{#                        {% endif %}#}
-{#                    {% endfor %}#}
-{#                </div>#}
-{#                {% endif %}#}
-{#                {% block content %}#}
-                {# Content from child templates goes here #}
-{#                {% endblock %}#}
-{##}
-{##}
-{#                <footer class="p-10 bg-gradient-to-r from-gray-700 to-gray-900 text-gray-300 mt-12"> {# Added mt-12 for spacing #}
-{#                    <div class="footer container mx-auto grid grid-cols-2 md:grid-cols-4 gap-8"> {# Adjusted grid layout #}
-{#                        <div>#}
-                             {# Footer title needs styling via Tailwind classes or styles.css #}
-{#                            <span class="font-heading font-semibold text-gray-100 opacity-100 mb-4 block text-lg">Resume Builder</span>#}
-{#                            <a class="link link-hover block mb-1 hover:text-white text-sm">About</a>#}
-{#                            <a class="link link-hover block mb-1 hover:text-white text-sm">Features</a>#}
-{#                            <a class="link link-hover block mb-1 hover:text-white text-sm">Pricing</a>#}
-{#                            <a class="link link-hover block mb-1 hover:text-white text-sm">FAQs</a>#}
-{#                        </div>#}
-{#                        <div>#}
-{#                            <span class="font-heading font-semibold text-gray-100 opacity-100 mb-4 block text-lg">Templates</span>#}
-{#                            <a class="link link-hover block mb-1 hover:text-white text-sm">Professional</a>#}
-{#                            <a class="link link-hover block mb-1 hover:text-white text-sm">Creative</a>#}
-{#                            <a class="link link-hover block mb-1 hover:text-white text-sm">Technical</a>#}
-{#                            <a class="link link-hover block mb-1 hover:text-white text-sm">Academic</a>#}
-{#                        </div>#}
-{#                        <div>#}
-{#                            <span class="font-heading font-semibold text-gray-100 opacity-100 mb-4 block text-lg">Legal</span>#}
-{#                            <a class="link link-hover block mb-1 hover:text-white text-sm">Terms of service</a>#}
-{#                            <a class="link link-hover block mb-1 hover:text-white text-sm">Privacy policy</a>#}
-{#                            <a class="link link-hover block mb-1 hover:text-white text-sm">Cookie policy</a>#}
-{#                        </div>#}
-{#                        <div>#}
-{#                            <span class="font-heading font-semibold text-gray-100 opacity-100 mb-4 block text-lg">Social</span>#}
-{#                            <div class="grid grid-flow-col gap-6">#}
-{#                                <a class="social-icon hover:text-white"><i class="fa-brands fa-twitter text-2xl"></i></a>#}
-{#                                <a class="social-icon hover:text-white"><i class="fa-brands fa-facebook text-2xl"></i></a>#}
-{#                                <a class="social-icon hover:text-white"><i class="fa-brands fa-instagram text-2xl"></i></a>#}
-{#                                <a class="social-icon hover:text-white"><i class="fa-brands fa-linkedin text-2xl"></i></a>#}
-{#                            </div>#}
-{#                        </div>#}
-{#                    </div>#}
-{#                    <div class="text-center mt-12 container mx-auto opacity-80">#}
-{#                        <div class="flex items-center justify-center gap-2 mb-2">#}
-{#                            <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">#}
-{#                                <i class="fa-solid fa-file-lines"></i>#}
-{#                            </div>#}
-                             {# Needs font via Tailwind/styles.css #}
-{#                            <p class="font-semibold font-heading">Resume Builder</p>#}
-{#                        </div>#}
-                         {# Used Django template tag for year #}
-{#                        <p class="text-sm">© {% now "Y" %} Resume Builder. All rights reserved.</p>#}
-{#                    </div>#}
-{#                </footer>#}
-{#                </main> </div> </div> {% block extra_js %}{% endblock %}#}
-{##}
-{#    </body>#}
-{#</html>#}
-{##}
-{##}
-{#{% load static %}#}
-{#<!DOCTYPE html>#}
-{#<html lang="en" class="h-full bg-gray-100"> {# Added h-full, bg-gray-100 here #}
-{#<head>#}
-{#    <meta charset="UTF-8">#}
-{#    <meta name="viewport" content="width=device-width, initial-scale=1.0"> {# Added Viewport #}
-{#    <title>{% block title %}AI Job Portal{% endblock %}</title>#}
-{##}
-{#    <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">#}
-{##}
-{#    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>#}
-{##}
-{#    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">#}
-{##}
-{#    <link rel="preconnect" href="https://fonts.googleapis.com">#}
-{#    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>#}
-{#    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">#}
-{##}
-{#    <style>#}
-{#        /* Include Inter font-family if not done via Tailwind config */#}
-{#        body { font-family: 'Inter', sans-serif; }#}
-{#        /* Ensure html/body take full height for flexbox */#}
-{#        html, body { height: 100%; margin: 0; padding: 0; }#}
-{#        /* Add styles for the scrollbar if desired */#}
-{#        ::-webkit-scrollbar { width: 8px; height: 8px; }#}
-{#        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }#}
-{#        ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 10px; }#}
-{#        ::-webkit-scrollbar-thumb:hover { background: #a5b4fc; }#}
-{#    </style>#}
-{##}
-{#    {% block extra_css %}{% endblock %}#}
-{#</head>#}
-{#<body class="h-full font-sans"> {# Removed bg-gray-100 from body, added to html #}
-{#    <div class="flex h-full" x-data="{ sidebarOpen: true }"> {# Changed h-screen to h-full #}
-{##}
-{#        {% include 'theme_partials/_sidebar.html' %} {# Assuming theme_partials are in theme/templates/theme_partials #}
-{##}
-{#        <div class="flex-1 flex flex-col overflow-hidden">#}
-{##}
-{#            {% include 'theme_partials/_topbar.html' %} {# Assuming theme_partials are in theme/templates/theme_partials #}
-{##}
-{#            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">#}
-{#                {% if messages %}#}
-{#                <div class="mb-6"> {# Added mb-6 for spacing #}
-{#                    {% for message in messages %}#}
-{#                        <div class="mb-4 flex items-center justify-between p-4 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700 border-l-4 border-red-500{% elif message.tags == 'success' %}bg-green-100 text-green-700 border-l-4 border-green-500{% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-700 border-l-4 border-yellow-500{% else %}bg-blue-100 text-blue-700 border-l-4 border-blue-500{% endif %}">#}
+{#                        <div class="flex items-center justify-between p-4 rounded-md shadow-md#}
+{#                                    {% if message.tags == 'error' %}bg-red-50 text-red-700 border-l-4 border-red-500{% elif message.tags == 'success' %}bg-green-50 text-green-700 border-l-4 border-green-500{% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-700 border-l-4 border-yellow-500{% else %}bg-blue-50 text-blue-700 border-l-4 border-blue-500{% endif %}"#}
+{#                             role="alert">#}
 {#                            <div class="flex items-center">#}
-{#                                {% if message.tags == 'error' %}<i class="fa-solid fa-circle-exclamation mr-3 text-lg"></i>{% elif message.tags == 'success' %}<i class="fa-solid fa-check-circle mr-3 text-lg"></i>{% elif message.tags == 'warning' %}<i class="fa-solid fa-triangle-exclamation mr-3 text-lg"></i>{% else %}<i class="fa-solid fa-info-circle mr-3 text-lg"></i>{% endif %}#}
+{#                                {% if message.tags == 'error' %}<i class="fa-solid fa-circle-exclamation mr-3 text-lg"></i>#}
+{#                                {% elif message.tags == 'success' %}<i class="fa-solid fa-check-circle mr-3 text-lg"></i>#}
+{#                                {% elif message.tags == 'warning' %}<i class="fa-solid fa-triangle-exclamation mr-3 text-lg"></i>#}
+{#                                {% else %}<i class="fa-solid fa-info-circle mr-3 text-lg"></i>#}
+{#                                {% endif %}#}
 {#                                <span>{{ message }}</span>#}
 {#                            </div>#}
-{#                            <button type="button" onclick="this.parentElement.remove()" class="{% if message.tags == 'error' %}text-red-600 hover:text-red-800{% elif message.tags == 'success' %}text-green-600 hover:text-green-800{% elif message.tags == 'warning' %}text-yellow-600 hover:text-yellow-800{% else %}text-blue-600 hover:text-blue-800{% endif %}">#}
+{#                            <button type="button" @click="$event.target.closest('[role=alert]').remove()" class="text-current opacity-75 hover:opacity-100 ml-4">#}
+{#                                <span class="sr-only">Close</span>#}
 {#                                <i class="fa-solid fa-times"></i>#}
 {#                            </button>#}
 {#                        </div>#}
@@ -392,6 +225,7 @@
 {#            </main>#}
 {#        </div>#}
 {#    </div>#}
+{##}
 {#    {% block extra_js %}{% endblock %}#}
 {#</body>#}
 {#</html>#}

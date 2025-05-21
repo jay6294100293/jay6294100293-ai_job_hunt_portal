@@ -1,10 +1,10 @@
-# job_portal/views/finalize_resume_view.py (Formerly generate_resume_view.py)
+# job_portal/views/finalize_resume_view.py
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, get_object_or_404, render
 from django.db import transaction
-from django.utils import timezone  # If you add a 'published_at' field
+from django.utils import timezone
 import logging
 
 from job_portal.models import Resume
@@ -15,32 +15,30 @@ logger = logging.getLogger(__name__)
 @login_required
 def finalize_resume_view(request, resume_id):
     """
-    Finalizes a draft resume, changing its status from 'draft' to 'active'.
-    Assumes all data has been incrementally saved to the database via editing views.
+    Finalizes a draft resume, changing its status from 'draft' to 'published'.
     """
     resume = get_object_or_404(Resume, id=resume_id, user=request.user)
 
-    if resume.status != 'draft':
-        messages.info(request, f"Resume '{resume.title}' is already {resume.get_status_display()}.")
-        return redirect('job_portal:view_resume', resume_id=resume.id)  # Ensure 'view_resume' URL exists
+    # Only draft resumes can be finalized
+    if resume.publication_status != Resume.DRAFT:
+        messages.info(request, f"Resume '{resume.title}' is already {resume.get_publication_status_display()}.")
+        return redirect('job_portal:view_resume', resume_id=resume.id)
 
-    if request.method == 'POST':  # Confirmation step
+    if request.method == 'POST':
         try:
             with transaction.atomic():
-                resume.status = 'active'  # Set to your "finalized" status
-                resume.updated_at = timezone.now()  # Ensure updated_at is current
-                # Optionally: resume.published_at = timezone.now()
+                resume.publication_status = Resume.PUBLISHED
+                resume.updated_at = timezone.now()
                 resume.save()
-            messages.success(request, f"Resume '{resume.title}' has been finalized and is now active!")
+
+            messages.success(request, f"Resume '{resume.title}' has been finalized and is now published!")
             return redirect('job_portal:view_resume', resume_id=resume.id)
         except Exception as e:
             logger.error(f"Error finalizing resume {resume_id} for user {request.user.username}: {e}", exc_info=True)
             messages.error(request, f"An unexpected error occurred while finalizing the resume: {str(e)}")
-            # Redirect back to view the resume (still in draft) or dashboard
             return redirect('job_portal:view_resume', resume_id=resume.id)
 
-    # For GET request, display a confirmation page.
-    # Ensure 'resumes/confirm_finalize_resume.html' template exists.
+    # For GET request, display a confirmation page
     return render(request, 'resumes/confirm_finalize_resume.html', {'resume': resume})
 
 # # resumes/views.py

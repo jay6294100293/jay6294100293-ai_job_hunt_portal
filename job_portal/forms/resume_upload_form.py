@@ -2,21 +2,19 @@
 
 from django import forms
 from django.core.validators import FileExtensionValidator
-# from django.conf import settings # Not strictly needed for this form unless using MAX_UPLOAD_SIZE from settings
 
 # Define MAX_UPLOAD_SIZE here or import from settings if you have it there
 MAX_UPLOAD_SIZE_MB = 5
 MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024
+
 
 class ResumeUploadForm(forms.Form):
     """Form for uploading an existing resume."""
     resume_file = forms.FileField(
         label="Upload your resume",
         validators=[FileExtensionValidator(allowed_extensions=['pdf', 'doc', 'docx', 'txt', 'odt'])],
-        widget=forms.ClearableFileInput( # Using ClearableFileInput for better UX
+        widget=forms.ClearableFileInput(
             attrs={
-                # These classes seem to be from DaisyUI or a similar Tailwind component library.
-                # Adjust if you're using plain Tailwind or different class names.
                 'class': 'file-input file-input-bordered file-input-primary w-full max-w-md text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100',
                 'accept': '.pdf,.doc,.docx,.txt,.odt'
             }
@@ -24,23 +22,25 @@ class ResumeUploadForm(forms.Form):
         help_text=f"Supported formats: PDF, DOC, DOCX, TXT, ODT. Max file size: {MAX_UPLOAD_SIZE_MB}MB."
     )
 
-    # The ai_engine field is to let the user choose a preference for parsing,
-    # it might not be stored directly in the model but used by your view logic.
+    # The ai_engine field is to let the user choose a preference for parsing
     ai_engine = forms.ChoiceField(
         label="Preferred AI Engine for Analysis",
         choices=[
-            ('chatgpt', 'ChatGPT (OpenAI)'), # Assuming you might use different models
+            ('chatgpt', 'ChatGPT (OpenAI)'),
             ('gemini', 'Google Gemini'),
-            # ('default', 'System Default') # Could be an option
         ],
-        widget=forms.RadioSelect(
-            # attrs={'class': 'radio radio-primary'} # Retaining if this styling is intended
-            # For more standard Tailwind, you'd style the label and input pairs.
-            # Example for Tailwind (requires more complex template rendering):
-            # Each radio button would be styled individually in the template.
-        ),
-        initial='chatgpt', # Default selection
+        widget=forms.RadioSelect(),
+        initial='chatgpt',
         help_text="Choose the AI engine you prefer for resume content analysis and enhancement suggestions."
+    )
+
+    # Option to enable/disable AI parsing
+    ai_parsing_enabled = forms.BooleanField(
+        label="Use AI for enhanced resume parsing",
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={'class': 'h-4 w-4 text-indigo-600 border-gray-300 rounded'}),
+        help_text="Uncheck if you prefer basic parsing without AI assistance."
     )
 
     def clean_resume_file(self):
