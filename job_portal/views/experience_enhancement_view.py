@@ -1202,7 +1202,7 @@ def check_bullet_strength(request):
 # # # #     # Render the bullet points to HTML
 # # # #     bullet_html = ''
 # # # #     for idx, bullet_text in enumerate(bullets):
-# # # #         bullet_html += render_to_string('resumes/partials/bullet_point_form_row.html', {
+# # # #         bullet_html += render_to_string('resumes/partials/project_bullet_point_form_row.html', {
 # # # #             'parent_index': parent_index,
 # # # #             'index': idx,
 # # # #             'bullet_text': bullet_text,

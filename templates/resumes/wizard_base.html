@@ -1,469 +1,629 @@
+{# templates/resumes/wizard_base.html #}
 {% extends 'base_authenticated.html' %}
-{% load resume_extras %}
-{% load static %}
-{% load widget_tweaks %}
+{% load static resume_extras %} {# Ensure 'resume_extras' is loaded #}
 
-{% block title %}Resume Builder - Step {{ step }} of {{ total_steps }}{% endblock %}
+{% block title %}{{ resume.title|default:"Create Resume" }} - Step: {{ current_step_display|default:"Current Step" }}{% endblock %}
 
-{% block content %}
-<div class="container mx-auto px-4 py-8 sm:py-10">
-    <div class="mb-8 sm:mb-10">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Create Your Professional Resume</h1>
-            <span class="text-sm font-medium text-gray-600">Step {{ step }} of {{ total_steps }}</span>
-        </div>
-
-        <!-- Progress bar -->
-        <div class="w-full bg-gray-200 rounded-full h-2 mb-6">
-            <div class="bg-indigo-600 h-2 rounded-full transition-all duration-500 ease-out"
-                 style="width: {{ step|floatformat:0|mul:100|div:total_steps }}%"></div>
-        </div>
-
-        <!-- Step indicators - Improved alignment and spacing -->
-        <div class="flex justify-between mb-8">
-            {% for i in total_steps|get_range %}
-                <div class="flex flex-col items-center w-full max-w-[60px]">
-                    {% if i < step %}
-                        <!-- Completed steps -->
-                        <a href="{% url 'job_portal:resume_wizard' step=i %}"
-                           class="group relative"
-                           title="Go back to Step {{ i }}">
-                            <div class="w-8 h-8 mx-auto rounded-full bg-gray-500 flex items-center justify-center mb-1
-                                        group-hover:bg-indigo-600 transition-colors duration-200">
-                                <span class="text-white text-sm font-medium">{{ i }}</span>
-                            </div>
-                            <span class="text-gray-500 group-hover:text-indigo-600 transition-colors duration-200
-                                         text-center w-full block text-xs whitespace-nowrap overflow-hidden text-ellipsis">
-                                {% if i == 1 %}Personal
-                                {% elif i == 2 %}Summary
-                                {% elif i == 3 %}Skills
-                                {% elif i == 4 %}Experience
-                                {% elif i == 5 %}Education
-                                {% elif i == 6 %}Projects
-                                {% elif i == 7 %}Certifications
-                                {% elif i == 8 %}Languages
-                                {% elif i == 9 %}Additional
-                                {% endif %}
-                            </span>
-                        </a>
-                    {% elif i == step %}
-                        <!-- Current step -->
-                        <div class="w-8 h-8 mx-auto rounded-full bg-indigo-600 flex items-center justify-center mb-1
-                                    ring-2 ring-offset-2 ring-indigo-500">
-                            <span class="text-white text-sm font-medium">{{ i }}</span>
-                        </div>
-                        <span class="text-indigo-700 font-semibold text-center w-full block text-xs
-                                     whitespace-nowrap overflow-hidden text-ellipsis">
-                            {% if i == 1 %}Personal
-                            {% elif i == 2 %}Summary
-                            {% elif i == 3 %}Skills
-                            {% elif i == 4 %}Experience
-                            {% elif i == 5 %}Education
-                            {% elif i == 6 %}Projects
-                            {% elif i == 7 %}Certifications
-                            {% elif i == 8 %}Languages
-                            {% elif i == 9 %}Additional
-                            {% endif %}
-                        </span>
-                    {% else %}
-                        <!-- Future steps -->
-                        <div class="w-8 h-8 mx-auto rounded-full bg-gray-300 flex items-center justify-center mb-1">
-                            <span class="text-gray-600 text-sm font-medium">{{ i }}</span>
-                        </div>
-                        <span class="text-gray-400 text-center w-full block text-xs
-                                     whitespace-nowrap overflow-hidden text-ellipsis">
-                            {% if i == 1 %}Personal
-                            {% elif i == 2 %}Summary
-                            {% elif i == 3 %}Skills
-                            {% elif i == 4 %}Experience
-                            {% elif i == 5 %}Education
-                            {% elif i == 6 %}Projects
-                            {% elif i == 7 %}Certifications
-                            {% elif i == 8 %}Languages
-                            {% elif i == 9 %}Additional
-                            {% endif %}
-                        </span>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- Form card -->
-    <div class="bg-white shadow-xl rounded-xl border border-gray-200 overflow-hidden">
-        <form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="false">
-            {% csrf_token %}
-            <div class="p-6 sm:p-8">
-                <h2 class="text-xl md:text-2xl font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-200 flex items-center">
-                    <span class="mr-3 text-indigo-600 text-xl w-6 text-center flex-shrink-0">
-                        {% block step_icon %}
-                            {% if step == 1 %}<i class="fa-solid fa-user-circle"></i>
-                            {% elif step == 2 %}<i class="fa-solid fa-file-lines"></i>
-                            {% elif step == 3 %}<i class="fa-solid fa-lightbulb"></i>
-                            {% elif step == 4 %}<i class="fa-solid fa-briefcase"></i>
-                            {% elif step == 5 %}<i class="fa-solid fa-graduation-cap"></i>
-                            {% elif step == 6 %}<i class="fa-solid fa-diagram-project"></i>
-                            {% elif step == 7 %}<i class="fa-solid fa-certificate"></i>
-                            {% elif step == 8 %}<i class="fa-solid fa-language"></i>
-                            {% elif step == 9 %}<i class="fa-solid fa-puzzle-piece"></i>
-                            {% else %}<i class="fa-solid fa-clipboard-list"></i>
-                            {% endif %}
-                        {% endblock step_icon %}
-                    </span>
-                    <span>{% block step_title %}{% endblock step_title %}</span>
-                </h2>
-
-                <div class="space-y-6">
-                    {% block step_content %}{% endblock step_content %}
-                </div>
-            </div>
-
-            <!-- Navigation buttons with consistent spacing -->
-            <div class="px-6 sm:px-8 py-4 border-t border-gray-200 bg-gray-50">
-                <div class="flex justify-between items-center">
-                    {% if step > 1 %}
-                    <a href="{% url 'job_portal:resume_wizard' step=step|add:'-1' %}"
-                       class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                       id="prev-step-btn">
-                        <i class="fa-solid fa-chevron-left mr-2 -ml-1 h-5 w-5" aria-hidden="true"></i> Previous Step
-                    </a>
-                    {% else %}
-                    <div></div> <!-- Empty div for spacing -->
-                    {% endif %}
-
-                    {% if step < total_steps %}
-                    <button type="submit" form="resume-form"
-                            class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out"
-                            id="next-step-btn">
-                        Save & Continue <i class="fa-solid fa-chevron-right ml-2 -mr-1 h-5 w-5" aria-hidden="true"></i>
-                    </button>
-                    {% else %}
-                    <button type="submit" form="resume-form"
-                            class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150 ease-in-out"
-                            id="complete-resume-btn">
-                        <i class="fa-solid fa-check mr-2"></i> Complete Resume
-                    </button>
-                    {% endif %}
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <!-- Preview button -->
-    <div class="mt-8 text-center">
-        <button id="open-preview-modal" type="button"
-                class="inline-flex items-center justify-center px-4 py-2 border border-indigo-600 text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            <i class="fa-solid fa-eye mr-2"></i> Preview Resume
-        </button>
-    </div>
-
-    <!-- Resume Preview Modal -->
-    <div id="resumePreviewModal" class="fixed inset-0 z-50 overflow-y-auto hidden items-center justify-center p-4"
-         aria-labelledby="resume-modal-title" role="dialog" aria-modal="true">
-        <div class="fixed inset-0 bg-gray-900/80 transition-opacity"
-             aria-hidden="true" onclick="closeResumePreviewModal()"></div>
-
-        <div class="relative bg-white rounded-xl shadow-xl overflow-hidden w-11/12 max-w-4xl mx-auto my-8 transform transition-all">
-            <div class="bg-indigo-700 p-4 px-6 text-white flex justify-between items-center">
-                <h3 class="font-semibold text-lg flex items-center" id="resume-modal-title">
-                    <i class="fa-solid fa-file-invoice mr-3"></i>
-                    <span>Resume Preview</span>
-                </h3>
-                <button class="inline-flex items-center justify-center h-8 w-8 rounded-full transition duration-150 ease-in-out bg-transparent text-indigo-100 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-700 focus:ring-white"
-                        onclick="closeResumePreviewModal()">
-                    <span class="sr-only">Close</span> <i class="fa-solid fa-times text-lg"></i>
-                </button>
-            </div>
-
-            <div id="resume-preview" class="h-[75vh] overflow-y-auto p-0 bg-gray-100">
-                <div class="flex flex-col justify-center items-center h-full text-gray-500 p-4 text-center">
-                    <i class="fa-solid fa-spinner fa-spin text-4xl text-indigo-600 mb-4 animate-spin"></i>
-                    <p>Loading preview...</p>
-                </div>
-            </div>
-
-            <div class="border-t border-gray-200 p-4 px-6 flex justify-between items-center bg-gray-50">
-                <button id="refresh-preview"
-                        class="inline-flex items-center justify-center px-3 py-1.5 border border-indigo-600 text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    <i class="fa-solid fa-sync-alt mr-2"></i> Refresh Preview
-                </button>
-                <button class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                        onclick="closeResumePreviewModal()">
-                    Close
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock content %}
-
-{% block extra_js %}
-<script>
-    // Function to toggle end date based on "is current" checkbox
-    function toggleEndDate(checkbox) {
-        try {
-            const fieldWrapper = checkbox.closest('.field-wrapper') || checkbox.closest('div[class*="space-y-"] > div') || checkbox.closest('.form-group');
-            if (!fieldWrapper) return;
-
-            const endDateField = fieldWrapper.querySelector('input[name$="end_date"], select[name$="end_date"]');
-            const endDateLabel = fieldWrapper.querySelector('label[for$="end_date"]');
-
-            if (endDateField) {
-                const container = endDateField.closest('.relative') || endDateField.parentElement;
-                if (checkbox.checked) {
-                    endDateField.disabled = true;
-                    endDateField.value = '';
-                    container?.classList.add('opacity-50', 'pointer-events-none');
-                    endDateLabel?.classList.add('opacity-50');
-                    endDateField.required = false;
-                } else {
-                    endDateField.disabled = false;
-                    container?.classList.remove('opacity-50', 'pointer-events-none');
-                    endDateLabel?.classList.remove('opacity-50');
-                }
-            }
-        } catch (e) { console.error("Error in toggleEndDate:", e); }
-    }
-
-    // Resume Preview Modal Functions
-    const resumePreviewModal = document.getElementById('resumePreviewModal');
-    const resumePreviewContainer = document.getElementById('resume-preview');
-    const resumeFormForPreview = document.getElementById('resume-form');
-    const currentStep = {{ step|default:0 }};
-
-    function openResumePreviewModal() {
-        if (!resumePreviewModal || !resumePreviewContainer) {
-            console.error("Resume Preview Modal or container element not found!");
-            return;
-        }
-        // Always open the modal
-        resumePreviewModal.classList.remove('hidden');
-        resumePreviewModal.classList.add('flex');
-        document.body.style.overflow = 'hidden';
-
-        // Check if it's the first step to show message OR fetch preview
-        if (currentStep === 1) {
-            // Show message on step 1
-            resumePreviewContainer.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-full p-8 text-center">
-                    <i class="fa-solid fa-info-circle text-4xl text-blue-500 mb-4"></i>
-                    <p class="text-gray-800 mb-2 font-semibold">Preview Available Soon</p>
-                    <p class="text-sm text-gray-600 max-w-md">
-                        The full resume preview requires information from later steps. Please complete this step and continue.
-                        The preview will be available from Step 2 onwards.
-                    </p>
-                </div>`;
-        } else {
-            // Fetch the actual preview for steps > 1
-            refreshResumePreview();
-        }
-    }
-
-    function closeResumePreviewModal() {
-        if (resumePreviewModal) {
-            resumePreviewModal.classList.add('hidden');
-            resumePreviewModal.classList.remove('flex');
-            document.body.style.overflow = 'auto';
-        }
-    }
-
-    function refreshResumePreview() {
-        // Prevent refresh attempt on step 1 (keep message displayed)
-        if (currentStep === 1) {
-            console.log("Preview refresh skipped on step 1.");
-            // Ensure the message is still there if modal was somehow cleared
-            if(resumePreviewContainer && resumePreviewContainer.querySelector('.fa-info-circle') == null){
-                 openResumePreviewModal(); // Re-call to reset content to the message
-            }
-            return;
-        }
-
-        if (!resumePreviewContainer || !resumeFormForPreview) {
-            console.error("Preview container or form element not found for refresh.");
-            return;
-        }
-        // Indicate loading
-        resumePreviewContainer.innerHTML = `
-            <div class="flex flex-col items-center justify-center h-full p-4 text-gray-600">
-                <i class="fas fa-spinner fa-spin text-3xl text-indigo-600 mb-4 animate-spin"></i>
-                <p>Generating preview...</p>
-            </div>`;
-
-        const formData = new FormData(resumeFormForPreview);
-
-        // Add dynamic form data processing for formsets
-        try {
-            // Process skill fields
-            const skillRows = document.querySelectorAll('#skills-container .form-row');
-            if (skillRows.length > 0) {
-                formData.append('skill_count', skillRows.length);
-            }
-
-            // Process experience fields
-            const expRows = document.querySelectorAll('#experience-container .form-row');
-            if (expRows.length > 0) {
-                formData.append('experience_count', expRows.length);
-                expRows.forEach((row, index) => {
-                    // Process bullet points for each experience
-                    const bulletRows = row.querySelectorAll('.bullet-point-row');
-                    if (bulletRows.length > 0) {
-                        formData.append(`bullet_count_${index}`, bulletRows.length);
-                    }
-                });
-            }
-
-            // Process education fields
-            const eduRows = document.querySelectorAll('#education-container .form-row');
-            if (eduRows.length > 0) {
-                formData.append('education_count', eduRows.length);
-            }
-
-            // Process project fields
-            const projRows = document.querySelectorAll('#projects-container .form-row');
-            if (projRows.length > 0) {
-                formData.append('projects_count', projRows.length);
-                projRows.forEach((row, index) => {
-                    // Process bullet points for each project
-                    const bulletRows = row.querySelectorAll('.bullet-point-row');
-                    if (bulletRows.length > 0) {
-                        formData.append(`project_${index}_bullet_count`, bulletRows.length);
-                    }
-                });
-            }
-        } catch (e) {
-            console.error("Error preparing form data:", e);
-        }
-
-        fetch("{% url 'job_portal:preview_current_resume' %}", {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                 return response.text().then(text => { throw new Error(`Preview Error (${response.status}): ${text.substring(0, 200)}`); });
-            }
-            return response.text();
-        })
-        .then(html => {
-            // Inject response HTML with a light background wrapper
-            resumePreviewContainer.innerHTML = `<div class="bg-white shadow-lg m-2 p-4">${html}</div>`;
-        })
-        .catch(error => {
-            console.error("Resume Preview fetch/processing error:", error);
-            resumePreviewContainer.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-full p-8 text-center">
-                    <i class="fa-solid fa-circle-exclamation text-4xl text-red-500 mb-4"></i>
-                    <p class="text-red-600 mb-2 font-semibold">Failed to Load Preview</p>
-                    <p class="text-sm text-gray-600 mb-4 max-w-md">${error.message || 'An unknown error occurred.'}</p>
-                    <button class="inline-flex items-center justify-center px-3 py-1.5 border border-indigo-600 text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" onclick="refreshResumePreview()">
-                        <i class="fa-solid fa-sync-alt mr-2"></i> Try Again
-                    </button>
-                </div>`;
-        });
-    }
-
-    // Initial setup on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        // Setup 'is_current' checkboxes
-        document.querySelectorAll('input[type="checkbox"][name$="is_current"]').forEach(function(checkbox) {
-            toggleEndDate(checkbox);
-            checkbox.addEventListener('change', function() { toggleEndDate(this); });
-        });
-
-        // Setup preview button listeners
-        const openModalBtn = document.getElementById('open-preview-modal');
-        if (openModalBtn) openModalBtn.addEventListener('click', openResumePreviewModal);
-
-        const refreshBtn = document.getElementById('refresh-preview');
-        if (refreshBtn) refreshBtn.addEventListener('click', refreshResumePreview);
-
-        // Ensure the Previous Step button causes a full page reload
-        const prevStepBtn = document.getElementById('prev-step-btn');
-        if (prevStepBtn) {
-            prevStepBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const href = this.getAttribute('href');
-                window.location.href = href;
-            });
-        }
-
-        // Ensure the resume form submission causes a full page reload
-        const resumeForm = document.getElementById('resume-form');
-        if (resumeForm) {
-            // We need to ensure HTMX doesn't interfere with form submission
-            resumeForm.setAttribute('hx-boost', 'false');
-
-            // For the next/save button, let's add a direct handler
-            const nextButton = document.getElementById('next-step-btn');
-            if (nextButton) {
-                nextButton.addEventListener('click', function(e) {
-                    // Prevent the default button behavior
-                    e.preventDefault();
-
-                    // Disable any HTMX features
-                    if (typeof htmx !== 'undefined') {
-                        htmx.config.globalViewTransitions = false;
-                        resumeForm.setAttribute('hx-boost', 'false');
-                        resumeForm.setAttribute('data-no-ajax', 'true');
-                    }
-
-                    // Ensure form is submitted with page reload
-                    resumeForm.setAttribute('onsubmit', '');
-
-                    // Submit the form to cause a full page reload
-                    resumeForm.submit();
-                });
-            }
-
-            // Handle the complete resume button similarly
-            const completeButton = document.getElementById('complete-resume-btn');
-            if (completeButton) {
-                completeButton.addEventListener('click', function(e) {
-                    e.preventDefault();
-
-                    if (typeof htmx !== 'undefined') {
-                        htmx.config.globalViewTransitions = false;
-                        resumeForm.setAttribute('hx-boost', 'false');
-                        resumeForm.setAttribute('data-no-ajax', 'true');
-                    }
-
-                    resumeForm.setAttribute('onsubmit', '');
-                    resumeForm.submit();
-                });
-            }
-        }
-    });
-</script>
-
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/globals.css' %}"> {# Ensure this file exists if used #}
+<script src="{% static 'js/resume_wizard.js' %}" defer></script> {# Ensure this file exists if used #}
 <style>
-    /* Highlight animation for new elements */
-    .highlight-new { animation: highlight-pulse 1.0s ease-out; }
-    @keyframes highlight-pulse { 0%, 100% { background-color: transparent; } 50% { background-color: rgba(96, 165, 250, 0.15); } }
-
-    /* Fade out animation for removed elements */
-    .fade-out { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; border: none; overflow: hidden; transition: all 0.3s ease-out; }
-
-    /* Optional: Style the wrapper for the injected preview HTML */
-    .resume-preview-content { line-height: 1.6; }
-
-    /* Responsive grid adjustments */
-    @media screen and (max-width: 640px) {
-        /* Smaller step indicators on mobile */
-        .step-indicator { font-size: 0.7rem; }
+    /* Styles for step indicators (same as previously provided) */
+    .step-item {
+        @apply flex items-center text-slate-500 dark:text-slate-400 relative;
+    }
+    .step-item .step-connector {
+        @apply flex-auto border-t-2 transition duration-500 ease-in-out;
+    }
+    .step-item .step-circle {
+        @apply relative flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full text-xs sm:text-sm font-semibold transition duration-500 ease-in-out;
+    }
+    .step-item .step-text {
+        @apply absolute top-0 -ml-10 text-center mt-12 w-32 text-xs font-medium uppercase hidden md:block;
     }
 
-    /* Improve focus visibility for accessibility */
-    button:focus, a:focus {
-        outline: 2px solid rgba(99, 102, 241, 0.5);
-        outline-offset: 2px;
+    /* Completed Step */
+    .step-item.completed .step-connector { /* Connector before the circle */
+        @apply border-green-500 dark:border-green-400;
+    }
+    .step-item.completed .step-circle {
+        @apply bg-green-500 text-white dark:bg-green-400 dark:text-slate-900 border-green-500 dark:border-green-400;
+    }
+    .step-item.completed .step-text {
+        @apply text-green-600 dark:text-green-300;
+    }
+    /* Connector after a completed step's circle should also be green if the next step is also completed or active */
+    .step-item.completed + .step-item-connector-wrapper .step-connector {
+        @apply border-green-500 dark:border-green-400;
+    }
+
+
+    /* Active Step */
+    .step-item.active .step-connector { /* Connector before the active circle */
+         @apply border-primary-500 dark:border-primary-400; /* Can be gray if previous is not completed */
+    }
+    .step-item.active .step-circle {
+        @apply bg-primary-500 text-white ring-2 ring-offset-2 ring-primary-300 dark:bg-primary-400 dark:text-slate-900 dark:ring-primary-500 dark:ring-offset-slate-800 border-primary-500 dark:border-primary-400;
+    }
+    .step-item.active .step-text {
+        @apply text-primary-600 dark:text-primary-300 font-semibold;
+    }
+    /* Connector after an active step's circle should be gray (default) */
+    .step-item.active + .step-item-connector-wrapper .step-connector {
+        @apply border-slate-300 dark:border-slate-600;
+    }
+    /* If previous step was completed, the connector leading to active should be green */
+    .step-item.completed + .step-item-connector-wrapper.points-to-active .step-connector {
+        @apply border-green-500 dark:border-green-400;
+    }
+
+
+    /* Default/Upcoming Step */
+    .step-item.default .step-connector { /* Connector before a default circle */
+        @apply border-slate-300 dark:border-slate-600;
+    }
+    .step-item.default .step-circle {
+        @apply bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600;
+    }
+    .step-item.default .step-text {
+        @apply text-slate-500 dark:text-slate-400;
+    }
+    /* Connector after a default step's circle should also be gray */
+     .step-item.default + .step-item-connector-wrapper .step-connector {
+        @apply border-slate-300 dark:border-slate-600;
     }
 </style>
 {% endblock %}
 
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="bg-white dark:bg-slate-800 shadow-xl rounded-lg">
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+            <h1 class="text-xl font-semibold text-slate-800 dark:text-slate-100">
+                Editing Resume: <span class="text-primary-600 dark:text-primary-400">{{ resume.title }}</span>
+            </h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400">
+                Currently on step: <span class="font-medium">{{ current_step_display }}</span>
+            </p>
+        </div>
+
+        <div class="px-4 sm:px-6 py-6">
+            <div class="flex items-center">
+                {% for step_key, step_config in wizard_steps.items %}
+                    {% step_status resume step_key current_step wizard_steps as step_class %}
+                    <div class="step-item flex-1 {{ step_class }}">
+                        {# Connector leading to the circle (only if not the first item) #}
+                        {% if not forloop.first %}
+                        <div class="step-connector"></div>
+                        {% else %}
+                        <div class="step-connector border-transparent"></div> {# Invisible connector for layout consistency #}
+                        {% endif %}
+
+                        <a href="{% if resume.id %}{% url 'job_portal:resume_wizard' resume_id=resume.id step=step_key %}{% else %}javascript:void(0);{% endif %}"
+                           class="step-circle group"
+                           title="{{ step_config.name }}">
+                            <i class="fas {{ step_config.icon }} group-hover:scale-110 transition-transform"></i>
+                            <span class="step-text">{{ step_config.name }}</span>
+                        </a>
+                    </div>
+                    {# Trailing connector after the circle (only if not the last item) #}
+                    {% if not forloop.last %}
+                    <div class="step-item-connector-wrapper flex-1 {% if wizard_steps|get_item:forloop.counter0|get_item:'key' == current_step %}points-to-active{% endif %}">
+                         <div class="step-connector
+                            {% if step_class == 'completed' and wizard_steps|get_item:forloop.counter|get_item:'status' != 'default' %} border-green-500 dark:border-green-400
+                            {% elif step_class == 'active' %} border-slate-300 dark:border-slate-600
+                            {% else %} border-slate-300 dark:border-slate-600
+                            {% endif %}"></div>
+                    </div>
+                    {% else %}
+                     <div class="step-item-connector-wrapper flex-1"><div class="step-connector border-transparent"></div></div> {# Invisible for layout #}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+
+        <div class="p-6">
+            {% block wizard_content %}
+                {# Specific step content will go here, extending this base #}
+            {% endblock wizard_content %}
+        </div>
+
+        </div>
+
+    <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <a href="{% url 'job_portal:resume_list' %}" class="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:underline">
+            <i class="fas fa-list-ul mr-1.5"></i> Back to All Resumes
+        </a>
+        {% if resume.id %}
+        <div class="flex items-center space-x-3">
+            <a href="{% url 'job_portal:preview_current_resume' resume_id=resume.id %}" target="_blank" class="btn-neutral text-sm">
+                <i class="fas fa-eye mr-1.5"></i> Preview Resume
+            </a>
+            <a href="{% url 'job_portal:select_template' resume_id=resume.id %}" class="btn-neutral text-sm">
+                 <i class="fas fa-palette mr-1.5"></i> Change Template
+            </a>
+             <a href="{% url 'job_portal:finalize_resume' resume_id=resume.id %}" class="btn-success text-sm">
+                <i class="fas fa-check-circle mr-1.5"></i> View & Finalize
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+{# Include formset management script if needed, e.g., for experience, education steps #}
+{# <script src="{% static 'js/formset_management.js' %}" defer></script> #}
+{% endblock %}
+
+{#{% extends 'base_authenticated.html' %}#}
+{#{% load resume_extras %}#}
+{#{% load static %}#}
+{#{% load widget_tweaks %}#}
+{##}
+{#{% block title %}Resume Builder - Step {{ step }} of {{ total_steps }}{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#<div class="container mx-auto px-4 py-8 sm:py-10">#}
+{#    <div class="mb-8 sm:mb-10">#}
+{#        <div class="flex justify-between items-center mb-4">#}
+{#            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Create Your Professional Resume</h1>#}
+{#            <span class="text-sm font-medium text-gray-600">Step {{ step }} of {{ total_steps }}</span>#}
+{#        </div>#}
+{##}
+{#        <!-- Progress bar -->#}
+{#        <div class="w-full bg-gray-200 rounded-full h-2 mb-6">#}
+{#            <div class="bg-indigo-600 h-2 rounded-full transition-all duration-500 ease-out"#}
+{#                 style="width: {{ step|floatformat:0|mul:100|div:total_steps }}%"></div>#}
+{#        </div>#}
+{##}
+{#        <!-- Step indicators - Improved alignment and spacing -->#}
+{#        <div class="flex justify-between mb-8">#}
+{#            {% for i in total_steps|get_range %}#}
+{#                <div class="flex flex-col items-center w-full max-w-[60px]">#}
+{#                    {% if i < step %}#}
+{#                        <!-- Completed steps -->#}
+{#                        <a href="{% url 'job_portal:resume_wizard' step=i %}"#}
+{#                           class="group relative"#}
+{#                           title="Go back to Step {{ i }}">#}
+{#                            <div class="w-8 h-8 mx-auto rounded-full bg-gray-500 flex items-center justify-center mb-1#}
+{#                                        group-hover:bg-indigo-600 transition-colors duration-200">#}
+{#                                <span class="text-white text-sm font-medium">{{ i }}</span>#}
+{#                            </div>#}
+{#                            <span class="text-gray-500 group-hover:text-indigo-600 transition-colors duration-200#}
+{#                                         text-center w-full block text-xs whitespace-nowrap overflow-hidden text-ellipsis">#}
+{#                                {% if i == 1 %}Personal#}
+{#                                {% elif i == 2 %}Summary#}
+{#                                {% elif i == 3 %}Skills#}
+{#                                {% elif i == 4 %}Experience#}
+{#                                {% elif i == 5 %}Education#}
+{#                                {% elif i == 6 %}Projects#}
+{#                                {% elif i == 7 %}Certifications#}
+{#                                {% elif i == 8 %}Languages#}
+{#                                {% elif i == 9 %}Additional#}
+{#                                {% endif %}#}
+{#                            </span>#}
+{#                        </a>#}
+{#                    {% elif i == step %}#}
+{#                        <!-- Current step -->#}
+{#                        <div class="w-8 h-8 mx-auto rounded-full bg-indigo-600 flex items-center justify-center mb-1#}
+{#                                    ring-2 ring-offset-2 ring-indigo-500">#}
+{#                            <span class="text-white text-sm font-medium">{{ i }}</span>#}
+{#                        </div>#}
+{#                        <span class="text-indigo-700 font-semibold text-center w-full block text-xs#}
+{#                                     whitespace-nowrap overflow-hidden text-ellipsis">#}
+{#                            {% if i == 1 %}Personal#}
+{#                            {% elif i == 2 %}Summary#}
+{#                            {% elif i == 3 %}Skills#}
+{#                            {% elif i == 4 %}Experience#}
+{#                            {% elif i == 5 %}Education#}
+{#                            {% elif i == 6 %}Projects#}
+{#                            {% elif i == 7 %}Certifications#}
+{#                            {% elif i == 8 %}Languages#}
+{#                            {% elif i == 9 %}Additional#}
+{#                            {% endif %}#}
+{#                        </span>#}
+{#                    {% else %}#}
+{#                        <!-- Future steps -->#}
+{#                        <div class="w-8 h-8 mx-auto rounded-full bg-gray-300 flex items-center justify-center mb-1">#}
+{#                            <span class="text-gray-600 text-sm font-medium">{{ i }}</span>#}
+{#                        </div>#}
+{#                        <span class="text-gray-400 text-center w-full block text-xs#}
+{#                                     whitespace-nowrap overflow-hidden text-ellipsis">#}
+{#                            {% if i == 1 %}Personal#}
+{#                            {% elif i == 2 %}Summary#}
+{#                            {% elif i == 3 %}Skills#}
+{#                            {% elif i == 4 %}Experience#}
+{#                            {% elif i == 5 %}Education#}
+{#                            {% elif i == 6 %}Projects#}
+{#                            {% elif i == 7 %}Certifications#}
+{#                            {% elif i == 8 %}Languages#}
+{#                            {% elif i == 9 %}Additional#}
+{#                            {% endif %}#}
+{#                        </span>#}
+{#                    {% endif %}#}
+{#                </div>#}
+{#            {% endfor %}#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Form card -->#}
+{#    <div class="bg-white shadow-xl rounded-xl border border-gray-200 overflow-hidden">#}
+{#        <form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="false">#}
+{#            {% csrf_token %}#}
+{#            <div class="p-6 sm:p-8">#}
+{#                <h2 class="text-xl md:text-2xl font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-200 flex items-center">#}
+{#                    <span class="mr-3 text-indigo-600 text-xl w-6 text-center flex-shrink-0">#}
+{#                        {% block step_icon %}#}
+{#                            {% if step == 1 %}<i class="fa-solid fa-user-circle"></i>#}
+{#                            {% elif step == 2 %}<i class="fa-solid fa-file-lines"></i>#}
+{#                            {% elif step == 3 %}<i class="fa-solid fa-lightbulb"></i>#}
+{#                            {% elif step == 4 %}<i class="fa-solid fa-briefcase"></i>#}
+{#                            {% elif step == 5 %}<i class="fa-solid fa-graduation-cap"></i>#}
+{#                            {% elif step == 6 %}<i class="fa-solid fa-diagram-project"></i>#}
+{#                            {% elif step == 7 %}<i class="fa-solid fa-certificate"></i>#}
+{#                            {% elif step == 8 %}<i class="fa-solid fa-language"></i>#}
+{#                            {% elif step == 9 %}<i class="fa-solid fa-puzzle-piece"></i>#}
+{#                            {% else %}<i class="fa-solid fa-clipboard-list"></i>#}
+{#                            {% endif %}#}
+{#                        {% endblock step_icon %}#}
+{#                    </span>#}
+{#                    <span>{% block step_title %}{% endblock step_title %}</span>#}
+{#                </h2>#}
+{##}
+{#                <div class="space-y-6">#}
+{#                    {% block step_content %}{% endblock step_content %}#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <!-- Navigation buttons with consistent spacing -->#}
+{#            <div class="px-6 sm:px-8 py-4 border-t border-gray-200 bg-gray-50">#}
+{#                <div class="flex justify-between items-center">#}
+{#                    {% if step > 1 %}#}
+{#                    <a href="{% url 'job_portal:resume_wizard' step=step|add:'-1' %}"#}
+{#                       class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"#}
+{#                       id="prev-step-btn">#}
+{#                        <i class="fa-solid fa-chevron-left mr-2 -ml-1 h-5 w-5" aria-hidden="true"></i> Previous Step#}
+{#                    </a>#}
+{#                    {% else %}#}
+{#                    <div></div> <!-- Empty div for spacing -->#}
+{#                    {% endif %}#}
+{##}
+{#                    {% if step < total_steps %}#}
+{#                    <button type="submit" form="resume-form"#}
+{#                            class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out"#}
+{#                            id="next-step-btn">#}
+{#                        Save & Continue <i class="fa-solid fa-chevron-right ml-2 -mr-1 h-5 w-5" aria-hidden="true"></i>#}
+{#                    </button>#}
+{#                    {% else %}#}
+{#                    <button type="submit" form="resume-form"#}
+{#                            class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150 ease-in-out"#}
+{#                            id="complete-resume-btn">#}
+{#                        <i class="fa-solid fa-check mr-2"></i> Complete Resume#}
+{#                    </button>#}
+{#                    {% endif %}#}
+{#                </div>#}
+{#            </div>#}
+{#        </form>#}
+{#    </div>#}
+{##}
+{#    <!-- Preview button -->#}
+{#    <div class="mt-8 text-center">#}
+{#        <button id="open-preview-modal" type="button"#}
+{#                class="inline-flex items-center justify-center px-4 py-2 border border-indigo-600 text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">#}
+{#            <i class="fa-solid fa-eye mr-2"></i> Preview Resume#}
+{#        </button>#}
+{#    </div>#}
+{##}
+{#    <!-- Resume Preview Modal -->#}
+{#    <div id="resumePreviewModal" class="fixed inset-0 z-50 overflow-y-auto hidden items-center justify-center p-4"#}
+{#         aria-labelledby="resume-modal-title" role="dialog" aria-modal="true">#}
+{#        <div class="fixed inset-0 bg-gray-900/80 transition-opacity"#}
+{#             aria-hidden="true" onclick="closeResumePreviewModal()"></div>#}
+{##}
+{#        <div class="relative bg-white rounded-xl shadow-xl overflow-hidden w-11/12 max-w-4xl mx-auto my-8 transform transition-all">#}
+{#            <div class="bg-indigo-700 p-4 px-6 text-white flex justify-between items-center">#}
+{#                <h3 class="font-semibold text-lg flex items-center" id="resume-modal-title">#}
+{#                    <i class="fa-solid fa-file-invoice mr-3"></i>#}
+{#                    <span>Resume Preview</span>#}
+{#                </h3>#}
+{#                <button class="inline-flex items-center justify-center h-8 w-8 rounded-full transition duration-150 ease-in-out bg-transparent text-indigo-100 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-indigo-700 focus:ring-white"#}
+{#                        onclick="closeResumePreviewModal()">#}
+{#                    <span class="sr-only">Close</span> <i class="fa-solid fa-times text-lg"></i>#}
+{#                </button>#}
+{#            </div>#}
+{##}
+{#            <div id="resume-preview" class="h-[75vh] overflow-y-auto p-0 bg-gray-100">#}
+{#                <div class="flex flex-col justify-center items-center h-full text-gray-500 p-4 text-center">#}
+{#                    <i class="fa-solid fa-spinner fa-spin text-4xl text-indigo-600 mb-4 animate-spin"></i>#}
+{#                    <p>Loading preview...</p>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <div class="border-t border-gray-200 p-4 px-6 flex justify-between items-center bg-gray-50">#}
+{#                <button id="refresh-preview"#}
+{#                        class="inline-flex items-center justify-center px-3 py-1.5 border border-indigo-600 text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">#}
+{#                    <i class="fa-solid fa-sync-alt mr-2"></i> Refresh Preview#}
+{#                </button>#}
+{#                <button class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"#}
+{#                        onclick="closeResumePreviewModal()">#}
+{#                    Close#}
+{#                </button>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
+{#{% endblock content %}#}
+{##}
+{#{% block extra_js %}#}
+{#<script>#}
+{#    // Function to toggle end date based on "is current" checkbox#}
+{#    function toggleEndDate(checkbox) {#}
+{#        try {#}
+{#            const fieldWrapper = checkbox.closest('.field-wrapper') || checkbox.closest('div[class*="space-y-"] > div') || checkbox.closest('.form-group');#}
+{#            if (!fieldWrapper) return;#}
+{##}
+{#            const endDateField = fieldWrapper.querySelector('input[name$="end_date"], select[name$="end_date"]');#}
+{#            const endDateLabel = fieldWrapper.querySelector('label[for$="end_date"]');#}
+{##}
+{#            if (endDateField) {#}
+{#                const container = endDateField.closest('.relative') || endDateField.parentElement;#}
+{#                if (checkbox.checked) {#}
+{#                    endDateField.disabled = true;#}
+{#                    endDateField.value = '';#}
+{#                    container?.classList.add('opacity-50', 'pointer-events-none');#}
+{#                    endDateLabel?.classList.add('opacity-50');#}
+{#                    endDateField.required = false;#}
+{#                } else {#}
+{#                    endDateField.disabled = false;#}
+{#                    container?.classList.remove('opacity-50', 'pointer-events-none');#}
+{#                    endDateLabel?.classList.remove('opacity-50');#}
+{#                }#}
+{#            }#}
+{#        } catch (e) { console.error("Error in toggleEndDate:", e); }#}
+{#    }#}
+{##}
+{#    // Resume Preview Modal Functions#}
+{#    const resumePreviewModal = document.getElementById('resumePreviewModal');#}
+{#    const resumePreviewContainer = document.getElementById('resume-preview');#}
+{#    const resumeFormForPreview = document.getElementById('resume-form');#}
+{#    const currentStep = {{ step|default:0 }};#}
+{##}
+{#    function openResumePreviewModal() {#}
+{#        if (!resumePreviewModal || !resumePreviewContainer) {#}
+{#            console.error("Resume Preview Modal or container element not found!");#}
+{#            return;#}
+{#        }#}
+{#        // Always open the modal#}
+{#        resumePreviewModal.classList.remove('hidden');#}
+{#        resumePreviewModal.classList.add('flex');#}
+{#        document.body.style.overflow = 'hidden';#}
+{##}
+{#        // Check if it's the first step to show message OR fetch preview#}
+{#        if (currentStep === 1) {#}
+{#            // Show message on step 1#}
+{#            resumePreviewContainer.innerHTML = `#}
+{#                <div class="flex flex-col items-center justify-center h-full p-8 text-center">#}
+{#                    <i class="fa-solid fa-info-circle text-4xl text-blue-500 mb-4"></i>#}
+{#                    <p class="text-gray-800 mb-2 font-semibold">Preview Available Soon</p>#}
+{#                    <p class="text-sm text-gray-600 max-w-md">#}
+{#                        The full resume preview requires information from later steps. Please complete this step and continue.#}
+{#                        The preview will be available from Step 2 onwards.#}
+{#                    </p>#}
+{#                </div>`;#}
+{#        } else {#}
+{#            // Fetch the actual preview for steps > 1#}
+{#            refreshResumePreview();#}
+{#        }#}
+{#    }#}
+{##}
+{#    function closeResumePreviewModal() {#}
+{#        if (resumePreviewModal) {#}
+{#            resumePreviewModal.classList.add('hidden');#}
+{#            resumePreviewModal.classList.remove('flex');#}
+{#            document.body.style.overflow = 'auto';#}
+{#        }#}
+{#    }#}
+{##}
+{#    function refreshResumePreview() {#}
+{#        // Prevent refresh attempt on step 1 (keep message displayed)#}
+{#        if (currentStep === 1) {#}
+{#            console.log("Preview refresh skipped on step 1.");#}
+{#            // Ensure the message is still there if modal was somehow cleared#}
+{#            if(resumePreviewContainer && resumePreviewContainer.querySelector('.fa-info-circle') == null){#}
+{#                 openResumePreviewModal(); // Re-call to reset content to the message#}
+{#            }#}
+{#            return;#}
+{#        }#}
+{##}
+{#        if (!resumePreviewContainer || !resumeFormForPreview) {#}
+{#            console.error("Preview container or form element not found for refresh.");#}
+{#            return;#}
+{#        }#}
+{#        // Indicate loading#}
+{#        resumePreviewContainer.innerHTML = `#}
+{#            <div class="flex flex-col items-center justify-center h-full p-4 text-gray-600">#}
+{#                <i class="fas fa-spinner fa-spin text-3xl text-indigo-600 mb-4 animate-spin"></i>#}
+{#                <p>Generating preview...</p>#}
+{#            </div>`;#}
+{##}
+{#        const formData = new FormData(resumeFormForPreview);#}
+{##}
+{#        // Add dynamic form data processing for formsets#}
+{#        try {#}
+{#            // Process skill fields#}
+{#            const skillRows = document.querySelectorAll('#skills-container .form-row');#}
+{#            if (skillRows.length > 0) {#}
+{#                formData.append('skill_count', skillRows.length);#}
+{#            }#}
+{##}
+{#            // Process experience fields#}
+{#            const expRows = document.querySelectorAll('#experience-container .form-row');#}
+{#            if (expRows.length > 0) {#}
+{#                formData.append('experience_count', expRows.length);#}
+{#                expRows.forEach((row, index) => {#}
+{#                    // Process bullet points for each experience#}
+{#                    const bulletRows = row.querySelectorAll('.bullet-point-row');#}
+{#                    if (bulletRows.length > 0) {#}
+{#                        formData.append(`bullet_count_${index}`, bulletRows.length);#}
+{#                    }#}
+{#                });#}
+{#            }#}
+{##}
+{#            // Process education fields#}
+{#            const eduRows = document.querySelectorAll('#education-container .form-row');#}
+{#            if (eduRows.length > 0) {#}
+{#                formData.append('education_count', eduRows.length);#}
+{#            }#}
+{##}
+{#            // Process project fields#}
+{#            const projRows = document.querySelectorAll('#projects-container .form-row');#}
+{#            if (projRows.length > 0) {#}
+{#                formData.append('projects_count', projRows.length);#}
+{#                projRows.forEach((row, index) => {#}
+{#                    // Process bullet points for each project#}
+{#                    const bulletRows = row.querySelectorAll('.bullet-point-row');#}
+{#                    if (bulletRows.length > 0) {#}
+{#                        formData.append(`project_${index}_bullet_count`, bulletRows.length);#}
+{#                    }#}
+{#                });#}
+{#            }#}
+{#        } catch (e) {#}
+{#            console.error("Error preparing form data:", e);#}
+{#        }#}
+{##}
+{#        fetch("{% url 'job_portal:preview_current_resume' %}", {#}
+{#            method: 'POST',#}
+{#            body: formData,#}
+{#            headers: {#}
+{#                'X-Requested-With': 'XMLHttpRequest',#}
+{#                'X-CSRFToken': formData.get('csrfmiddlewaretoken')#}
+{#            }#}
+{#        })#}
+{#        .then(response => {#}
+{#            if (!response.ok) {#}
+{#                 return response.text().then(text => { throw new Error(`Preview Error (${response.status}): ${text.substring(0, 200)}`); });#}
+{#            }#}
+{#            return response.text();#}
+{#        })#}
+{#        .then(html => {#}
+{#            // Inject response HTML with a light background wrapper#}
+{#            resumePreviewContainer.innerHTML = `<div class="bg-white shadow-lg m-2 p-4">${html}</div>`;#}
+{#        })#}
+{#        .catch(error => {#}
+{#            console.error("Resume Preview fetch/processing error:", error);#}
+{#            resumePreviewContainer.innerHTML = `#}
+{#                <div class="flex flex-col items-center justify-center h-full p-8 text-center">#}
+{#                    <i class="fa-solid fa-circle-exclamation text-4xl text-red-500 mb-4"></i>#}
+{#                    <p class="text-red-600 mb-2 font-semibold">Failed to Load Preview</p>#}
+{#                    <p class="text-sm text-gray-600 mb-4 max-w-md">${error.message || 'An unknown error occurred.'}</p>#}
+{#                    <button class="inline-flex items-center justify-center px-3 py-1.5 border border-indigo-600 text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" onclick="refreshResumePreview()">#}
+{#                        <i class="fa-solid fa-sync-alt mr-2"></i> Try Again#}
+{#                    </button>#}
+{#                </div>`;#}
+{#        });#}
+{#    }#}
+{##}
+{#    // Initial setup on page load#}
+{#    document.addEventListener('DOMContentLoaded', function() {#}
+{#        // Setup 'is_current' checkboxes#}
+{#        document.querySelectorAll('input[type="checkbox"][name$="is_current"]').forEach(function(checkbox) {#}
+{#            toggleEndDate(checkbox);#}
+{#            checkbox.addEventListener('change', function() { toggleEndDate(this); });#}
+{#        });#}
+{##}
+{#        // Setup preview button listeners#}
+{#        const openModalBtn = document.getElementById('open-preview-modal');#}
+{#        if (openModalBtn) openModalBtn.addEventListener('click', openResumePreviewModal);#}
+{##}
+{#        const refreshBtn = document.getElementById('refresh-preview');#}
+{#        if (refreshBtn) refreshBtn.addEventListener('click', refreshResumePreview);#}
+{##}
+{#        // Ensure the Previous Step button causes a full page reload#}
+{#        const prevStepBtn = document.getElementById('prev-step-btn');#}
+{#        if (prevStepBtn) {#}
+{#            prevStepBtn.addEventListener('click', function(e) {#}
+{#                e.preventDefault();#}
+{#                const href = this.getAttribute('href');#}
+{#                window.location.href = href;#}
+{#            });#}
+{#        }#}
+{##}
+{#        // Ensure the resume form submission causes a full page reload#}
+{#        const resumeForm = document.getElementById('resume-form');#}
+{#        if (resumeForm) {#}
+{#            // We need to ensure HTMX doesn't interfere with form submission#}
+{#            resumeForm.setAttribute('hx-boost', 'false');#}
+{##}
+{#            // For the next/save button, let's add a direct handler#}
+{#            const nextButton = document.getElementById('next-step-btn');#}
+{#            if (nextButton) {#}
+{#                nextButton.addEventListener('click', function(e) {#}
+{#                    // Prevent the default button behavior#}
+{#                    e.preventDefault();#}
+{##}
+{#                    // Disable any HTMX features#}
+{#                    if (typeof htmx !== 'undefined') {#}
+{#                        htmx.config.globalViewTransitions = false;#}
+{#                        resumeForm.setAttribute('hx-boost', 'false');#}
+{#                        resumeForm.setAttribute('data-no-ajax', 'true');#}
+{#                    }#}
+{##}
+{#                    // Ensure form is submitted with page reload#}
+{#                    resumeForm.setAttribute('onsubmit', '');#}
+{##}
+{#                    // Submit the form to cause a full page reload#}
+{#                    resumeForm.submit();#}
+{#                });#}
+{#            }#}
+{##}
+{#            // Handle the complete resume button similarly#}
+{#            const completeButton = document.getElementById('complete-resume-btn');#}
+{#            if (completeButton) {#}
+{#                completeButton.addEventListener('click', function(e) {#}
+{#                    e.preventDefault();#}
+{##}
+{#                    if (typeof htmx !== 'undefined') {#}
+{#                        htmx.config.globalViewTransitions = false;#}
+{#                        resumeForm.setAttribute('hx-boost', 'false');#}
+{#                        resumeForm.setAttribute('data-no-ajax', 'true');#}
+{#                    }#}
+{##}
+{#                    resumeForm.setAttribute('onsubmit', '');#}
+{#                    resumeForm.submit();#}
+{#                });#}
+{#            }#}
+{#        }#}
+{#    });#}
+{#</script>#}
+{##}
+{#<style>#}
+{#    /* Highlight animation for new elements */#}
+{#    .highlight-new { animation: highlight-pulse 1.0s ease-out; }#}
+{#    @keyframes highlight-pulse { 0%, 100% { background-color: transparent; } 50% { background-color: rgba(96, 165, 250, 0.15); } }#}
+{##}
+{#    /* Fade out animation for removed elements */#}
+{#    .fade-out { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; border: none; overflow: hidden; transition: all 0.3s ease-out; }#}
+{##}
+{#    /* Optional: Style the wrapper for the injected preview HTML */#}
+{#    .resume-preview-content { line-height: 1.6; }#}
+{##}
+{#    /* Responsive grid adjustments */#}
+{#    @media screen and (max-width: 640px) {#}
+{#        /* Smaller step indicators on mobile */#}
+{#        .step-indicator { font-size: 0.7rem; }#}
+{#    }#}
+{##}
+{#    /* Improve focus visibility for accessibility */#}
+{#    button:focus, a:focus {#}
+{#        outline: 2px solid rgba(99, 102, 241, 0.5);#}
+{#        outline-offset: 2px;#}
+{#    }#}
+{#</style>#}
+{#{% endblock %}#}
+{##}
 {#{% extends 'base_authenticated.html' %}#}
 {#{% load resume_extras %}#}
 {#{% load static %}#}

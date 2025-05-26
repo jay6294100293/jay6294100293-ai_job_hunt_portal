@@ -56,12 +56,12 @@ def htmx_add_form_row(request):
         if parent_index is None:
             return HttpResponseBadRequest("Parent index ('parent_index') required for experience bullet point.")
         form_instance = ExperienceBulletPointForm(prefix=f'exp_bullet-{parent_index}-{form_index_placeholder}')
-        template_name = 'resumes/partials/form_rows/bullet_point_form_row.html'
+        template_name = 'resumes/partials/form_rows/project_bullet_point_form_row.html'
     elif form_type == 'project_bullet_point':
         if parent_index is None:
             return HttpResponseBadRequest("Parent index ('parent_index') required for project bullet point.")
         form_instance = ProjectBulletPointForm(prefix=f'proj_bullet-{parent_index}-{form_index_placeholder}')
-        template_name = 'resumes/partials/form_rows/bullet_point_form_row.html'
+        template_name = 'resumes/partials/form_rows/project_bullet_point_form_row.html'
 
     if template_name and form_instance:
         context['form'] = form_instance  # Pass the unbound form to the template
@@ -139,12 +139,12 @@ def htmx_add_form_row(request):
 #         # For simplicity, the template for experience_form_row.html might handle the bullet point sub-formset directly.
 #         # Or, this specific HTMX call is for adding one bullet to an *existing* experience.
 #         form_instance = ExperienceBulletPointForm(prefix=f'exp_bullet-{parent_index}-{form_index_placeholder}')
-#         template_name = 'resumes/partials/form_rows/bullet_point_form_row.html'  # Or specific
+#         template_name = 'resumes/partials/form_rows/project_bullet_point_form_row.html'  # Or specific
 #     elif form_type == 'project_bullet_point':
 #         if parent_index is None:
 #             return HttpResponseBadRequest("Parent index ('parent_index') required for project bullet point.")
 #         form_instance = ProjectBulletPointForm(prefix=f'proj_bullet-{parent_index}-{form_index_placeholder}')
-#         template_name = 'resumes/partials/form_rows/bullet_point_form_row.html'  # Or specific
+#         template_name = 'resumes/partials/form_rows/project_bullet_point_form_row.html'  # Or specific
 #
 #     if template_name and form_instance:
 #         context['form'] = form_instance  # Pass the unbound form to the template
@@ -210,6 +210,6 @@ def htmx_add_form_row(request):
 # #             'parent_index': parent_index,
 # #             'ai_engine': ai_engine  # Pass the AI engine to the template
 # #         })
-# #         return render(request, 'resumes/partials/bullet_point_form_row.html', context)
+# #         return render(request, 'resumes/partials/project_bullet_point_form_row.html', context)
 # #
 # #     return HttpResponse("Form type not recognized")

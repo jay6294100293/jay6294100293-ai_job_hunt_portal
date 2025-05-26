@@ -1,278 +1,583 @@
-{% load resume_extras %}
-<div class="professional-resume font-sans text-gray-800 max-w-[800px] mx-auto p-6 sm:p-8 print:p-0 print:max-w-full">
-  <style>
-    @media print {
-      body { /* Apply print styles to body to ensure they are picked up */
-        -webkit-print-color-adjust: exact; /* Ensures background colors and colors print in Chrome/Safari */
-        print-color-adjust: exact; /* Standard */
-      }
-      .professional-resume {
-        font-size: 10pt; /* Adjusted for potentially fitting more content */
-        line-height: 1.4;
-      }
-      .page-break {
-        page-break-before: always !important;
-      }
-      @page {
-        margin: 0.5in;
-        size: A4; /* Explicitly A4 */
-      }
-      /* Ensure text is black for print for better readability */
-      .print\:text-black { color: #000 !important; }
-      .print\:bg-white { background-color: #fff !important; }
-      /* Hide elements not for print if any */
-      .no-print { display: none !important; }
-    }
-  </style>
+{# templates/resumes/templates/template1.html #}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ resume.title }} - {{ resume.full_name }}</title>
+    {# Basic Tailwind Load - In a real scenario, you'd likely have a shared CSS compiled #}
+    {# For simplicity, assuming Tailwind classes are available or link to your compiled CSS #}
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    {# Link to your project's compiled Tailwind CSS if available #}
+    {# <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}"> #}
+     <link rel="stylesheet" href="{% static 'css/resume-templates.css' %}"> {# Specific styles for resume templates #}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <header class="text-center mb-6 pb-4 border-b-2 border-indigo-700 print:border-gray-400">
-    <h1 class="text-2xl sm:text-3xl font-bold text-indigo-700 print:text-black uppercase m-0">{{ resume.full_name }}</h1>
-    <div class="mt-2 text-xs sm:text-sm flex flex-wrap justify-center gap-x-3 gap-y-1">
-      <span>{{ resume.email }}</span>
-      <span class="hidden sm:inline print:inline">|</span>
-      <span>{{ resume.phone }}</span>
-      {% if resume.address %}
-      <span class="hidden sm:inline print:inline">|</span>
-      <span class="print:text-black">{{ resume.address }}</span>
-      {% endif %}
-      {% if resume.linkedin %}
-      <span class="hidden sm:inline print:inline">|</span>
-      <span><a href="{{ resume.linkedin }}" class="text-indigo-600 hover:text-indigo-800 print:text-black">LinkedIn</a></span>
-      {% endif %}
-      {% if resume.github %}
-      <span class="hidden sm:inline print:inline">|</span>
-      <span><a href="{{ resume.github }}" class="text-indigo-600 hover:text-indigo-800 print:text-black">GitHub</a></span>
-      {% endif %}
-      {% if resume.portfolio %}
-      <span class="hidden sm:inline print:inline">|</span>
-      <span><a href="{{ resume.portfolio }}" class="text-indigo-600 hover:text-indigo-800 print:text-black">Portfolio</a></span>
-      {% endif %}
-    </div>
-  </header>
-
-  {% if resume.summary %}
-  <section class="mb-5">
-    <h2 class="text-base sm:text-lg font-bold text-indigo-700 print:text-black uppercase border-b border-gray-300 print:border-gray-400 pb-1 mb-2">Professional Summary</h2>
-    {% comment %}
-      Handles if resume.summary is an object with a 'summary' attribute,
-      or if resume.summary itself is the direct text.
-      If resume.summary is like the bullet points (e.g., resume.summary.description.description),
-      you'll need to adjust this path, e.g., {{ resume.summary.description.description }}
-    {% endcomment %}
-    {% if resume.summary.summary is not None %}
-    <p class="text-sm sm:text-base">{{ resume.summary.summary }}</p>
-    {% elif resume.summary is not None %}
-    <p class="text-sm sm:text-base">{{ resume.summary }}</p>
-    {% endif %}
-  </section>
-  {% endif %}
-
-  {% if resume.skills.exists %}
-  <section class="mb-5">
-    <h2 class="text-base sm:text-lg font-bold text-indigo-700 print:text-black uppercase border-b border-gray-300 print:border-gray-400 pb-1 mb-2">Skills</h2>
-    <div class="flex flex-wrap gap-1 sm:gap-2">
-      {% for skill in resume.skills.all %}
-      <span class="bg-gray-100 print:border print:border-gray-300 print:bg-white px-2 py-1 rounded text-xs sm:text-sm">{{ skill.skill_name }}</span>
-      {% endfor %}
-    </div>
-  </section>
-  {% endif %}
-
-  {% if resume.experiences.exists %}
-  <section class="mb-5">
-    <h2 class="text-base sm:text-lg font-bold text-indigo-700 print:text-black uppercase border-b border-gray-300 print:border-gray-400 pb-1 mb-2">Experience</h2>
-    {% for experience in resume.experiences.all %}
-    <div class="mb-4 {% if resume.experiences.count > 3 and forloop.counter == 3 %}page-break{% endif %}">
-      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">
-        <h3 class="font-semibold sm:font-bold text-sm sm:text-base">{{ experience.job_title }}</h3>
-        <div class="text-xs sm:text-sm text-gray-600 print:text-black">
-          {% if experience.start_date %}{{ experience.start_date|date:"M Y" }}{% endif %} -
-          {% if experience.is_current %}Present{% elif experience.end_date %}{{ experience.end_date|date:"M Y" }}{% endif %}
-        </div>
-      </div>
-      <div class="text-xs sm:text-sm italic mb-1">{{ experience.employer }} | {{ experience.location }}</div>
-
-      <ul class="list-disc ml-5 text-xs sm:text-sm space-y-1">
-        {% for point in experience.bullet_points %}
-          {% comment %}
-            CORRECTED LOGIC: Access point.description.description
-            Based on debug output, point.description is a dictionary: {'description': 'Actual text'}
-          {% endcomment %}
-          {% if point.description and point.description.description is not None %}
-            <li>{{ point.description.description }}</li>
-          {% elif point.description %}
-            <li>{{ point.description }}</li>
-          {% else %}
-            {% with point_str=point|stringformat:"s" %}
-              {% if "{'description':" in point_str %}
-                <li>{{ point_str|slice:"16:-2" }}</li>
-              {% else %}
-                <li>{{ point }}</li>
-              {% endif %}
-            {% endwith %}
-          {% endif %}
-        {% endfor %}
-      </ul>
-    </div>
-    {% endfor %}
-  </section>
-  {% endif %}
-
-  {% if resume.educations.exists %}
-  <section class="mb-5 {% if resume.experiences.count > 2 and resume.educations.count > 2 %}page-break{% endif %}">
-    <h2 class="text-base sm:text-lg font-bold text-indigo-700 print:text-black uppercase border-b border-gray-300 print:border-gray-400 pb-1 mb-2">Education</h2>
-    {% for education in resume.educations.all %}
-    <div class="mb-3">
-      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">
-        <h3 class="font-semibold sm:font-bold text-sm sm:text-base">{{ education.degree }}{% if education.field_of_study %} in {{ education.field_of_study }}{% endif %}</h3>
-        <div class="text-xs sm:text-sm text-gray-600 print:text-black">
-          {% if education.graduation_date %}{{ education.graduation_date|date:"Y" }}{% endif %}
-        </div>
-      </div>
-      <div class="text-xs sm:text-sm italic">{{ education.school_name }} | {{ education.location }}</div>
-      {% if education.gpa %}<div class="text-xs sm:text-sm">GPA: {{ education.gpa }}</div>{% endif %}
-    </div>
-    {% endfor %}
-  </section>
-  {% endif %}
-
-  {% if resume.projects.exists %}
-  <section class="mb-5">
-    <h2 class="text-base sm:text-lg font-bold text-indigo-700 print:text-black uppercase border-b border-gray-300 print:border-gray-400 pb-1 mb-2">Projects</h2>
-    {% for project in resume.projects.all %}
-    <div class="mb-4">
-      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">
-        <h3 class="font-semibold sm:font-bold text-sm sm:text-base">{{ project.project_name }}</h3>
-        <div class="text-xs sm:text-sm text-gray-600 print:text-black">
-          {% if project.start_date %}{{ project.start_date|date:"M Y" }}{% endif %}
-          {% if project.completion_date %} - {{ project.completion_date|date:"M Y" }}{% endif %}
-        </div>
-      </div>
-      {% if project.summary %}<p class="text-xs sm:text-sm mb-1">{{ project.summary }}</p>{% endif %}
-
-      <ul class="list-disc ml-5 text-xs sm:text-sm space-y-1">
-        {% for point in project.bullet_points %}
-          {% comment %}
-            CORRECTED LOGIC: Assuming project bullet points have the same structure
-            as experience bullet points (point.description is a dictionary).
-            Access point.description.description
-          {% endcomment %}
-          {% if point.description and point.description.description is not None %}
-            <li>{{ point.description.description }}</li>
-          {% elif point.description %}
-            <li>{{ point.description }}</li>
-          {% else %}
-            {% with point_str=point|stringformat:"s" %}
-              {% if "{'description':" in point_str %}
-                <li>{{ point_str|slice:"16:-2" }}</li>
-              {% else %}
-                <li>{{ point }}</li>
-              {% endif %}
-            {% endwith %}
-          {% endif %}
-        {% endfor %}
-      </ul>
-
-      {% if project.project_link or project.github_link %}
-      <div class="text-xs sm:text-sm mt-1">
-        {% if project.project_link %}<a href="{{ project.project_link }}" class="text-indigo-600 hover:text-indigo-800 print:text-black">Project Link</a>{% endif %}
-        {% if project.github_link %}{% if project.project_link %} | {% endif %}<a href="{{ project.github_link }}" class="text-indigo-600 hover:text-indigo-800 print:text-black">GitHub Repository</a>{% endif %}
-      </div>
-      {% endif %}
-    </div>
-    {% endfor %}
-  </section>
-  {% endif %}
-
-  {% if resume.certifications.exists %}
-  <section class="mb-5">
-    <h2 class="text-base sm:text-lg font-bold text-indigo-700 print:text-black uppercase border-b border-gray-300 print:border-gray-400 pb-1 mb-2">Certifications</h2>
-    <ul class="list-disc ml-5 text-xs sm:text-sm space-y-2">
-      {% for certification in resume.certifications.all %}
-      <li>
-        <span class="font-semibold">{{ certification.name }}</span>
-        {% if certification.institute %} - {{ certification.institute }}{% endif %}
-        {% if certification.completion_date %} ({{ certification.completion_date|date:"Y" }}){% endif %}
-        {% if certification.description %}<div class="mt-1 text-xs sm:text-sm">{{ certification.description }}</div>{% endif %}
-      </li>
-      {% endfor %}
-    </ul>
-  </section>
-  {% endif %}
-
-  {% if resume.languages.exists %}
-  <section class="mb-5">
-    <h2 class="text-base sm:text-lg font-bold text-indigo-700 print:text-black uppercase border-b border-gray-300 print:border-gray-400 pb-1 mb-2">Languages</h2>
-    <div class="flex flex-wrap gap-1 sm:gap-2">
-      {% for language in resume.languages.all %}
-      <span class="bg-gray-100 print:border print:border-gray-300 print:bg-white px-2 py-1 rounded text-xs sm:text-sm">
-        {{ language.language_name }} - {{ language.get_proficiency_display }}
-      </span>
-      {% endfor %}
-    </div>
-  </section>
-  {% endif %}
-
-  {% if resume.custom_data.exists %}
-  <section class="mb-5">
-    <h2 class="text-base sm:text-lg font-bold text-indigo-700 print:text-black uppercase border-b border-gray-300 print:border-gray-400 pb-1 mb-2">Additional Information</h2>
-    {% for section in resume.custom_data.all %}
-    <div class="mb-3">
-      <h3 class="font-semibold sm:font-bold text-sm sm:text-base">{{ section.name }}</h3>
-      {% if section.institution_name %}<div class="text-xs sm:text-sm italic">{{ section.institution_name }}</div>{% endif %}
-      {% if section.completion_date %}<div class="text-xs sm:text-sm text-gray-600 print:text-black">{{ section.completion_date|date:"Y" }}</div>{% endif %}
-      {% if section.description %}<p class="text-xs sm:text-sm mt-1">{{ section.description }}</p>{% endif %}
-      {% if section.bullet_points %}
-      <ul class="list-disc ml-5 text-xs sm:text-sm space-y-1 mt-1">
-        {% for point in section.bullet_points.splitlines %}
-        {% if point|trim %}
-        <li>{{ point|safe }}</li>
-        {% endif %}
-        {% endfor %}
-      </ul>
-      {% endif %}
-      {% if section.link %}<div class="text-xs sm:text-sm mt-1"><a href="{{ section.link }}" class="text-indigo-600 hover:text-indigo-800 print:text-black">Link</a></div>{% endif %}
-    </div>
-    {% endfor %}
-  </section>
-  {% endif %}
-
-  <footer class="text-center text-xs text-gray-500 mt-8 print:fixed print:bottom-[0.25in] print:right-[0.5in] print:mt-0 no-screen">
-    <div class="hidden print:block">
-      Page <span class="pageNumber"></span> of <span class="totalPages"></span>
-    </div>
-  </footer>
-</div>
-
-<script>
-  // This script is more for dynamic page number display on screen if needed,
-  // or for browsers that might not fully support CSS @page counters for 'totalPages'.
-  // For simple print, the CSS @page rules are usually sufficient.
-  (function() {
-    function updatePageNumbers() {
-      var pageSpans = document.querySelectorAll('.pageNumber');
-      var totalSpans = document.querySelectorAll('.totalPages');
-      // CSS counters are preferred for print. This is a fallback or for on-screen if needed.
-      // Actual total pages is hard to get reliably with JS for print before printing.
-      // The @page CSS is the more robust way for print.
-    }
-
-    // If you need to trigger something before print specifically for this script:
-    // window.addEventListener('beforeprint', updatePageNumbers);
-
-    // If the footer is only for print, ensure it's styled correctly
-    var footer = document.querySelector('footer');
-    if (footer && footer.classList.contains('print:fixed')) {
-        // Check if we are in print preview or actual print
-        if (window.matchMedia && window.matchMedia('print').matches) {
-            // footer.classList.remove('hidden'); // Example if it was hidden for screen
-        } else {
-            // footer.classList.add('hidden'); // Example if it should be hidden for screen
+    <style>
+        /* Basic A4-like styling for print/PDF */
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            @apply bg-gray-100;
         }
-    }
-  })();
-</script>
+        .resume-container {
+            @apply bg-white shadow-lg mx-auto my-8;
+            width: 210mm; /* A4 width */
+            min-height: 297mm; /* A4 height, use min-height to allow content to expand */
+            padding: 15mm; /* Margins */
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; /* Common resume font */
+            font-size: 10pt; /* Base font size */
+            line-height: 1.4;
+            color: #333;
+        }
+        h1, h2, h3, h4 {
+            @apply font-semibold text-gray-800;
+            margin-bottom: 0.25em; /* Reduced bottom margin for headings */
+        }
+        h1 { font-size: 22pt; @apply text-center mb-1 text-blue-700; } /* Name */
+        h2 { font-size: 14pt; @apply border-b-2 border-gray-300 pb-1 mt-3 mb-2 text-blue-600; } /* Section Titles */
+        h3 { font-size: 11pt; @apply text-gray-700; } /* Job Title, Degree */
+        h4 { font-size: 10pt; @apply text-gray-600 italic; } /* Company, School */
 
+        .contact-info {
+            @apply text-center text-xs text-gray-600 mb-4;
+        }
+        .contact-info a {
+            @apply text-blue-600 hover:underline;
+        }
+        .contact-info span:not(:last-child):after {
+            content: " | ";
+            margin: 0 0.5em;
+        }
+        .section {
+            @apply mb-3; /* Space between sections */
+        }
+        .section-item {
+            @apply mb-2; /* Space between items within a section (e.g., two jobs) */
+        }
+        .date-location {
+            @apply float-right text-xs text-gray-500 font-normal;
+        }
+        .item-header {
+            @apply flex justify-between items-baseline;
+        }
+        .item-header h3 {
+             margin-bottom: 0; /* Remove space below job title / degree */
+        }
+
+        ul.bullet-points {
+            @apply list-disc list-outside pl-5 mt-1 space-y-0.5;
+            margin-left: 0.5em; /* Indent bullets */
+        }
+        ul.bullet-points li {
+            @apply text-gray-700;
+            font-size: 9.5pt;
+        }
+        .skills-list {
+            @apply flex flex-wrap gap-x-4 gap-y-1;
+        }
+        .skill-item {
+            @apply text-sm;
+        }
+        .skill-category {
+            @apply font-semibold text-gray-700 block text-xs uppercase tracking-wider mb-1;
+        }
+
+        @media print {
+            body {
+                background-color: #fff;
+                margin: 0;
+            }
+            .resume-container {
+                margin: 0;
+                box-shadow: none;
+                border: none; /* Optional: remove border for print */
+                padding: 10mm; /* Adjust padding for print if needed */
+                min-height: 0; /* Allow it to be natural height for print */
+            }
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    {# This button is for development/testing; you might remove it or place it elsewhere #}
+    <div class="no-print text-center py-4">
+        <button onclick="window.print()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            <i class="fas fa-print mr-2"></i> Print / Save as PDF
+        </button>
+         <a href="{% if resume.id %}{% url 'job_portal:resume_wizard' resume_id=resume.id step='personal_info' %}{% else %}#{% endif %}" class="ml-2 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+            <i class="fas fa-edit mr-2"></i> Back to Editor
+        </a>
+    </div>
+
+    <div class="resume-container" id="resume-content-template1">
+        <header class="text-center mb-4">
+            {% if resume.full_name %}
+                <h1 class="text-3xl font-bold text-blue-700 tracking-tight">{{ resume.full_name }}</h1>
+            {% endif %}
+            <div class="contact-info mt-1">
+                {% if resume.phone %}<span><i class="fas fa-phone-alt mr-1"></i>{{ resume.phone }}</span>{% endif %}
+                {% if resume.email %}<span><i class="fas fa-envelope mr-1"></i><a href="mailto:{{ resume.email }}">{{ resume.email }}</a></span>{% endif %}
+                {% if resume.address %}<span><i class="fas fa-map-marker-alt mr-1"></i>{{ resume.address|linebreaksbr }}</span>{% endif %}
+            </div>
+            <div class="contact-info">
+                {% if resume.linkedin %}<span><i class="fab fa-linkedin mr-1"></i><a href="{{ resume.linkedin }}" target="_blank">{{ resume.linkedin|urlize }}</a></span>{% endif %}
+                {% if resume.github %}<span><i class="fab fa-github mr-1"></i><a href="{{ resume.github }}" target="_blank">{{ resume.github|urlize }}</a></span>{% endif %}
+                {% if resume.portfolio %}<span><i class="fas fa-globe mr-1"></i><a href="{{ resume.portfolio }}" target="_blank">{{ resume.portfolio|urlize }}</a></span>{% endif %}
+            </div>
+        </header>
+
+        {% if resume.summary %}
+        <section class="section summary-section">
+            <h2>Summary</h2>
+            <p class="text-sm text-gray-700">{{ resume.summary|linebreaksbr }}</p>
+        </section>
+        {% endif %}
+
+        {% if resume.experiences.all %}
+        <section class="section experience-section">
+            <h2>Experience</h2>
+            {% for exp in resume.experiences.all %}
+            <div class="section-item">
+                <div class="item-header">
+                    <h3>{{ exp.job_title }}</h3>
+                    <span class="date-location">
+                        {{ exp.start_date|date:"M Y" }} – {% if exp.is_current %}Present{% else %}{{ exp.end_date|date:"M Y" }}{% endif %}
+                    </span>
+                </div>
+                <h4>{{ exp.employer }}{% if exp.location %}, {{ exp.location }}{% endif %}</h4>
+                {% if exp.bullet_points.all %}
+                <ul class="bullet-points">
+                    {% for bullet in exp.bullet_points.all %}
+                    <li>{{ bullet.description }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+
+        {% if resume.educations.all %}
+        <section class="section education-section">
+            <h2>Education</h2>
+            {% for edu in resume.educations.all %}
+            <div class="section-item">
+                 <div class="item-header">
+                    <h3>{{ edu.degree_name }}</h3>
+                     <span class="date-location">
+                        {% if edu.graduation_date %}{{ edu.graduation_date|date:"M Y" }}{% else %}Date N/A{% endif %}
+                    </span>
+                </div>
+                <h4>{{ edu.school_name }}{% if edu.location %}, {{ edu.location }}{% endif %}</h4>
+                {% if edu.field_of_study %}<p class="text-sm text-gray-600"><em>Field of Study:</em> {{ edu.field_of_study }}</p>{% endif %}
+                {% if edu.gpa %}<p class="text-xs text-gray-500">GPA: {{ edu.gpa }}</p>{% endif %}
+                {% if edu.description %}<p class="text-xs text-gray-600 mt-0.5">{{ edu.description|linebreaksbr }}</p>{% endif %}
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+
+        {% if resume.skills.all %}
+        <section class="section skills-section">
+            <h2>Skills</h2>
+            {# Group skills by category for better presentation #}
+            {% regroup resume.skills.all|dictsort:"skill_category_choice" by effective_skill_category as skills_by_category %}
+            <div class="space-y-2">
+            {% for category_group in skills_by_category %}
+                <div>
+                    {% if category_group.grouper != "Uncategorized" and category_group.grouper %}
+                    <h4 class="skill-category !text-gray-700 !font-semibold !text-xs !uppercase !tracking-wider !mb-1 !mt-1.5">{{ category_group.grouper }}</h4>
+                    {% endif %}
+                    <ul class="skills-list">
+                        {% for skill in category_group.list|dictsort:"skill_name" %}
+                        <li class="skill-item text-sm text-gray-700">
+                            {{ skill.skill_name }}
+                            {% if skill.proficiency_level > 0 %}
+                                <span class="text-xs text-blue-500">({% for i in ""|center:skill.proficiency_level %}★{% endfor %}{% for i in ""|center:skill.proficiency_level|add:"-5"|slice:"1:" %}☆{% endfor %})</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% if resume.projects.all %}
+        <section class="section projects-section">
+            <h2>Projects</h2>
+            {% for project in resume.projects.all %}
+            <div class="section-item">
+                <div class="item-header">
+                    <h3>{{ project.project_name }}</h3>
+                    <span class="date-location">
+                        {% if project.start_date %}{{ project.start_date|date:"M Y" }}{% endif %}
+                        {% if project.start_date and project.completion_date %} – {% endif %}
+                        {% if project.completion_date %}{{ project.completion_date|date:"M Y" }}{% elif project.start_date %} – Present{% endif %}
+                    </span>
+                </div>
+                {% if project.project_link or project.github_link %}
+                <div class="text-xs mb-0.5">
+                    {% if project.project_link %}<a href="{{ project.project_link }}" class="text-blue-600 hover:underline mr-2"><i class="fas fa-link mr-1"></i>Live Demo</a>{% endif %}
+                    {% if project.github_link %}<a href="{{ project.github_link }}" class="text-blue-600 hover:underline"><i class="fab fa-github mr-1"></i>Source Code</a>{% endif %}
+                </div>
+                {% endif %}
+                {% if project.summary %}<p class="text-sm text-gray-700 mb-0.5">{{ project.summary|linebreaksbr }}</p>{% endif %}
+                {% if project.bullet_points.all %}
+                <ul class="bullet-points">
+                    {% for bullet in project.bullet_points.all %}
+                    <li>{{ bullet.description }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                {% if project.technologies.all %}
+                    <p class="text-xs text-gray-600 mt-1"><em>Technologies:</em> {% for tech in project.technologies.all %}{{ tech.skill_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+
+        {% if resume.certifications.all %}
+        <section class="section certifications-section">
+            <h2>Certifications</h2>
+            {% for cert in resume.certifications.all %}
+            <div class="section-item">
+                <div class="item-header">
+                    <h3>{{ cert.name }}</h3>
+                     <span class="date-location">
+                        {% if cert.issue_date %}{{ cert.issue_date|date:"M Y" }}{% endif %}
+                    </span>
+                </div>
+                {% if cert.issuing_organization %}<h4>{{ cert.issuing_organization }}</h4>{% endif %}
+                {% if cert.credential_id %}<p class="text-xs text-gray-500">Credential ID: {{ cert.credential_id }}</p>{% endif %}
+                 {% if cert.link %}<p class="text-xs"><a href="{{ cert.link }}" class="text-blue-600 hover:underline"><i class="fas fa-external-link-alt mr-1"></i>View Credential</a></p>{% endif %}
+                {% if cert.description %}<p class="text-xs text-gray-600 mt-0.5">{{ cert.description|linebreaksbr }}</p>{% endif %}
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+
+        {% if resume.languages.all %}
+        <section class="section languages-section">
+            <h2>Languages</h2>
+            <ul class="list-disc list-outside pl-5 space-y-0.5">
+                {% for lang in resume.languages.all %}
+                <li class="text-sm text-gray-700">{{ lang.language_name }} ({{ lang.get_proficiency_display }})</li>
+                {% endfor %}
+            </ul>
+        </section>
+        {% endif %}
+
+        {% if resume.custom_sections.all %}
+            {% for custom_section in resume.custom_sections.all %}
+            <section class="section custom-section">
+                <h2>{{ custom_section.name }}</h2>
+                {% if custom_section.institution_name or custom_section.completion_date %}
+                <div class="item-header">
+                    {% if custom_section.institution_name %}<h4>{{ custom_section.institution_name }}</h4>{% endif %}
+                     <span class="date-location">
+                        {% if custom_section.completion_date %}{{ custom_section.completion_date|date:"M Y" }}{% endif %}
+                    </span>
+                </div>
+                {% endif %}
+                {% if custom_section.description %}<p class="text-sm text-gray-700 mb-1">{{ custom_section.description|linebreaksbr }}</p>{% endif %}
+                {% if custom_section.bullet_points %}
+                <ul class="bullet-points">
+                    {% for bullet in custom_section.bullet_points|linebreaksbrsplit %} {# Assuming one bullet per line #}
+                        {% if bullet|strip %}<li>{{ bullet|strip }}</li>{% endif %}
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                {% if custom_section.link %}<p class="text-xs mt-1"><a href="{{ custom_section.link }}" class="text-blue-600 hover:underline"><i class="fas fa-link mr-1"></i>More Info</a></p>{% endif %}
+            </section>
+            {% endfor %}
+        {% endif %}
+    </div>
+</body>
+</html>
+
+{#{% load resume_extras %}#}
+{#<div class="professional-resume font-sans text-gray-800 max-w-[800px] mx-auto p-6 sm:p-8 print:p-0 print:max-w-full">#}
+{#  <style>#}
+{#    @media print {#}
+{#      body { /* Apply print styles to body to ensure they are picked up */#}
+{#        -webkit-print-color-adjust: exact; /* Ensures background colors and colors print in Chrome/Safari */#}
+{#        print-color-adjust: exact; /* Standard */#}
+{#      }#}
+{#      .professional-resume {#}
+{#        font-size: 10pt; /* Adjusted for potentially fitting more content */#}
+{#        line-height: 1.4;#}
+{#      }#}
+{#      .page-break {#}
+{#        page-break-before: always !important;#}
+{#      }#}
+{#      @page {#}
+{#        margin: 0.5in;#}
+{#        size: A4; /* Explicitly A4 */#}
+{#      }#}
+{#      /* Ensure text is black for print for better readability */#}
+{#      .print\:text-black { color: #000 !important; }#}
+{#      .print\:bg-white { background-color: #fff !important; }#}
+{#      /* Hide elements not for print if any */#}
+{#      .no-print { display: none !important; }#}
+{#    }#}
+{#  </style>#}
+{##}
+{#  <header class="text-center mb-6 pb-4 border-b-2 border-indigo-700 print:border-gray-400">#}
+{#    <h1 class="text-2xl sm:text-3xl font-bold text-indigo-700 print:text-black uppercase m-0">{{ resume.full_name }}</h1>#}
+{#    <div class="mt-2 text-xs sm:text-sm flex flex-wrap justify-center gap-x-3 gap-y-1">#}
+{#      <span>{{ resume.email }}</span>#}
+{#      <span class="hidden sm:inline print:inline">|</span>#}
+{#      <span>{{ resume.phone }}</span>#}
+{#      {% if resume.address %}#}
+{#      <span class="hidden sm:inline print:inline">|</span>#}
+{#      <span class="print:text-black">{{ resume.address }}</span>#}
+{#      {% endif %}#}
+{#      {% if resume.linkedin %}#}
+{#      <span class="hidden sm:inline print:inline">|</span>#}
+{#      <span><a href="{{ resume.linkedin }}" class="text-indigo-600 hover:text-indigo-800 print:text-black">LinkedIn</a></span>#}
+{#      {% endif %}#}
+{#      {% if resume.github %}#}
+{#      <span class="hidden sm:inline print:inline">|</span>#}
+{#      <span><a href="{{ resume.github }}" class="text-indigo-600 hover:text-indigo-800 print:text-black">GitHub</a></span>#}
+{#      {% endif %}#}
+{#      {% if resume.portfolio %}#}
+{#      <span class="hidden sm:inline print:inline">|</span>#}
+{#      <span><a href="{{ resume.portfolio }}" class="text-indigo-600 hover:text-indigo-800 print:text-black">Portfolio</a></span>#}
+{#      {% endif %}#}
+{#    </div>#}
+{#  </header>#}
+{##}
+{#  {% if resume.summary %}#}
+{#  <section class="mb-5">#}
+{#    <h2 class="text-base sm:text-lg font-bold text-indigo-700 print:text-black uppercase border-b border-gray-300 print:border-gray-400 pb-1 mb-2">Professional Summary</h2>#}
+{#    {% comment %}#}
+{#      Handles if resume.summary is an object with a 'summary' attribute,#}
+{#      or if resume.summary itself is the direct text.#}
+{#      If resume.summary is like the bullet points (e.g., resume.summary.description.description),#}
+{#      you'll need to adjust this path, e.g., {{ resume.summary.description.description }}#}
+{#    {% endcomment %}#}
+{#    {% if resume.summary.summary is not None %}#}
+{#    <p class="text-sm sm:text-base">{{ resume.summary.summary }}</p>#}
+{#    {% elif resume.summary is not None %}#}
+{#    <p class="text-sm sm:text-base">{{ resume.summary }}</p>#}
+{#    {% endif %}#}
+{#  </section>#}
+{#  {% endif %}#}
+{##}
+{#  {% if resume.skills.exists %}#}
+{#  <section class="mb-5">#}
+{#    <h2 class="text-base sm:text-lg font-bold text-indigo-700 print:text-black uppercase border-b border-gray-300 print:border-gray-400 pb-1 mb-2">Skills</h2>#}
+{#    <div class="flex flex-wrap gap-1 sm:gap-2">#}
+{#      {% for skill in resume.skills.all %}#}
+{#      <span class="bg-gray-100 print:border print:border-gray-300 print:bg-white px-2 py-1 rounded text-xs sm:text-sm">{{ skill.skill_name }}</span>#}
+{#      {% endfor %}#}
+{#    </div>#}
+{#  </section>#}
+{#  {% endif %}#}
+{##}
+{#  {% if resume.experiences.exists %}#}
+{#  <section class="mb-5">#}
+{#    <h2 class="text-base sm:text-lg font-bold text-indigo-700 print:text-black uppercase border-b border-gray-300 print:border-gray-400 pb-1 mb-2">Experience</h2>#}
+{#    {% for experience in resume.experiences.all %}#}
+{#    <div class="mb-4 {% if resume.experiences.count > 3 and forloop.counter == 3 %}page-break{% endif %}">#}
+{#      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">#}
+{#        <h3 class="font-semibold sm:font-bold text-sm sm:text-base">{{ experience.job_title }}</h3>#}
+{#        <div class="text-xs sm:text-sm text-gray-600 print:text-black">#}
+{#          {% if experience.start_date %}{{ experience.start_date|date:"M Y" }}{% endif %} -#}
+{#          {% if experience.is_current %}Present{% elif experience.end_date %}{{ experience.end_date|date:"M Y" }}{% endif %}#}
+{#        </div>#}
+{#      </div>#}
+{#      <div class="text-xs sm:text-sm italic mb-1">{{ experience.employer }} | {{ experience.location }}</div>#}
+{##}
+{#      <ul class="list-disc ml-5 text-xs sm:text-sm space-y-1">#}
+{#        {% for point in experience.bullet_points %}#}
+{#          {% comment %}#}
+{#            CORRECTED LOGIC: Access point.description.description#}
+{#            Based on debug output, point.description is a dictionary: {'description': 'Actual text'}#}
+{#          {% endcomment %}#}
+{#          {% if point.description and point.description.description is not None %}#}
+{#            <li>{{ point.description.description }}</li>#}
+{#          {% elif point.description %}#}
+{#            <li>{{ point.description }}</li>#}
+{#          {% else %}#}
+{#            {% with point_str=point|stringformat:"s" %}#}
+{#              {% if "{'description':" in point_str %}#}
+{#                <li>{{ point_str|slice:"16:-2" }}</li>#}
+{#              {% else %}#}
+{#                <li>{{ point }}</li>#}
+{#              {% endif %}#}
+{#            {% endwith %}#}
+{#          {% endif %}#}
+{#        {% endfor %}#}
+{#      </ul>#}
+{#    </div>#}
+{#    {% endfor %}#}
+{#  </section>#}
+{#  {% endif %}#}
+{##}
+{#  {% if resume.educations.exists %}#}
+{#  <section class="mb-5 {% if resume.experiences.count > 2 and resume.educations.count > 2 %}page-break{% endif %}">#}
+{#    <h2 class="text-base sm:text-lg font-bold text-indigo-700 print:text-black uppercase border-b border-gray-300 print:border-gray-400 pb-1 mb-2">Education</h2>#}
+{#    {% for education in resume.educations.all %}#}
+{#    <div class="mb-3">#}
+{#      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">#}
+{#        <h3 class="font-semibold sm:font-bold text-sm sm:text-base">{{ education.degree }}{% if education.field_of_study %} in {{ education.field_of_study }}{% endif %}</h3>#}
+{#        <div class="text-xs sm:text-sm text-gray-600 print:text-black">#}
+{#          {% if education.graduation_date %}{{ education.graduation_date|date:"Y" }}{% endif %}#}
+{#        </div>#}
+{#      </div>#}
+{#      <div class="text-xs sm:text-sm italic">{{ education.school_name }} | {{ education.location }}</div>#}
+{#      {% if education.gpa %}<div class="text-xs sm:text-sm">GPA: {{ education.gpa }}</div>{% endif %}#}
+{#    </div>#}
+{#    {% endfor %}#}
+{#  </section>#}
+{#  {% endif %}#}
+{##}
+{#  {% if resume.projects.exists %}#}
+{#  <section class="mb-5">#}
+{#    <h2 class="text-base sm:text-lg font-bold text-indigo-700 print:text-black uppercase border-b border-gray-300 print:border-gray-400 pb-1 mb-2">Projects</h2>#}
+{#    {% for project in resume.projects.all %}#}
+{#    <div class="mb-4">#}
+{#      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-1">#}
+{#        <h3 class="font-semibold sm:font-bold text-sm sm:text-base">{{ project.project_name }}</h3>#}
+{#        <div class="text-xs sm:text-sm text-gray-600 print:text-black">#}
+{#          {% if project.start_date %}{{ project.start_date|date:"M Y" }}{% endif %}#}
+{#          {% if project.completion_date %} - {{ project.completion_date|date:"M Y" }}{% endif %}#}
+{#        </div>#}
+{#      </div>#}
+{#      {% if project.summary %}<p class="text-xs sm:text-sm mb-1">{{ project.summary }}</p>{% endif %}#}
+{##}
+{#      <ul class="list-disc ml-5 text-xs sm:text-sm space-y-1">#}
+{#        {% for point in project.bullet_points %}#}
+{#          {% comment %}#}
+{#            CORRECTED LOGIC: Assuming project bullet points have the same structure#}
+{#            as experience bullet points (point.description is a dictionary).#}
+{#            Access point.description.description#}
+{#          {% endcomment %}#}
+{#          {% if point.description and point.description.description is not None %}#}
+{#            <li>{{ point.description.description }}</li>#}
+{#          {% elif point.description %}#}
+{#            <li>{{ point.description }}</li>#}
+{#          {% else %}#}
+{#            {% with point_str=point|stringformat:"s" %}#}
+{#              {% if "{'description':" in point_str %}#}
+{#                <li>{{ point_str|slice:"16:-2" }}</li>#}
+{#              {% else %}#}
+{#                <li>{{ point }}</li>#}
+{#              {% endif %}#}
+{#            {% endwith %}#}
+{#          {% endif %}#}
+{#        {% endfor %}#}
+{#      </ul>#}
+{##}
+{#      {% if project.project_link or project.github_link %}#}
+{#      <div class="text-xs sm:text-sm mt-1">#}
+{#        {% if project.project_link %}<a href="{{ project.project_link }}" class="text-indigo-600 hover:text-indigo-800 print:text-black">Project Link</a>{% endif %}#}
+{#        {% if project.github_link %}{% if project.project_link %} | {% endif %}<a href="{{ project.github_link }}" class="text-indigo-600 hover:text-indigo-800 print:text-black">GitHub Repository</a>{% endif %}#}
+{#      </div>#}
+{#      {% endif %}#}
+{#    </div>#}
+{#    {% endfor %}#}
+{#  </section>#}
+{#  {% endif %}#}
+{##}
+{#  {% if resume.certifications.exists %}#}
+{#  <section class="mb-5">#}
+{#    <h2 class="text-base sm:text-lg font-bold text-indigo-700 print:text-black uppercase border-b border-gray-300 print:border-gray-400 pb-1 mb-2">Certifications</h2>#}
+{#    <ul class="list-disc ml-5 text-xs sm:text-sm space-y-2">#}
+{#      {% for certification in resume.certifications.all %}#}
+{#      <li>#}
+{#        <span class="font-semibold">{{ certification.name }}</span>#}
+{#        {% if certification.institute %} - {{ certification.institute }}{% endif %}#}
+{#        {% if certification.completion_date %} ({{ certification.completion_date|date:"Y" }}){% endif %}#}
+{#        {% if certification.description %}<div class="mt-1 text-xs sm:text-sm">{{ certification.description }}</div>{% endif %}#}
+{#      </li>#}
+{#      {% endfor %}#}
+{#    </ul>#}
+{#  </section>#}
+{#  {% endif %}#}
+{##}
+{#  {% if resume.languages.exists %}#}
+{#  <section class="mb-5">#}
+{#    <h2 class="text-base sm:text-lg font-bold text-indigo-700 print:text-black uppercase border-b border-gray-300 print:border-gray-400 pb-1 mb-2">Languages</h2>#}
+{#    <div class="flex flex-wrap gap-1 sm:gap-2">#}
+{#      {% for language in resume.languages.all %}#}
+{#      <span class="bg-gray-100 print:border print:border-gray-300 print:bg-white px-2 py-1 rounded text-xs sm:text-sm">#}
+{#        {{ language.language_name }} - {{ language.get_proficiency_display }}#}
+{#      </span>#}
+{#      {% endfor %}#}
+{#    </div>#}
+{#  </section>#}
+{#  {% endif %}#}
+{##}
+{#  {% if resume.custom_data.exists %}#}
+{#  <section class="mb-5">#}
+{#    <h2 class="text-base sm:text-lg font-bold text-indigo-700 print:text-black uppercase border-b border-gray-300 print:border-gray-400 pb-1 mb-2">Additional Information</h2>#}
+{#    {% for section in resume.custom_data.all %}#}
+{#    <div class="mb-3">#}
+{#      <h3 class="font-semibold sm:font-bold text-sm sm:text-base">{{ section.name }}</h3>#}
+{#      {% if section.institution_name %}<div class="text-xs sm:text-sm italic">{{ section.institution_name }}</div>{% endif %}#}
+{#      {% if section.completion_date %}<div class="text-xs sm:text-sm text-gray-600 print:text-black">{{ section.completion_date|date:"Y" }}</div>{% endif %}#}
+{#      {% if section.description %}<p class="text-xs sm:text-sm mt-1">{{ section.description }}</p>{% endif %}#}
+{#      {% if section.bullet_points %}#}
+{#      <ul class="list-disc ml-5 text-xs sm:text-sm space-y-1 mt-1">#}
+{#        {% for point in section.bullet_points.splitlines %}#}
+{#        {% if point|trim %}#}
+{#        <li>{{ point|safe }}</li>#}
+{#        {% endif %}#}
+{#        {% endfor %}#}
+{#      </ul>#}
+{#      {% endif %}#}
+{#      {% if section.link %}<div class="text-xs sm:text-sm mt-1"><a href="{{ section.link }}" class="text-indigo-600 hover:text-indigo-800 print:text-black">Link</a></div>{% endif %}#}
+{#    </div>#}
+{#    {% endfor %}#}
+{#  </section>#}
+{#  {% endif %}#}
+{##}
+{#  <footer class="text-center text-xs text-gray-500 mt-8 print:fixed print:bottom-[0.25in] print:right-[0.5in] print:mt-0 no-screen">#}
+{#    <div class="hidden print:block">#}
+{#      Page <span class="pageNumber"></span> of <span class="totalPages"></span>#}
+{#    </div>#}
+{#  </footer>#}
+{#</div>#}
+{##}
+{#<script>#}
+{#  // This script is more for dynamic page number display on screen if needed,#}
+{#  // or for browsers that might not fully support CSS @page counters for 'totalPages'.#}
+{#  // For simple print, the CSS @page rules are usually sufficient.#}
+{#  (function() {#}
+{#    function updatePageNumbers() {#}
+{#      var pageSpans = document.querySelectorAll('.pageNumber');#}
+{#      var totalSpans = document.querySelectorAll('.totalPages');#}
+{#      // CSS counters are preferred for print. This is a fallback or for on-screen if needed.#}
+{#      // Actual total pages is hard to get reliably with JS for print before printing.#}
+{#      // The @page CSS is the more robust way for print.#}
+{#    }#}
+{##}
+{#    // If you need to trigger something before print specifically for this script:#}
+{#    // window.addEventListener('beforeprint', updatePageNumbers);#}
+{##}
+{#    // If the footer is only for print, ensure it's styled correctly#}
+{#    var footer = document.querySelector('footer');#}
+{#    if (footer && footer.classList.contains('print:fixed')) {#}
+{#        // Check if we are in print preview or actual print#}
+{#        if (window.matchMedia && window.matchMedia('print').matches) {#}
+{#            // footer.classList.remove('hidden'); // Example if it was hidden for screen#}
+{#        } else {#}
+{#            // footer.classList.add('hidden'); // Example if it should be hidden for screen#}
+{#        }#}
+{#    }#}
+{#  })();#}
+{#</script>#}
+{##}
 {#{% load resume_extras %}#}
 {#<div class="professional-resume font-sans text-gray-800 max-w-[800px] mx-auto p-6 sm:p-8 print:p-0 print:max-w-full">#}
 {#  <style>#}

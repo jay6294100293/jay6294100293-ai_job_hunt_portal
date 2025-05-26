@@ -1,108 +1,233 @@
-{% comment %}
-This is a partial template for the project bullet enhancement modal form
-Save as 'resumes/theme_partials/project_enhancement_modal.html'
-{% endcomment %}
+{# templates/resumes/partials/project_ai/project_enhancement_modal.html #}
+{% load static i18n widget_tweaks %}
 
-<div id="project-enhancement-modal" class="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center hidden">
-  <div class="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full mx-4 p-6 shadow-xl">
-    <h3 class="font-bold text-lg flex items-center text-gray-800 dark:text-gray-100">
-      <i class="fa-solid fa-wand-magic-sparkles text-blue-500 mr-2"></i>
-      Enhance Project Bullet Point
-    </h3>
-    <p class="py-2 text-sm text-gray-600 dark:text-gray-400">
-      Make your project bullet point more impactful with AI enhancement
-    </p>
+<div id="project-enhancement-modal" class="fixed inset-0 z-[1050] overflow-y-auto hidden" aria-labelledby="modal-title-project-ai" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-slate-700/70 backdrop-blur-sm transition-opacity" aria-hidden="true" id="project-ai-modal-backdrop" @click="$dispatch('close-modal', 'project-enhancement-modal')"></div>
 
-    {# Ensure your Django view URL exists and is correct #}
-    <form id="project-enhancement-form" hx-post="{% url 'job_portal:enhance_project_bullet' %}" {# Changed to hx-post as it likely modifies data/makes requests #}
-          hx-target="#enhanced_bullet_result"
-          hx-swap="innerHTML"
-          hx-indicator="#enhancement_in_progress">
-      {% csrf_token %} {# Added CSRF token for POST requests #}
+        <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full"
+             x-trap.noscroll="isModalOpen('project-enhancement-modal')">
 
-      <input type="hidden" name="parent_index" value="" id="parent_index_modal">
-      <input type="hidden" name="bullet_index" value="" id="bullet_index_modal">
-      <input type="hidden" name="project_name" value="" id="project_name_modal">
-      {# Removed project_title hidden input #}
-      <input type="hidden" name="project_summary" value="" id="project_summary_modal">
+            <form id="project-ai-form"
+                  {# hx-post will be set by JS based on action_type #}
+                  hx-target="#project_ai_result_area"
+                  hx-swap="innerHTML"
+                  hx-indicator="#project_ai_in_progress_indicator">
+                {% csrf_token %}
+                <input type="hidden" name="project_index" id="project_ai_parent_index_modal" value="">
+                {# For single bullet enhancement #}
+                <input type="hidden" name="bullet_index" id="project_ai_bullet_index_modal" value="">
+                <input type="hidden" name="bullet_id" id="project_ai_bullet_id_modal" value="">
+                {# To differentiate action type for the backend view and JS #}
+                <input type="hidden" name="action_type" id="project_ai_action_type_modal" value="enhance_single_project_bullet">
 
-      <div class="mt-4">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="original_bullet_modal"> {# Added 'for' attribute #}
-          Original Bullet Point
-        </label>
-        <textarea id="original_bullet_modal" name="bullet_text" class="w-full min-h-24 p-2 border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" readonly></textarea>
-      </div>
+                <div class="bg-white dark:bg-slate-800 px-4 pt-5 pb-4 sm:p-6">
+                    <div class="sm:flex sm:items-start">
+                         <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-secondary-100 dark:bg-secondary-700/30 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="fas fa-lightbulb text-secondary-600 dark:text-secondary-400 text-xl"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-grow">
+                            <h3 class="text-lg leading-6 font-semibold text-slate-900 dark:text-slate-100" id="modal-title-project-ai">
+                                {/* Title will be set by JavaScript */}
+                            </h3>
+                             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1" id="project_ai_modal_subtitle">
+                                {/* Subtitle will be set by JavaScript */}
+                            </p>
+                        </div>
+                        <button type="button" @click="$dispatch('close-modal', 'project-enhancement-modal')" class="text-slate-400 hover:text-slate-500 dark:text-slate-500 dark:hover:text-slate-300 absolute top-4 right-4">
+                            <span class="sr-only">{% trans "Close" %}</span>
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
 
-      <div class="mt-4">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Project Context
-        </label>
-        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-md text-sm space-y-2 border border-gray-200 dark:border-gray-600"> {# Added border #}
-          {# --- CORRECTED SECTION (Project Title line removed) --- #}
-          <p><strong>Project Name:</strong> <span id="project_name_display" class="text-gray-800 dark:text-gray-200"></span></p>
-          <p><strong>Project Summary:</strong> <span id="project_summary_display" class="italic text-gray-600 dark:text-gray-400"></span></p>
-           {# --- END CORRECTION --- #}
+                    <div class="mt-5 space-y-4">
+                        {# Fields for Enhancing a Single Bullet (shown conditionally by JS) #}
+                        <div id="project_ai_single_bullet_fields_container" class="space-y-4">
+                            <label for="project_ai_original_bullet_modal" class="form-label">{% trans "Original Bullet Point" %}</label>
+                            <textarea name="bullet_text" id="project_ai_original_bullet_modal" class="form-input min-h-[80px]" rows="3" placeholder="Your current project bullet point..."></textarea>
+                        </div>
+
+                        {# Common Context Fields #}
+                        <div>
+                            <label for="project_ai_project_name_modal" class="form-label">{% trans "Project Name (Context)" %}</label>
+                            <input type="text" name="project_name" id="project_ai_project_name_modal" class="form-input-readonly" readonly>
+                        </div>
+                        <div>
+                            <label for="project_ai_project_summary_modal" class="form-label">{% trans "Project Summary (Context)" %}</label>
+                            <textarea name="project_summary" id="project_ai_project_summary_modal" class="form-input-readonly min-h-[80px]" rows="3" readonly></textarea>
+                        </div>
+
+                        {# Fields for Generating Multiple Bullets (shown conditionally by JS) #}
+                        <div id="project_ai_generate_bullets_fields_container" class="hidden space-y-4">
+                             <div>
+                                <label for="project_ai_target_job_title_modal" class="form-label">{% trans "Target Job Title (Optional, for better generation)" %}</label>
+                                <input type="text" name="target_job_title" id="project_ai_target_job_title_modal" class="form-input" placeholder="e.g., Full Stack Developer">
+                            </div>
+                             <div>
+                                <label for="project_ai_skills_modal" class="form-label">{% trans "Key Skills/Technologies for this Project (Comma-separated, Optional)" %}</label>
+                                <input type="text" name="skills" id="project_ai_skills_modal" class="form-input" placeholder="e.g., Python, Django, React">
+                            </div>
+                            <div>
+                                <label for="project_ai_num_bullets_modal" class="form-label">{% trans "Number of Bullets to Generate" %}</label>
+                                <select name="num_bullets" id="project_ai_num_bullets_modal" class="form-select">
+                                    <option value="2">2</option>
+                                    <option value="3" selected>3</option>
+                                    <option value="4">4</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {# Common AI settings #}
+                         <div id="project_ai_enhancement_type_container"> {# Shown for single bullet enhancement #}
+                            <label for="project_ai_enhancement_type_modal" class="form-label">{% trans "Enhancement Type" %}</label>
+                            <select name="enhancement_type" id="project_ai_enhancement_type_modal" class="form-select">
+                                <option value="general" selected>{% trans "General Improvement" %}</option>
+                                <option value="impact">{% trans "Focus on Impact/Results" %}</option>
+                                <option value="conciseness">{% trans "Make More Concise" %}</option>
+                                <option value="technical_detail">{% trans "Add Technical Detail" %}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="project_ai_engine_modal" class="form-label">{% trans "AI Engine" %}</label>
+                            <select name="ai_engine" id="project_ai_engine_modal" class="form-select">
+                                <option value="chatgpt">ChatGPT (OpenAI)</option>
+                                <option value="gemini" selected>Gemini (Google)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600/50 min-h-[100px]">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">{% trans "AI Suggestion(s):" %}</label>
+                        <div id="project_ai_in_progress_indicator" class="htmx-indicator py-4 flex justify-center items-center text-sm text-slate-500 dark:text-slate-400">
+                             <i class="fas fa-spinner fa-spin mr-2"></i> <span id="project_ai_indicator_text">{% trans "Processing..." %}</span>
+                        </div>
+                        <div id="project_ai_result_area" class="text-sm text-slate-700 dark:text-slate-300 space-y-1">
+                             <p class="text-xs text-slate-400 dark:text-slate-500 italic">{% trans "Suggestions will appear here." %}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 dark:bg-slate-800/60 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+                    <button type="submit" id="project_ai_submit_btn" class="btn-primary w-full sm:w-auto">
+                        {#{% trans "Enhance Bullet" %} Changed by JS #}
+                    </button>
+                    <button type="button" id="apply-project-ai-btn" disabled class="btn-success w-full sm:w-auto">
+                        <i class="fas fa-check mr-2"></i> {% trans "Apply to Resume" %}
+                    </button>
+                     <button type="button" @click="$dispatch('close-modal', 'project-enhancement-modal')" class="btn-neutral w-full sm:w-auto">
+                        {% trans "Cancel" %}
+                    </button>
+                </div>
+            </form>
         </div>
-      </div>
-
-      <div class="mt-4">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Enhancement Type
-        </label>
-        <div class="flex flex-wrap gap-x-4 gap-y-2"> {# Added flex-wrap for smaller screens #}
-          <label class="cursor-pointer flex items-center gap-2">
-            <input type="radio" name="enhancement_type" value="general" class="text-blue-600 border-gray-300 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-600 dark:checked:bg-blue-500 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800" checked>
-            <span class="text-gray-700 dark:text-gray-300">General Enhancement</span>
-          </label>
-          <label class="cursor-pointer flex items-center gap-2">
-            <input type="radio" name="enhancement_type" value="ats" class="text-blue-600 border-gray-300 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-600 dark:checked:bg-blue-500 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800">
-            <span class="text-gray-700 dark:text-gray-300">ATS Optimization</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="mt-4">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          AI Model
-        </label>
-        <div class="flex flex-wrap gap-x-4 gap-y-2"> {# Added flex-wrap #}
-          <label class="cursor-pointer flex items-center gap-2">
-            <input type="radio" name="ai_engine" value="chatgpt" class="text-blue-600 border-gray-300 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-600 dark:checked:bg-blue-500 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800" checked>
-            <span class="text-gray-700 dark:text-gray-300">ChatGPT</span>
-          </label>
-          <label class="cursor-pointer flex items-center gap-2">
-            <input type="radio" name="ai_engine" value="gemini" class="text-blue-600 border-gray-300 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-600 dark:checked:bg-blue-500 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800">
-            <span class="text-gray-700 dark:text-gray-300">Gemini</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="mt-4">
-        <label class="flex justify-between items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"> {# Added items-center #}
-          <span>Enhanced Result</span>
-          <span id="enhancement_in_progress" class="htmx-indicator text-xs text-gray-600 dark:text-gray-400 hidden">
-            {# Improved spinner #}
-            <svg class="animate-spin -ml-1 mr-1 h-4 w-4 inline-block text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-             Enhancing...
-          </span>
-        </label>
-        <div id="enhanced_bullet_result" class="p-4 min-h-24 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-900/50 dark:text-gray-200 shadow-inner"> {# Adjusted styling #}
-          <p class="text-gray-400 dark:text-gray-500 italic">Enhanced bullet point will appear here</p>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-3 mt-6"> {# Increased gap slightly #}
-        <button type="button" onclick="closeModal('project-enhancement-modal')" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800">Cancel</button>
-        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">
-          <i class="fa-solid fa-wand-magic-sparkles -ml-1 mr-2 h-5 w-5"></i> Enhance
-        </button>
-        <button type="button" id="apply_enhancement_btn" disabled class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 opacity-50 cursor-not-allowed dark:focus:ring-offset-gray-800" onclick="applyProjectEnhancement()">
-          <i class="fa-solid fa-check -ml-1 mr-2 h-5 w-5"></i> Apply
-        </button>
-      </div>
-    </form>
-  </div>
+    </div>
 </div>
+
+#{% comment %}#}
+{#This is a partial template for the project bullet enhancement modal form#}
+{#Save as 'resumes/theme_partials/project_enhancement_modal.html'#}
+{#{% endcomment %}#}
+{##}
+{#<div id="project-enhancement-modal" class="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center hidden">#}
+{#  <div class="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full mx-4 p-6 shadow-xl">#}
+{#    <h3 class="font-bold text-lg flex items-center text-gray-800 dark:text-gray-100">#}
+{#      <i class="fa-solid fa-wand-magic-sparkles text-blue-500 mr-2"></i>#}
+{#      Enhance Project Bullet Point#}
+{#    </h3>#}
+{#    <p class="py-2 text-sm text-gray-600 dark:text-gray-400">#}
+{#      Make your project bullet point more impactful with AI enhancement#}
+{#    </p>#}
+{##}
+    {# Ensure your Django view URL exists and is correct #}
+{#    <form id="project-enhancement-form" hx-post="{% url 'job_portal:enhance_project_bullet' %}" {# Changed to hx-post as it likely modifies data/makes requests #}
+{#          hx-target="#enhanced_bullet_result"#}
+{#          hx-swap="innerHTML"#}
+{#          hx-indicator="#enhancement_in_progress">#}
+{#      {% csrf_token %} {# Added CSRF token for POST requests #}
+{##}
+{#      <input type="hidden" name="parent_index" value="" id="parent_index_modal">#}
+{#      <input type="hidden" name="bullet_index" value="" id="bullet_index_modal">#}
+{#      <input type="hidden" name="project_name" value="" id="project_name_modal">#}
+      {# Removed project_title hidden input #}
+{#      <input type="hidden" name="project_summary" value="" id="project_summary_modal">#}
+{##}
+{#      <div class="mt-4">#}
+{#        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="original_bullet_modal"> {# Added 'for' attribute #}
+{#          Original Bullet Point#}
+{#        </label>#}
+{#        <textarea id="original_bullet_modal" name="bullet_text" class="w-full min-h-24 p-2 border border-gray-300 rounded-md shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" readonly></textarea>#}
+{#      </div>#}
+{##}
+{#      <div class="mt-4">#}
+{#        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">#}
+{#          Project Context#}
+{#        </label>#}
+{#        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-md text-sm space-y-2 border border-gray-200 dark:border-gray-600"> {# Added border #}
+          {# --- CORRECTED SECTION (Project Title line removed) --- #}
+{#          <p><strong>Project Name:</strong> <span id="project_name_display" class="text-gray-800 dark:text-gray-200"></span></p>#}
+{#          <p><strong>Project Summary:</strong> <span id="project_summary_display" class="italic text-gray-600 dark:text-gray-400"></span></p>#}
+           {# --- END CORRECTION --- #}
+{#        </div>#}
+{#      </div>#}
+{##}
+{#      <div class="mt-4">#}
+{#        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">#}
+{#          Enhancement Type#}
+{#        </label>#}
+{#        <div class="flex flex-wrap gap-x-4 gap-y-2"> {# Added flex-wrap for smaller screens #}
+{#          <label class="cursor-pointer flex items-center gap-2">#}
+{#            <input type="radio" name="enhancement_type" value="general" class="text-blue-600 border-gray-300 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-600 dark:checked:bg-blue-500 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800" checked>#}
+{#            <span class="text-gray-700 dark:text-gray-300">General Enhancement</span>#}
+{#          </label>#}
+{#          <label class="cursor-pointer flex items-center gap-2">#}
+{#            <input type="radio" name="enhancement_type" value="ats" class="text-blue-600 border-gray-300 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-600 dark:checked:bg-blue-500 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800">#}
+{#            <span class="text-gray-700 dark:text-gray-300">ATS Optimization</span>#}
+{#          </label>#}
+{#        </div>#}
+{#      </div>#}
+{##}
+{#      <div class="mt-4">#}
+{#        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">#}
+{#          AI Model#}
+{#        </label>#}
+{#        <div class="flex flex-wrap gap-x-4 gap-y-2"> {# Added flex-wrap #}
+{#          <label class="cursor-pointer flex items-center gap-2">#}
+{#            <input type="radio" name="ai_engine" value="chatgpt" class="text-blue-600 border-gray-300 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-600 dark:checked:bg-blue-500 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800" checked>#}
+{#            <span class="text-gray-700 dark:text-gray-300">ChatGPT</span>#}
+{#          </label>#}
+{#          <label class="cursor-pointer flex items-center gap-2">#}
+{#            <input type="radio" name="ai_engine" value="gemini" class="text-blue-600 border-gray-300 focus:ring-blue-500 dark:bg-gray-900 dark:border-gray-600 dark:checked:bg-blue-500 dark:focus:ring-blue-600 dark:focus:ring-offset-gray-800">#}
+{#            <span class="text-gray-700 dark:text-gray-300">Gemini</span>#}
+{#          </label>#}
+{#        </div>#}
+{#      </div>#}
+{##}
+{#      <div class="mt-4">#}
+{#        <label class="flex justify-between items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"> {# Added items-center #}
+{#          <span>Enhanced Result</span>#}
+{#          <span id="enhancement_in_progress" class="htmx-indicator text-xs text-gray-600 dark:text-gray-400 hidden">#}
+            {# Improved spinner #}
+{#            <svg class="animate-spin -ml-1 mr-1 h-4 w-4 inline-block text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">#}
+{#              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>#}
+{#              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>#}
+{#            </svg>#}
+{#             Enhancing...#}
+{#          </span>#}
+{#        </label>#}
+{#        <div id="enhanced_bullet_result" class="p-4 min-h-24 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-900/50 dark:text-gray-200 shadow-inner"> {# Adjusted styling #}
+{#          <p class="text-gray-400 dark:text-gray-500 italic">Enhanced bullet point will appear here</p>#}
+{#        </div>#}
+{#      </div>#}
+{##}
+{#      <div class="flex justify-end gap-3 mt-6"> {# Increased gap slightly #}
+{#        <button type="button" onclick="closeModal('project-enhancement-modal')" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800">Cancel</button>#}
+{#        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">#}
+{#          <i class="fa-solid fa-wand-magic-sparkles -ml-1 mr-2 h-5 w-5"></i> Enhance#}
+{#        </button>#}
+{#        <button type="button" id="apply_enhancement_btn" disabled class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 opacity-50 cursor-not-allowed dark:focus:ring-offset-gray-800" onclick="applyProjectEnhancement()">#}
+{#          <i class="fa-solid fa-check -ml-1 mr-2 h-5 w-5"></i> Apply#}
+{#        </button>#}
+{#      </div>#}
+{#    </form>#}
+{#  </div>#}
+{#</div>#}

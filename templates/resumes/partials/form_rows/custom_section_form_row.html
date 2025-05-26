@@ -1,77 +1,157 @@
+{# templates/resumes/partials/form_rows/custom_section_form_row.html #}
+{% load widget_tweaks static i18n %}
 
-<div class="form-row bg-base-200 p-4 rounded-lg">
-    <h3 class="text-lg font-medium mb-4">Additional Section #{{ index|add:"1" }}</h3>
+{# Parameters passed: custom_form, formset_prefix, is_empty_form, custom_section_index #}
+<div class="custom-section-form bg-slate-50 dark:bg-slate-800/60 p-5 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 relative"
+     data-custom-section-form-index="{{ custom_section_index }}">
 
-    <!-- Section Name -->
-    <div class="form-control">
-        <label class="label" for="name_{{ index }}">
-            <span class="label-text">Section Title</span>
-            <span class="label-text-alt text-error">*</span>
-        </label>
-        <input type="text" id="name_{{ index }}" name="name_{{ index }}"
-            class="input input-bordered w-full" value="" required
-            placeholder="Awards, Publications, Volunteer Work, etc.">
-    </div>
+    {% if not is_empty_form and custom_form.instance.pk %}{{ custom_form.id }}{% endif %}
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <!-- Institution/Organization -->
-        <div class="form-control">
-            <label class="label" for="institution_name_{{ index }}">
-                <span class="label-text">Institution/Organization</span>
-                <span class="label-text-alt">(Optional)</span>
-            </label>
-            <input type="text" id="institution_name_{{ index }}" name="institution_name_{{ index }}"
-                class="input input-bordered w-full" value="">
-        </div>
-
-        <!-- Date -->
-        <div class="form-control">
-            <label class="label" for="completion_date_{{ index }}">
-                <span class="label-text">Date</span>
-                <span class="label-text-alt">(Optional)</span>
-            </label>
-            <input type="date" id="completion_date_{{ index }}" name="completion_date_{{ index }}"
-                class="input input-bordered w-full" value="">
+    <div class="flex justify-between items-start mb-4 pb-3 border-b border-slate-200 dark:border-slate-700">
+        <h3 class="text-lg font-medium text-primary-700 dark:text-primary-400 flex items-center">
+            <i class="fas fa-puzzle-piece mr-2"></i>
+            Custom Section #<span class="custom-section-form-counter">{% if not is_empty_form %}{{ forloop.counter }}{% else %}{{ custom_section_index|replace:"__prefix__","New" }}{% endif %}</span>
+        </h3>
+        <div class="flex items-center space-x-2">
+            {% if custom_form.DELETE %}
+                <div class="flex items-center">
+                    {% render_field custom_form.DELETE class+="form-checkbox-sm text-red-600 focus:ring-red-500 delete-custom-section-checkbox" data_form_index=custom_section_index %}
+                    <label for="{{ custom_form.DELETE.id_for_label }}" class="ml-1.5 text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 cursor-pointer">
+                        Delete
+                    </label>
+                </div>
+            {% endif %}
+            <button type="button" class="remove-custom-section-form btn-icon-danger btn-xs" title="Remove this custom section">
+                <i class="fas fa-trash-alt"></i>
+            </button>
         </div>
     </div>
 
-    <!-- Bullet Points -->
-    <div class="form-control mt-4">
-        <label class="label" for="bullet_points_{{ index }}">
-            <span class="label-text">Bullet Points</span>
-            <span class="label-text-alt">(One per line)</span>
-        </label>
-        <textarea id="bullet_points_{{ index }}" name="bullet_points_{{ index }}"
-            class="textarea textarea-bordered w-full" rows="5"
-            placeholder="Enter bullet points, one per line"></textarea>
+    {% for hidden_field in custom_form.hidden_fields %}
+        {% if hidden_field.name != 'id' %}{{ hidden_field }}{% endif %}
+    {% endfor %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
+        <div class="md:col-span-2">
+            <label for="{{ custom_form.name.id_for_label }}" class="form-label">Section Title <span class="text-red-500">*</span></label>
+            {% render_field custom_form.name class+="form-input" placeholder="e.g., Awards, Publications" %}
+            {% for error in custom_form.name.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+
+        <div>
+            <label for="{{ custom_form.institution_name.id_for_label }}" class="form-label">Institution / Organization (Optional)</label>
+            {% render_field custom_form.institution_name class+="form-input" placeholder="e.g., XYZ Corp, Community Food Bank" %}
+            {% for error in custom_form.institution_name.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+        <div>
+            <label for="{{ custom_form.completion_date.id_for_label }}" class="form-label">Relevant Date (Optional)</label>
+            {% render_field custom_form.completion_date type="month" class+="form-input" %}
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">E.g., Date of award, project completion.</p>
+            {% for error in custom_form.completion_date.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+
+        <div class="md:col-span-2">
+            <label for="{{ custom_form.description.id_for_label }}" class="form-label">Overall Description (Optional)</label>
+            {% render_field custom_form.description class+="form-input" rows="2" placeholder="A brief overview of this section." %}
+            {% for error in custom_form.description.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+
+        <div class="md:col-span-2">
+            <label for="{{ custom_form.bullet_points.id_for_label }}" class="form-label">Bullet Points (Optional)</label>
+            {% render_field custom_form.bullet_points class+="form-input min-h-[100px]" rows="4" placeholder="List key details, one per line." %}
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Enter each bullet point on a new line.</p>
+            {% for error in custom_form.bullet_points.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+        <div class="md:col-span-2">
+            <label for="{{ custom_form.link.id_for_label }}" class="form-label">Related Link (Optional)</label>
+            {% render_field custom_form.link type="url" class+="form-input" placeholder="e.g., https://example.com/award-details" %}
+            {% for error in custom_form.link.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
     </div>
 
-    <!-- Description -->
-    <div class="form-control mt-4">
-        <label class="label" for="description_{{ index }}">
-            <span class="label-text">Description</span>
-            <span class="label-text-alt">(Optional)</span>
-        </label>
-        <textarea id="description_{{ index }}" name="description_{{ index }}"
-            class="textarea textarea-bordered w-full" rows="3"></textarea>
-    </div>
-
-    <!-- Link -->
-    <div class="form-control mt-4">
-        <label class="label" for="link_{{ index }}">
-            <span class="label-text">Link</span>
-            <span class="label-text-alt">(Optional)</span>
-        </label>
-        <input type="url" id="link_{{ index }}" name="link_{{ index }}"
-            class="input input-bordered w-full" value=""
-            placeholder="https://example.com">
-    </div>
-
-    <!-- Remove Section Button -->
-    <div class="flex justify-end mt-4">
-        <button type="button" class="btn btn-error"
-                onclick="removeFormRow(this, 'custom_sections_container', 'section_count')">
-            <i class="fa-solid fa-trash-can mr-2"></i> Remove Section
-        </button>
-    </div>
+    {% if custom_form.non_field_errors %}
+        <div class="mt-3 p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700/60 rounded-md text-sm text-red-600 dark:text-red-300">
+            {% for error in custom_form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
 </div>
+
+{##}
+{#<div class="form-row bg-base-200 p-4 rounded-lg">#}
+{#    <h3 class="text-lg font-medium mb-4">Additional Section #{{ index|add:"1" }}</h3>#}
+{##}
+{#    <!-- Section Name -->#}
+{#    <div class="form-control">#}
+{#        <label class="label" for="name_{{ index }}">#}
+{#            <span class="label-text">Section Title</span>#}
+{#            <span class="label-text-alt text-error">*</span>#}
+{#        </label>#}
+{#        <input type="text" id="name_{{ index }}" name="name_{{ index }}"#}
+{#            class="input input-bordered w-full" value="" required#}
+{#            placeholder="Awards, Publications, Volunteer Work, etc.">#}
+{#    </div>#}
+{##}
+{#    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">#}
+{#        <!-- Institution/Organization -->#}
+{#        <div class="form-control">#}
+{#            <label class="label" for="institution_name_{{ index }}">#}
+{#                <span class="label-text">Institution/Organization</span>#}
+{#                <span class="label-text-alt">(Optional)</span>#}
+{#            </label>#}
+{#            <input type="text" id="institution_name_{{ index }}" name="institution_name_{{ index }}"#}
+{#                class="input input-bordered w-full" value="">#}
+{#        </div>#}
+{##}
+{#        <!-- Date -->#}
+{#        <div class="form-control">#}
+{#            <label class="label" for="completion_date_{{ index }}">#}
+{#                <span class="label-text">Date</span>#}
+{#                <span class="label-text-alt">(Optional)</span>#}
+{#            </label>#}
+{#            <input type="date" id="completion_date_{{ index }}" name="completion_date_{{ index }}"#}
+{#                class="input input-bordered w-full" value="">#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Bullet Points -->#}
+{#    <div class="form-control mt-4">#}
+{#        <label class="label" for="bullet_points_{{ index }}">#}
+{#            <span class="label-text">Bullet Points</span>#}
+{#            <span class="label-text-alt">(One per line)</span>#}
+{#        </label>#}
+{#        <textarea id="bullet_points_{{ index }}" name="bullet_points_{{ index }}"#}
+{#            class="textarea textarea-bordered w-full" rows="5"#}
+{#            placeholder="Enter bullet points, one per line"></textarea>#}
+{#    </div>#}
+{##}
+{#    <!-- Description -->#}
+{#    <div class="form-control mt-4">#}
+{#        <label class="label" for="description_{{ index }}">#}
+{#            <span class="label-text">Description</span>#}
+{#            <span class="label-text-alt">(Optional)</span>#}
+{#        </label>#}
+{#        <textarea id="description_{{ index }}" name="description_{{ index }}"#}
+{#            class="textarea textarea-bordered w-full" rows="3"></textarea>#}
+{#    </div>#}
+{##}
+{#    <!-- Link -->#}
+{#    <div class="form-control mt-4">#}
+{#        <label class="label" for="link_{{ index }}">#}
+{#            <span class="label-text">Link</span>#}
+{#            <span class="label-text-alt">(Optional)</span>#}
+{#        </label>#}
+{#        <input type="url" id="link_{{ index }}" name="link_{{ index }}"#}
+{#            class="input input-bordered w-full" value=""#}
+{#            placeholder="https://example.com">#}
+{#    </div>#}
+{##}
+{#    <!-- Remove Section Button -->#}
+{#    <div class="flex justify-end mt-4">#}
+{#        <button type="button" class="btn btn-error"#}
+{#                onclick="removeFormRow(this, 'custom_sections_container', 'section_count')">#}
+{#            <i class="fa-solid fa-trash-can mr-2"></i> Remove Section#}
+{#        </button>#}
+{#    </div>#}
+{#</div>#}

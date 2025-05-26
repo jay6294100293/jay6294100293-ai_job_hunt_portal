@@ -1,125 +1,433 @@
 {% extends 'base_authenticated.html' %}
+{% load static i18n %}
 
-{% block title %}Dashboard - AI Job Portal{% endblock %}
+{% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="container mx-auto">
-    <div class="mb-8 p-6 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg shadow-md">
-        <h1 class="text-3xl font-semibold">Dashboard Overview</h1>
-        <p class="mt-1 text-primary-100">Welcome back, {{ user.username }}!</p>
-    </div>
+<div class="space-y-8 sm:space-y-10">
 
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
-            <div class="p-5">
-                 <div class="flex items-center">
-                    <div class="flex-shrink-0 p-3 bg-blue-100 rounded-full">
-                        <i class="fa-solid fa-file-lines text-blue-500 text-xl"></i>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Saved Resumes</dt>
-                            <dd><div class="text-2xl font-semibold text-gray-900">{{ resume_count }}</div></dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-5 py-3">
-                <a href="{% url 'job_portal:resume_list' %}" class="text-sm font-medium text-primary-600 hover:text-primary-700">View Resumes</a>
-            </div>
+    {# Welcome Header #}
+    <div class="relative bg-gradient-to-br from-primary-600 to-secondary-500 dark:from-primary-700 dark:to-secondary-600 p-6 sm:p-8 rounded-xl shadow-2xl text-white overflow-hidden">
+        <div class="absolute inset-0 opacity-10 dark:opacity-20">
+            {# Decorative background pattern or subtle illustration #}
+            <svg class="absolute bottom-0 left-0 " width="500" height="500" fill="none" viewBox="0 0 500 500" aria-hidden="true">
+                <defs>
+                    <pattern id="header-pattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="translate(0.5 0.5) rotate(45)">
+                        <circle cx="2" cy="2" r="1.5" class="fill-white/50 dark:fill-white/30"></circle>
+                    </pattern>
+                </defs>
+                <rect width="500" height="500" fill="url(#header-pattern)"></rect>
+            </svg>
         </div>
-
-        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 p-3 bg-green-100 rounded-full">
-                        <i class="fa-solid fa-key text-green-500 text-xl"></i>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">API Keys Status</dt>
-                            <dd>
-                                <div class="text-sm font-medium text-gray-900 mt-1">
-                                     {% if user.chatgpt_api_key and user.gemini_api_key %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>
-                                          All Configured
-                                        </span>
-                                     {% elif user.chatgpt_api_key or user.gemini_api_key %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-yellow-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>
-                                          Partially Configured
-                                        </span>
-                                     {% else %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-red-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>
-                                          Not Configured
-                                        </span>
-                                     {% endif %}
-                                </div>
-                            </dd>
-                        </dl>
-                    </div>
-                </div>
+        <div class="relative flex flex-col lg:flex-row justify-between items-start lg:items-center">
+            <div>
+                <h1 class="text-3xl sm:text-4xl font-bold tracking-tight mb-1.5">Welcome back, {{ user.first_name|default:user.username }}!</h1>
+                <p class="text-lg text-primary-100 dark:text-primary-200 max-w-2xl">
+                    Your AI-powered job hunt assistant. Let's find your next opportunity.
+                </p>
             </div>
-             <div class="bg-gray-50 px-5 py-3">
-                <a href="{% url 'update_api_keys' %}" class="text-sm font-medium text-primary-600 hover:text-primary-700">Manage Keys</a>
-            </div>
-        </div>
-        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 p-3 bg-purple-100 rounded-full">
-                        <i class="fa-solid fa-briefcase text-purple-500 text-xl"></i>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Tracked Applications</dt>
-                            <dd><div class="text-2xl font-semibold text-gray-900">0</div></dd> </dl>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-5 py-3">
-                 <a href="#" class="text-sm font-medium text-gray-500 cursor-not-allowed">Coming Soon</a>
+            <div class="mt-6 lg:mt-0 lg:ml-6 flex-shrink-0">
+                <a href="{% url 'job_portal:resume_creation_choice' %}"
+                   class="inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-primary-700 dark:text-primary-200 bg-white dark:bg-slate-50/20 dark:hover:bg-slate-50/30 hover:bg-primary-50 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-primary-200 dark:focus:ring-primary-500">
+                    <i class="fas fa-plus-circle mr-2.5"></i> Create New Resume
+                </a>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">Recent Resumes</h2>
-            {% if recent_resumes %}
-                <ul class="space-y-3">
-                    {% for resume in recent_resumes %}
-                        <li class="flex justify-between items-center p-3 bg-gray-50 rounded-md hover:bg-gray-100">
-                            <span class="font-medium text-gray-700">{{ resume.full_name }}</span>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs text-gray-500">Updated {{ resume.updated_at|timesince }} ago</span>
-                                <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" class="text-primary-600 hover:text-primary-800 text-sm"><i class="fa-solid fa-eye"></i></a>
-                                <a href="{% url 'job_portal:edit_resume' resume_id=resume.id %}" class="text-primary-600 hover:text-primary-800 text-sm"><i class="fa-solid fa-edit"></i></a>
-                            </div>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-gray-500">No resumes created yet.</p>
+    {# Stats Cards #}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out transform hover:-translate-y-1">
+            <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0 p-3.5 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-700/30 dark:to-primary-600/40 text-primary-600 dark:text-primary-200 shadow-md">
+                    <i class="fas fa-file-alt fa-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Total Resumes</p>
+                    <p class="text-3xl font-bold text-slate-800 dark:text-slate-100">{{ total_resumes_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out transform hover:-translate-y-1">
+            <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0 p-3.5 rounded-full bg-gradient-to-br from-green-100 to-green-200 dark:from-green-700/30 dark:to-green-600/40 text-green-600 dark:text-green-200 shadow-md">
+                    <i class="fas fa-paper-plane fa-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Applications Sent</p>
+                    <p class="text-3xl font-bold text-slate-800 dark:text-slate-100">
+                        {{ applications_sent_count|default:0 }}
+                        {% if not applications_sent_count %}
+                        <span class="text-xs font-normal text-slate-400 dark:text-slate-500 ml-1">(Coming Soon)</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out transform hover:-translate-y-1">
+            <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0 p-3.5 rounded-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-700/30 dark:to-yellow-600/40 text-yellow-600 dark:text-yellow-300 shadow-md">
+                    <i class="fas fa-lightbulb fa-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-slate-500 dark:text-slate-400">AI Enhancements</p>
+                    <p class="text-3xl font-bold text-slate-800 dark:text-slate-100">
+                        {{ ai_enhancements_used_count|default:0 }}
+                        {% if not ai_enhancements_used_count %}
+                        <span class="text-xs font-normal text-slate-400 dark:text-slate-500 ml-1">(Tracked Soon)</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Recent Resumes Section #}
+    {% if recent_resumes %}
+    <div class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-xl shadow-lg">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-100">Recent Resumes</h2>
+            {% if total_resumes_count > recent_resumes|length %}
+                <a href="{% url 'job_portal:resume_list' %}" class="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition-colors duration-150 group">
+                    View All <i class="fas fa-arrow-right ml-1 group-hover:translate-x-1 transition-transform duration-150"></i>
+                </a>
             {% endif %}
         </div>
+        <div class="overflow-x-auto -mx-6 sm:-mx-8">
+            <table class="min-w-full">
+                <thead class="border-b border-slate-200 dark:border-slate-700">
+                    <tr>
+                        <th class="py-3.5 pl-6 pr-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Resume Title</th>
+                        <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Template</th>
+                        <th class="px-3 py-3.5 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Last Updated</th>
+                        <th class="px-3 py-3.5 pr-6 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                    {% for resume in recent_resumes %}
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors duration-150">
+                        <td class="py-4 pl-6 pr-3 whitespace-nowrap text-sm font-medium text-slate-800 dark:text-slate-100">{{ resume.title|truncatechars:40 }}</td>
+                        <td class="px-3 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-300">{{ resume.template_name|default:"Default" }}</td>
+                        <td class="px-3 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">{{ resume.updated_at|date:"M d, Y, g:i A" }}</td>
+                        <td class="py-4 pl-3 pr-6 whitespace-nowrap text-right text-sm space-x-2">
+                            <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" class="p-2 rounded-md text-primary-600 hover:bg-primary-100 dark:text-primary-400 dark:hover:bg-primary-500/20 transition-all duration-150" title="View">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'job_portal:resume_wizard' resume_id=resume.id step='personal_info' %}" class="p-2 rounded-md text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-600 transition-all duration-150" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    {# Empty state for recent resumes - more engaging #}
+    <div class="bg-white dark:bg-slate-800 p-8 sm:p-12 rounded-xl shadow-lg text-center">
+        <div class="relative mx-auto w-48 h-48 text-slate-400 dark:text-slate-500 mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+{#            <div class="absolute inset-0 flex items-center justify-center">#}
+{#                <i class="fas fa-file-medical text-5xl text-slate-300 dark:text-slate-600 opacity-40"></i>#}
+{#            </div>#}
+        </div>
+        <h2 class="text-2xl font-semibold text-slate-800 dark:text-slate-100 mb-3">Your Dashboard Awaits</h2>
+        <p class="text-slate-600 dark:text-slate-400 mb-6 max-w-sm mx-auto">Start by creating your first resume to see your progress and quick actions here.</p>
+        <a href="{% url 'job_portal:resume_creation_choice' %}"
+           class="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:ring-primary-300 rounded-lg shadow-lg transition-colors duration-150 dark:bg-primary-500 dark:hover:bg-primary-600 dark:focus:ring-primary-800 focus:outline-none">
+            <i class="fas fa-plus-circle mr-2.5"></i> Create Your First Resume
+        </a>
+    </div>
+    {% endif %}
 
-        <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-             <h2 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
-             <div class="space-y-3">
-                 <a href="{% url 'job_portal:resume_creation_choice' %}" class="block w-full text-center px-4 py-3 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition font-medium">
-                    <i class="fa-solid fa-plus-circle mr-2"></i>Create/Upload Resume
-                 </a>
-                 <a href="{% url 'update_api_keys' %}" class="block w-full text-center px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition font-medium">
-                    <i class="fa-solid fa-key mr-2"></i>Update API Keys
-                 </a>
-                  <a href="#" class="block w-full text-center px-4 py-3 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed font-medium">
-                    <i class="fa-solid fa-briefcase mr-2"></i>Track Applications (Soon)
-                 </a>
-             </div>
+    {# Quick Links & Next Steps Cards #}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-xl shadow-lg">
+            <h3 class="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-5 flex items-center">
+                <i class="fas fa-link mr-3 text-primary-500 dark:text-primary-400"></i>Quick Links
+            </h3>
+            <ul class="space-y-3">
+                <li><a href="{% url 'job_portal:resume_list' %}" class="group flex items-center text-slate-600 hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400 transition-colors duration-150 text-base py-1"><i class="fas fa-list-ul w-5 mr-3 text-slate-400 dark:text-slate-500 group-hover:text-primary-500 dark:group-hover:text-primary-400 transition-colors duration-150"></i> My Resumes</a></li>
+                <li><a href="{% url 'profile' %}" class="group flex items-center text-slate-600 hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400 transition-colors duration-150 text-base py-1"><i class="fas fa-user-circle w-5 mr-3 text-slate-400 dark:text-slate-500 group-hover:text-primary-500 dark:group-hover:text-primary-400 transition-colors duration-150"></i> View Profile</a></li>
+                <li><a href="{% url 'update_api_keys' %}" class="group flex items-center text-slate-600 hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400 transition-colors duration-150 text-base py-1"><i class="fas fa-key w-5 mr-3 text-slate-400 dark:text-slate-500 group-hover:text-primary-500 dark:group-hover:text-primary-400 transition-colors duration-150"></i> Manage API Keys</a></li>
+            </ul>
+        </div>
+        <div class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-xl shadow-lg">
+            <h3 class="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-5 flex items-center">
+                <i class="fas fa-rocket mr-3 text-secondary-500 dark:text-secondary-400"></i>Get Started
+            </h3>
+            <ol class="space-y-3 text-slate-600 dark:text-slate-300">
+                <li class="flex items-start">
+                    <span class="mr-3 mt-1 text-secondary-500 dark:text-secondary-400"><i class="fas fa-check-circle"></i></span>
+                    <span>Ensure your <a href="{% url 'update_api_keys' %}" class="font-medium text-primary-600 hover:underline dark:text-primary-400">API keys</a> are set up for AI features.</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="mr-3 mt-1 text-secondary-500 dark:text-secondary-400"><i class="fas fa-check-circle"></i></span>
+                    <span>Create or upload a <a href="{% url 'job_portal:resume_creation_choice' %}" class="font-medium text-primary-600 hover:underline dark:text-primary-400">new resume</a>.</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="mr-3 mt-1 text-secondary-500 dark:text-secondary-400"><i class="fas fa-check-circle"></i></span>
+                    <span>Explore AI-powered enhancements for your resume.</span>
+                </li>
+                <li class="flex items-start">
+                    <span class="mr-3 mt-1 text-secondary-500 dark:text-secondary-400"><i class="fas fa-check-circle"></i></span>
+                    <span>Tailor & generate application materials for jobs.</span>
+                </li>
+            </ol>
         </div>
     </div>
 </div>
 {% endblock %}
+
+{# templates/auth/dashboard.html #}
+{#{% extends 'base_authenticated.html' %}#}
+{#{% load static %}#}
+{##}
+{#{% block title %}Dashboard{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#<div class="space-y-8">#}
+{#    <div class="bg-gradient-to-r from-primary-600 to-secondary-600 dark:from-primary-700 dark:to-secondary-700 p-6 sm:p-8 rounded-xl shadow-lg text-white">#}
+{#        <div class="flex flex-col sm:flex-row justify-between items-center">#}
+{#            <div>#}
+{#                <h1 class="text-3xl font-bold mb-1">Welcome back, {{ user.first_name|default:user.username }}!</h1>#}
+{#                <p class="text-lg text-primary-100 dark:text-primary-200">Ready to streamline your job applications?</p>#}
+{#            </div>#}
+{#            <div class="mt-4 sm:mt-0">#}
+{#                <a href="{% url 'job_portal:resume_creation_choice' %}" class="btn-light py-3 px-6 text-lg font-semibold shadow-md hover:shadow-xl transition-shadow duration-300">#}
+{#                    <i class="fas fa-plus-circle mr-2"></i> Create New Resume#}
+{#                </a>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">#}
+{#        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md flex items-center space-x-4">#}
+{#            <div class="p-3 rounded-full bg-primary-100 dark:bg-primary-700/30 text-primary-600 dark:text-primary-300">#}
+{#                <i class="fas fa-file-alt fa-lg"></i>#}
+{#            </div>#}
+{#            <div>#}
+{#                <p class="text-sm text-slate-500 dark:text-slate-400">Total Resumes</p>#}
+{#                <p class="text-2xl font-semibold text-slate-800 dark:text-slate-100">{{ total_resumes_count }}</p> {# Pass this from view #}
+{#            </div>#}
+{#        </div>#}
+{#        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md flex items-center space-x-4">#}
+{#             <div class="p-3 rounded-full bg-green-100 dark:bg-green-700/30 text-green-600 dark:text-green-300">#}
+{#                <i class="fas fa-paper-plane fa-lg"></i>#}
+{#            </div>#}
+{#            <div>#}
+{#                <p class="text-sm text-slate-500 dark:text-slate-400">Applications Sent</p>#}
+{#                <p class="text-2xl font-semibold text-slate-800 dark:text-slate-100">0 <span class="text-xs">(Coming Soon)</span></p> {# Placeholder #}
+{#            </div>#}
+{#        </div>#}
+{#        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md flex items-center space-x-4">#}
+{#             <div class="p-3 rounded-full bg-yellow-100 dark:bg-yellow-700/30 text-yellow-600 dark:text-yellow-300">#}
+{#                <i class="fas fa-lightbulb fa-lg"></i>#}
+{#            </div>#}
+{#            <div>#}
+{#                <p class="text-sm text-slate-500 dark:text-slate-400">AI Enhancements Used</p>#}
+{#                <p class="text-2xl font-semibold text-slate-800 dark:text-slate-100">0 <span class="text-xs">(Coming Soon)</span></p> {# Placeholder #}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    {% if recent_resumes %} {# Pass this queryset from view #}
+{#    <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">#}
+{#        <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-4">Recent Resumes</h2>#}
+{#        <div class="overflow-x-auto">#}
+{#            <table class="w-full min-w-lg">#}
+{#                <thead class="border-b border-slate-200 dark:border-slate-700">#}
+{#                    <tr>#}
+{#                        <th class="text-left p-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Resume Title</th>#}
+{#                        <th class="text-left p-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Template</th>#}
+{#                        <th class="text-left p-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Last Updated</th>#}
+{#                        <th class="text-right p-3 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>#}
+{#                    </tr>#}
+{#                </thead>#}
+{#                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">#}
+{#                    {% for resume in recent_resumes %}#}
+{#                    <tr>#}
+{#                        <td class="p-3 whitespace-nowrap text-sm text-slate-700 dark:text-slate-200">{{ resume.title }}</td>#}
+{#                        <td class="p-3 whitespace-nowrap text-sm text-slate-700 dark:text-slate-200">{{ resume.template_name|default:"N/A" }}</td>#}
+{#                        <td class="p-3 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">{{ resume.updated_at|date:"M d, Y, P" }}</td>#}
+{#                        <td class="p-3 whitespace-nowrap text-right text-sm space-x-2">#}
+{#                            <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" class="btn-icon-primary" title="View">#}
+{#                                <i class="fas fa-eye"></i>#}
+{#                            </a>#}
+{#                            <a href="{% url 'job_portal:resume_wizard' resume_id=resume.id step='personal_info' %}" class="btn-icon-secondary" title="Edit">#}
+{#                                <i class="fas fa-edit"></i>#}
+{#                            </a>#}
+{#                        </td>#}
+{#                    </tr>#}
+{#                    {% endfor %}#}
+{#                </tbody>#}
+{#            </table>#}
+{#        </div>#}
+{#        {% if total_resumes_count > recent_resumes|length %}#}
+{#            <div class="mt-4 text-center">#}
+{#                <a href="{% url 'job_portal:resume_list' %}" class="btn-secondary">#}
+{#                    View All Resumes <i class="fas fa-arrow-right ml-1.5"></i>#}
+{#                </a>#}
+{#            </div>#}
+{#        {% endif %}#}
+{#    </div>#}
+{#    {% else %}#}
+{#    <div class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-lg shadow-md text-center">#}
+{#        <img src="{% static 'img/illustrations/empty_dashboard.svg' %}" alt="No resumes yet" class="mx-auto h-40 mb-4">#}
+{#        <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-2">No Resumes Yet</h2>#}
+{#        <p class="text-slate-600 dark:text-slate-400 mb-4">Start by creating your first resume to get a head start in your job search.</p>#}
+{#        <a href="{% url 'job_portal:resume_creation_choice' %}" class="btn-primary">#}
+{#            <i class="fas fa-plus-circle mr-2"></i> Create Your First Resume#}
+{#        </a>#}
+{#    </div>#}
+{#    {% endif %}#}
+{##}
+{#    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">#}
+{#        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">#}
+{#            <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-3">Quick Links</h3>#}
+{#            <ul class="space-y-2">#}
+{#                <li><a href="{% url 'job_portal:resume_list' %}" class="flex items-center text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-200 transition-colors duration-150"><i class="fas fa-list-ul w-5 mr-2"></i> My Resumes</a></li>#}
+{#                <li><a href="{% url 'profile' %}" class="flex items-center text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-200 transition-colors duration-150"><i class="fas fa-user-circle w-5 mr-2"></i> View Profile</a></li>#}
+{#                <li><a href="{% url 'update_api_keys' %}" class="flex items-center text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-200 transition-colors duration-150"><i class="fas fa-key w-5 mr-2"></i> Manage API Keys</a></li>#}
+{#            </ul>#}
+{#        </div>#}
+{#        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">#}
+{#            <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-3">Next Steps</h3>#}
+{#            <ol class="list-decimal list-inside space-y-2 text-slate-600 dark:text-slate-300">#}
+{#                <li>Ensure your <a href="{% url 'update_api_keys' %}" class="text-primary-600 hover:underline">API keys</a> are set up for AI features.</li>#}
+{#                <li>Create or upload a <a href="{% url 'job_portal:resume_creation_choice' %}" class="text-primary-600 hover:underline">new resume</a>.</li>#}
+{#                <li>Explore AI-powered enhancements for your resume sections.</li>#}
+{#                <li>Tailor your resume and generate application materials.</li>#}
+{#            </ol>#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
+{#{% endblock %}#}
+{#{% extends 'base_authenticated.html' %}#}
+{##}
+{#{% block title %}Dashboard - AI Job Portal{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#<div class="container mx-auto">#}
+{#    <div class="mb-8 p-6 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg shadow-md">#}
+{#        <h1 class="text-3xl font-semibold">Dashboard Overview</h1>#}
+{#        <p class="mt-1 text-primary-100">Welcome back, {{ user.username }}!</p>#}
+{#    </div>#}
+{##}
+{#    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">#}
+{#        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">#}
+{#            <div class="p-5">#}
+{#                 <div class="flex items-center">#}
+{#                    <div class="flex-shrink-0 p-3 bg-blue-100 rounded-full">#}
+{#                        <i class="fa-solid fa-file-lines text-blue-500 text-xl"></i>#}
+{#                    </div>#}
+{#                    <div class="ml-5 w-0 flex-1">#}
+{#                        <dl>#}
+{#                            <dt class="text-sm font-medium text-gray-500 truncate">Saved Resumes</dt>#}
+{#                            <dd><div class="text-2xl font-semibold text-gray-900">{{ resume_count }}</div></dd>#}
+{#                        </dl>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#            <div class="bg-gray-50 px-5 py-3">#}
+{#                <a href="{% url 'job_portal:resume_list' %}" class="text-sm font-medium text-primary-600 hover:text-primary-700">View Resumes</a>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">#}
+{#            <div class="p-5">#}
+{#                <div class="flex items-center">#}
+{#                    <div class="flex-shrink-0 p-3 bg-green-100 rounded-full">#}
+{#                        <i class="fa-solid fa-key text-green-500 text-xl"></i>#}
+{#                    </div>#}
+{#                    <div class="ml-5 w-0 flex-1">#}
+{#                         <dl>#}
+{#                            <dt class="text-sm font-medium text-gray-500 truncate">API Keys Status</dt>#}
+{#                            <dd>#}
+{#                                <div class="text-sm font-medium text-gray-900 mt-1">#}
+{#                                     {% if user.chatgpt_api_key and user.gemini_api_key %}#}
+{#                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">#}
+{#                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>#}
+{#                                          All Configured#}
+{#                                        </span>#}
+{#                                     {% elif user.chatgpt_api_key or user.gemini_api_key %}#}
+{#                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">#}
+{#                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-yellow-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>#}
+{#                                          Partially Configured#}
+{#                                        </span>#}
+{#                                     {% else %}#}
+{#                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">#}
+{#                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-red-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>#}
+{#                                          Not Configured#}
+{#                                        </span>#}
+{#                                     {% endif %}#}
+{#                                </div>#}
+{#                            </dd>#}
+{#                        </dl>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#             <div class="bg-gray-50 px-5 py-3">#}
+{#                <a href="{% url 'update_api_keys' %}" class="text-sm font-medium text-primary-600 hover:text-primary-700">Manage Keys</a>#}
+{#            </div>#}
+{#        </div>#}
+{#        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">#}
+{#            <div class="p-5">#}
+{#                <div class="flex items-center">#}
+{#                    <div class="flex-shrink-0 p-3 bg-purple-100 rounded-full">#}
+{#                        <i class="fa-solid fa-briefcase text-purple-500 text-xl"></i>#}
+{#                    </div>#}
+{#                    <div class="ml-5 w-0 flex-1">#}
+{#                        <dl>#}
+{#                            <dt class="text-sm font-medium text-gray-500 truncate">Tracked Applications</dt>#}
+{#                            <dd><div class="text-2xl font-semibold text-gray-900">0</div></dd> </dl>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#            <div class="bg-gray-50 px-5 py-3">#}
+{#                 <a href="#" class="text-sm font-medium text-gray-500 cursor-not-allowed">Coming Soon</a>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">#}
+{#        <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">#}
+{#            <h2 class="text-xl font-semibold text-gray-800 mb-4">Recent Resumes</h2>#}
+{#            {% if recent_resumes %}#}
+{#                <ul class="space-y-3">#}
+{#                    {% for resume in recent_resumes %}#}
+{#                        <li class="flex justify-between items-center p-3 bg-gray-50 rounded-md hover:bg-gray-100">#}
+{#                            <span class="font-medium text-gray-700">{{ resume.full_name }}</span>#}
+{#                            <div class="flex items-center gap-2">#}
+{#                                <span class="text-xs text-gray-500">Updated {{ resume.updated_at|timesince }} ago</span>#}
+{#                                <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" class="text-primary-600 hover:text-primary-800 text-sm"><i class="fa-solid fa-eye"></i></a>#}
+{#                                <a href="{% url 'job_portal:edit_resume' resume_id=resume.id %}" class="text-primary-600 hover:text-primary-800 text-sm"><i class="fa-solid fa-edit"></i></a>#}
+{#                            </div>#}
+{#                        </li>#}
+{#                    {% endfor %}#}
+{#                </ul>#}
+{#            {% else %}#}
+{#                <p class="text-gray-500">No resumes created yet.</p>#}
+{#            {% endif %}#}
+{#        </div>#}
+{##}
+{#        <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">#}
+{#             <h2 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>#}
+{#             <div class="space-y-3">#}
+{#                 <a href="{% url 'job_portal:resume_creation_choice' %}" class="block w-full text-center px-4 py-3 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition font-medium">#}
+{#                    <i class="fa-solid fa-plus-circle mr-2"></i>Create/Upload Resume#}
+{#                 </a>#}
+{#                 <a href="{% url 'update_api_keys' %}" class="block w-full text-center px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition font-medium">#}
+{#                    <i class="fa-solid fa-key mr-2"></i>Update API Keys#}
+{#                 </a>#}
+{#                  <a href="#" class="block w-full text-center px-4 py-3 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed font-medium">#}
+{#                    <i class="fa-solid fa-briefcase mr-2"></i>Track Applications (Soon)#}
+{#                 </a>#}
+{#             </div>#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
+{#{% endblock %}#}

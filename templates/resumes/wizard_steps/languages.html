@@ -1,258 +1,395 @@
 {# templates/resumes/wizard_steps/languages.html #}
-{% extends 'resumes/wizard_base.html' %}
-{% load resume_extras %} {# Assuming this is needed #}
-{% load static %}
-{% load widget_tweaks %} {# Ensure widget_tweaks is loaded if used #}
+{% extends "resumes/wizard_base.html" %}
+{% load widget_tweaks static i18n %}
 
-{% block step_title %}Languages{% endblock %}
+{% block extra_head %}
+    {{ block.super }}
+    {# Link to your specific JavaScript for handling formsets if not already in resume_wizard.js #}
+    {# e.g., <script src="{% static 'js/languages_formset.js' %}" defer></script> #}
+{% endblock %}
 
-{% block step_icon %}<i class="fa-solid fa-language mr-3 text-primary opacity-80"></i>{% endblock %}
-
-{% block step_content %}
-<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}">
+{% block wizard_content %}
+<form method="post" novalidate id="languages-formset-container">
     {% csrf_token %}
+    {{ form.management_form }} {# LanguageFormSet management form #}
 
-    {# *** Management Form Tag Added *** #}
-    {{ formset.management_form }}
-    {# ******************************** #}
-
-    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">
-        {# *** Original Info Box Content Restored *** #}
-        <div class="flex items-start">
-            <div class="text-primary text-xl mr-4 mt-1">
-                <i class="fa-solid fa-lightbulb"></i>
-            </div>
-            <div>
-                <p class="text-base">
-                    Add languages you speak and your proficiency level for each.
-                    This helps employers understand your communication abilities, especially for roles requiring multilingual skills.
-                </p>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                    <strong>Pro tip:</strong> Be honest about your proficiency levels. Many employers may test language skills during interviews, especially for roles where these skills are important.
-                </p>
-            </div>
-        </div>
-        {# *************************************** #}
-    </div>
-
-    <div id="languages_container" class="space-y-5">
-        {# Use formset variable passed from context #}
-        {% for form in formset.forms %}
-        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-5 transition-all duration-300 hover:shadow-lg language-entry" id="{{ form.prefix }}-row" data-index="{{ forloop.counter0 }}">
-             {% if formset.can_delete %}
-                 <div class="hidden">{{ form.DELETE }}</div>
-             {% endif %}
-
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium flex items-center">
-                    <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                        <i class="fa-solid fa-globe text-primary text-sm"></i>
-                    </span>
-                    Language #<span class="language-number">{{ forloop.counter }}</span>
-                </h3>
-                <div class="flex items-center gap-2">
-                    {% if formset.can_delete %}
-                    <button type="button" class="btn btn-ghost btn-sm text-error formset-delete-btn"
-                            onclick="deleteForm(this, '{{ formset.prefix }}')"> {# Ensure JS function exists #}
-                        <i class="fa-solid fa-trash-can mr-1"></i> Remove
-                    </button>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div class="form-control">
-                    <label class="label" for="{{ form.language_name.id_for_label }}">
-                        <span class="label-text font-medium">Language</span>
-                        {# *** Removed Asterisk *** #}
-                        {# <span class="label-text-alt text-error">*</span> #}
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-globe text-gray-400"></i>
-                        </div>
-                         {# *** Removed required attribute *** #}
-                        {% render_field form.language_name class+="input input-bordered w-full pl-10" placeholder="e.g., English, Spanish" %}
-                    </div>
-                    {% if form.language_name.errors %}<div class="text-error text-xs mt-1">{{ form.language_name.errors|first }}</div>{% endif %}
-                </div>
-
-                <div class="form-control">
-                    <label class="label" for="{{ form.proficiency.id_for_label }}">
-                        <span class="label-text font-medium">Proficiency Level</span>
-                         {# *** Removed Asterisk *** #}
-                        {# <span class="label-text-alt text-error">*</span> #}
-                    </label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-chart-bar text-gray-400"></i>
-                        </div>
-                        {# Pass choices from context #}
-                         {# *** Ensure proficiency choices are passed in context from view *** #}
-                         {# *** Removed required attribute from select if widget_tweaks adds it *** #}
-                        {% render_field form.proficiency class+="select select-bordered w-full pl-10" %}
-                    </div>
-                     {% if form.proficiency.errors %}<div class="text-error text-xs mt-1">{{ form.proficiency.errors|first }}</div>{% endif %}
-                </div>
-            </div>
-
-            {# Add back optional fields if defined in LanguageForm #}
-            {# e.g., Details, Certifications, etc. #}
-
-        </div> {# End form-row #}
-        {% empty %}
-        <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center" id="langs-empty-state">
-            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <i class="fa-solid fa-language text-primary text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-medium mb-2">No Languages Added Yet</h3>
-            <p class="text-gray-500 max-w-md mx-auto mb-6">
-                This section is optional. Add languages to highlight your communication skills.
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div>
+            <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-1">{{ current_step_display }}</h2>
+            <p class="text-sm text-slate-600 dark:text-slate-400">
+                List the languages you speak and your proficiency level in each.
             </p>
-            <button type="button" class="btn btn-primary add-another-btn" onclick="addForm(this, '{{ formset.prefix }}')">
-                <i class="fa-solid fa-plus mr-2"></i> Add a Language
-            </button>
         </div>
-        {% endfor %}
-    </div> {# End languages_container #}
-
-     {# Template for adding new forms #}
-    <template id="{{ formset.prefix }}-form-template">
-         <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-5 language-entry" id="{{ formset.prefix }}-__prefix__-row" data-index="__prefix__">
-              {% with form=formset.empty_form %} {# Use empty_form for template structure #}
-              <div class="hidden"><input type="checkbox" name="{{ form.prefix }}-DELETE" id="id_{{ form.prefix }}-DELETE"></div>
-              <div class="flex justify-between items-center mb-4"><h3>New Language</h3><button type="button" onclick="deleteForm(this, '{{ formset.prefix }}')">Remove</button></div>
-               <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div><label>Language</label>{% render_field form.language_name class+="input input-bordered w-full pl-10" %}</div>
-                    <div><label>Proficiency</label>{% render_field form.proficiency class+="select select-bordered w-full pl-10" %}</div>
-               </div>
-               {# Add inputs for other optional fields if needed #}
-              {% endwith %}
-         </div>
-    </template>
-
-    {# Add Language button (Always show, but JS might hide empty state) #}
-    <div class="flex justify-center mt-8">
-        <button type="button" class="btn btn-primary add-another-btn" onclick="addForm(this, '{{ formset.prefix }}')">
-             <i class="fa-solid fa-plus mr-2"></i> Add Another Language
+        <button type="button" id="add-language-form" class="btn-secondary-outline text-sm w-full sm:w-auto flex-shrink-0">
+            <i class="fas fa-plus mr-1.5"></i> Add Language
         </button>
     </div>
 
-    {# Proficiency Guide section kept #}
-    <div class="mt-10 bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6">
-        <h3 class="font-medium text-lg mb-4 flex items-center"><i class="fa-solid fa-info-circle text-primary mr-2"></i> Language Proficiency Guide</h3>
-        {# ... Include the Proficiency Guide HTML here ... #}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-4">
-                <div class="flex items-start gap-3"><div class="mt-1"><span class="badge badge-primary">Native</span></div><div><p class="font-medium">First language or mother tongue</p><p class="text-sm text-gray-600 dark:text-gray-400">Spoken from childhood with complete fluency...</p></div></div>
-                <div class="flex items-start gap-3"><div class="mt-1"><span class="badge badge-success">Advanced</span></div><div><p class="font-medium">Professional working proficiency</p><p class="text-sm text-gray-600 dark:text-gray-400">Can handle complex discussions...</p></div></div>
-            </div>
-            <div class="space-y-4">
-                <div class="flex items-start gap-3"><div class="mt-1"><span class="badge badge-warning">Intermediate</span></div><div><p class="font-medium">Limited working proficiency</p><p class="text-sm text-gray-600 dark:text-gray-400">Can participate in routine conversations...</p></div></div>
-                <div class="flex items-start gap-3"><div class="mt-1"><span class="badge badge-ghost">Basic</span></div><div><p class="font-medium">Elementary proficiency</p><p class="text-sm text-gray-600 dark:text-gray-400">Can understand and use familiar everyday expressions...</p></div></div>
-            </div>
+    {% if form.non_form_errors %}
+        <div class="mb-4 p-3 bg-red-100 dark:bg-red-800/30 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 rounded-md text-sm">
+            {% for error in form.non_form_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
         </div>
-        {# ... Other guide parts ... #}
+    {% endif %}
+
+    <div id="language-forms" class="space-y-6">
+        {% for lang_form in form %} {# Iterating through each Language form in the FormSet #}
+            <div class="language-form bg-slate-50 dark:bg-slate-800/60 p-5 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 relative" data-language-form-index="{{ forloop.counter0 }}">
+                {% if lang_form.instance.pk %}{{ lang_form.id }}{% endif %}
+
+                <div class="flex justify-between items-start mb-4 pb-3 border-b border-slate-200 dark:border-slate-700">
+                    <h3 class="text-lg font-medium text-primary-700 dark:text-primary-400 flex items-center">
+                        <i class="fas fa-language mr-2"></i>
+                        Language #<span class="language-form-counter">{{ forloop.counter }}</span>
+                    </h3>
+                     <div class="flex items-center space-x-2">
+                        {% if lang_form.DELETE %}
+                            <div class="flex items-center">
+                                {% render_field lang_form.DELETE class+="form-checkbox-sm text-red-600 focus:ring-red-500 delete-language-checkbox" data_form_index=forloop.counter0 %}
+                                <label for="{{ lang_form.DELETE.id_for_label }}" class="ml-1.5 text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 cursor-pointer">
+                                    Delete
+                                </label>
+                            </div>
+                        {% endif %}
+                        <button type="button" class="remove-language-form btn-icon-danger btn-xs" title="Remove this language">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
+                {% for hidden_field in lang_form.hidden_fields %}
+                     {% if hidden_field.name != 'id' %}{{ hidden_field }}{% endif %}
+                {% endfor %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
+                    <div>
+                        <label for="{{ lang_form.language_name.id_for_label }}" class="form-label">Language Name <span class="text-red-500">*</span></label>
+                        {% render_field lang_form.language_name class+="form-input" placeholder="e.g., Spanish, French, Mandarin" %}
+                        {% for error in lang_form.language_name.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+                    </div>
+
+                    <div>
+                        <label for="{{ lang_form.proficiency.id_for_label }}" class="form-label">Proficiency Level <span class="text-red-500">*</span></label>
+                        {% render_field lang_form.proficiency class+="form-select" %}
+                        {% for error in lang_form.proficiency.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+                    </div>
+                </div>
+
+                {% if lang_form.non_field_errors %}
+                    <div class="mt-3 p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700/60 rounded-md text-sm text-red-600 dark:text-red-300">
+                        {% for error in lang_form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div> {# End .language-form #}
+        {% endfor %}
+    </div> {# End #language-forms #}
+
+    <div id="empty-language-form" class="hidden">
+        {% include "resumes/partials/form_rows/language_form_row.html" with lang_form=form.empty_form formset_prefix=form.prefix is_empty_form=True language_index="__prefix__" %}
     </div>
 
-    {# Quick Add section kept #}
-     <div class="mt-6">
-        <h3 class="font-medium mb-4 flex items-center"><i class="fa-solid fa-plus text-primary mr-2"></i> Quick Add Common Languages</h3>
-        {# ... Include the Quick Add HTML buttons here ... #}
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            <button type="button" class="btn btn-outline btn-sm" onclick="quickAddLanguage('English')"><span class="flag-icon">🇺🇸</span> English</button>
-            <button type="button" class="btn btn-outline btn-sm" onclick="quickAddLanguage('Spanish')"><span class="flag-icon">🇪🇸</span> Spanish</button>
-             {# ... more buttons ... #}
+    {# Navigation Buttons #}
+    <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
+        <div>
+            {% if prev_step_url %}
+                <a href="{{ prev_step_url }}" class="btn-neutral w-full sm:w-auto">
+                    <i class="fas fa-arrow-left mr-2"></i> Previous Step
+                </a>
+            {% else %}
+                <span class="btn-disabled w-full sm:w-auto text-center">
+                    <i class="fas fa-arrow-left mr-2"></i> Previous Step
+                </span>
+            {% endif %}
         </div>
-     </div>
+        <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+            <button type="submit" name="action" value="save_and_exit" class="btn-secondary w-full sm:w-auto">
+                <i class="fas fa-save mr-1.5"></i> Save & Exit Wizard
+            </button>
+            <button type="submit" name="action" value="save_and_continue" class="btn-primary w-full sm:w-auto">
+                Save & Continue <i class="fas fa-arrow-right ml-1.5"></i>
+            </button>
+        </div>
+    </div>
 </form>
+{% endblock wizard_content %}
 
-{# Ensure necessary JS functions (addForm, deleteForm, quickAddLanguage etc.) are available #}
+{% block extra_js %}
+{{ block.super }}
 <script>
-    // Basic JS (ensure these are robust in your actual implementation)
-    if (typeof addForm !== 'function') {
-         function addForm(button, prefix) {
-             console.warn("addForm function not fully defined. Using basic example.");
-             const formContainer = document.getElementById('languages_container'); // Target specific container
-             const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');
-             const template = document.getElementById(prefix + '-form-template');
-             if (!formContainer || !totalFormsInput || !template) { console.error("Missing elements for addForm"); return; }
-             const formNum = parseInt(totalFormsInput.value);
-             let newFormHtml = template.innerHTML.replace(/__prefix__/g, formNum);
-             const tempDiv = document.createElement('div');
-             tempDiv.innerHTML = newFormHtml;
-             const newFormElement = tempDiv.firstElementChild;
-             const emptyState = document.getElementById('langs-empty-state');
-             if(emptyState) emptyState.classList.add('hidden'); // Hide empty state
-             formContainer.appendChild(newFormElement);
-             totalFormsInput.value = formNum + 1;
-
-             // Show 'Add Another' button if it was hidden by empty state logic (if any)
-             const addAnotherButton = document.querySelector('.add-another-btn'); // Adjust selector if needed
-              if(addAnotherButton) addAnotherButton.style.display = 'flex'; // Or 'block', 'inline-flex' etc.
-         }
-     }
-     if (typeof deleteForm !== 'function') {
-         function deleteForm(button, prefix) {
-             console.warn("deleteForm function not fully defined. Using basic example.");
-             const formRow = button.closest('.form-row');
-             const deleteInput = formRow.querySelector('input[name$="-DELETE"]');
-             if (deleteInput) {
-                 deleteInput.checked = true;
-                 formRow.style.display = 'none'; // Hide the form visually
-             } else {
-                  formRow.remove(); // Remove if no DELETE field (likely extra form)
-             }
-             // Check if remaining forms are all hidden (or none left) to show empty state
-             const container = document.getElementById('languages_container');
-             const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');
-             const emptyState = document.getElementById('langs-empty-state');
-             if(visibleForms.length === 0 && emptyState) {
-                 emptyState.classList.remove('hidden');
-                 const addAnotherButton = document.querySelector('.add-another-btn'); // Hide 'Add Another' if empty
-                  if(addAnotherButton) addAnotherButton.style.display = 'none';
-             }
-         }
-     }
-      // Basic Quick Add Example (ensure full JS logic exists elsewhere)
-      function quickAddLanguage(langName) {
-          const addBtn = document.querySelector('#languages_container .add-another-btn, #langs-empty-state .add-another-btn');
-          if (addBtn) {
-              addBtn.click(); // Trigger adding a new form
-              // Wait briefly for form to add, then populate
-              setTimeout(() => {
-                 const forms = document.querySelectorAll('#languages_container .form-row');
-                 const lastForm = forms[forms.length - 1]; // Assuming added at the end
-                 if (lastForm) {
-                     const nameInput = lastForm.querySelector('input[name$="-language_name"]');
-                     const profSelect = lastForm.querySelector('select[name$="-proficiency"]');
-                     if (nameInput) nameInput.value = langName;
-                     if (profSelect) profSelect.value = 'intermediate'; // Default
-                     lastForm.scrollIntoView({behavior: 'smooth'});
-                 }
-              }, 100); // Adjust delay if needed
-          }
-      }
-
-      // Initial check for empty state on load
-     document.addEventListener('DOMContentLoaded', function() {
-         const container = document.getElementById('languages_container');
-         const emptyState = document.getElementById('langs-empty-state');
-         if (container && emptyState) {
-             const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');
-             if (visibleForms.length > 0) {
-                 emptyState.classList.add('hidden');
-             } else {
-                 emptyState.classList.remove('hidden');
-                 // Hide 'Add Another' button if initially empty
-                  const addAnotherButton = document.querySelector('.add-another-btn');
-                  if(addAnotherButton) addAnotherButton.style.display = 'none';
-             }
-         }
-     });
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSimpleFormset({
+        formsetContainerId: 'languages-formset-container',
+        formsContainerId: 'language-forms',
+        addButtonId: 'add-language-form',
+        emptyFormTemplateId: 'empty-language-form',
+        formsetPrefix: '{{ form.prefix }}', // Django formset prefix
+        itemContainerClass: 'language-form', // Matches class in language_form_row.html
+        itemCounterClass: 'language-form-counter',
+        removeButtonClass: 'remove-language-form',
+        itemDataAttributePrefix: 'language'
+    });
+});
 </script>
 {% endblock %}
 
+{# templates/resumes/wizard_steps/languages.html #}
+{#{% extends 'resumes/wizard_base.html' %}#}
+{#{% load resume_extras %} {# Assuming this is needed #}
+{#{% load static %}#}
+{#{% load widget_tweaks %} {# Ensure widget_tweaks is loaded if used #}
+{##}
+{#{% block step_title %}Languages{% endblock %}#}
+{##}
+{#{% block step_icon %}<i class="fa-solid fa-language mr-3 text-primary opacity-80"></i>{% endblock %}#}
+{##}
+{#{% block step_content %}#}
+{#<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}">#}
+{#    {% csrf_token %}#}
+{##}
+    {# *** Management Form Tag Added *** #}
+{#    {{ formset.management_form }}#}
+    {# ******************************** #}
+{##}
+{#    <div class="bg-primary/5 border border-primary/10 rounded-lg p-5 mb-8">#}
+        {# *** Original Info Box Content Restored *** #}
+{#        <div class="flex items-start">#}
+{#            <div class="text-primary text-xl mr-4 mt-1">#}
+{#                <i class="fa-solid fa-lightbulb"></i>#}
+{#            </div>#}
+{#            <div>#}
+{#                <p class="text-base">#}
+{#                    Add languages you speak and your proficiency level for each.#}
+{#                    This helps employers understand your communication abilities, especially for roles requiring multilingual skills.#}
+{#                </p>#}
+{#                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">#}
+{#                    <strong>Pro tip:</strong> Be honest about your proficiency levels. Many employers may test language skills during interviews, especially for roles where these skills are important.#}
+{#                </p>#}
+{#            </div>#}
+{#        </div>#}
+        {# *************************************** #}
+{#    </div>#}
+{##}
+{#    <div id="languages_container" class="space-y-5">#}
+        {# Use formset variable passed from context #}
+{#        {% for form in formset.forms %}#}
+{#        <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-5 transition-all duration-300 hover:shadow-lg language-entry" id="{{ form.prefix }}-row" data-index="{{ forloop.counter0 }}">#}
+{#             {% if formset.can_delete %}#}
+{#                 <div class="hidden">{{ form.DELETE }}</div>#}
+{#             {% endif %}#}
+{##}
+{#            <div class="flex justify-between items-center mb-4">#}
+{#                <h3 class="text-lg font-medium flex items-center">#}
+{#                    <span class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">#}
+{#                        <i class="fa-solid fa-globe text-primary text-sm"></i>#}
+{#                    </span>#}
+{#                    Language #<span class="language-number">{{ forloop.counter }}</span>#}
+{#                </h3>#}
+{#                <div class="flex items-center gap-2">#}
+{#                    {% if formset.can_delete %}#}
+{#                    <button type="button" class="btn btn-ghost btn-sm text-error formset-delete-btn"#}
+{#                            onclick="deleteForm(this, '{{ formset.prefix }}')"> {# Ensure JS function exists #}
+{#                        <i class="fa-solid fa-trash-can mr-1"></i> Remove#}
+{#                    </button>#}
+{#                    {% endif %}#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">#}
+{#                <div class="form-control">#}
+{#                    <label class="label" for="{{ form.language_name.id_for_label }}">#}
+{#                        <span class="label-text font-medium">Language</span>#}
+                        {# *** Removed Asterisk *** #}
+                        {# <span class="label-text-alt text-error">*</span> #}
+{#                    </label>#}
+{#                    <div class="relative">#}
+{#                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                            <i class="fa-solid fa-globe text-gray-400"></i>#}
+{#                        </div>#}
+                         {# *** Removed required attribute *** #}
+{#                        {% render_field form.language_name class+="input input-bordered w-full pl-10" placeholder="e.g., English, Spanish" %}#}
+{#                    </div>#}
+{#                    {% if form.language_name.errors %}<div class="text-error text-xs mt-1">{{ form.language_name.errors|first }}</div>{% endif %}#}
+{#                </div>#}
+{##}
+{#                <div class="form-control">#}
+{#                    <label class="label" for="{{ form.proficiency.id_for_label }}">#}
+{#                        <span class="label-text font-medium">Proficiency Level</span>#}
+                         {# *** Removed Asterisk *** #}
+                        {# <span class="label-text-alt text-error">*</span> #}
+{#                    </label>#}
+{#                    <div class="relative">#}
+{#                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                            <i class="fa-solid fa-chart-bar text-gray-400"></i>#}
+{#                        </div>#}
+                        {# Pass choices from context #}
+                         {# *** Ensure proficiency choices are passed in context from view *** #}
+                         {# *** Removed required attribute from select if widget_tweaks adds it *** #}
+{#                        {% render_field form.proficiency class+="select select-bordered w-full pl-10" %}#}
+{#                    </div>#}
+{#                     {% if form.proficiency.errors %}<div class="text-error text-xs mt-1">{{ form.proficiency.errors|first }}</div>{% endif %}#}
+{#                </div>#}
+{#            </div>#}
+{##}
+            {# Add back optional fields if defined in LanguageForm #}
+            {# e.g., Details, Certifications, etc. #}
+{##}
+{#        </div> {# End form-row #}
+{#        {% empty %}#}
+{#        <div class="bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow p-8 text-center" id="langs-empty-state">#}
+{#            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">#}
+{#                <i class="fa-solid fa-language text-primary text-2xl"></i>#}
+{#            </div>#}
+{#            <h3 class="text-lg font-medium mb-2">No Languages Added Yet</h3>#}
+{#            <p class="text-gray-500 max-w-md mx-auto mb-6">#}
+{#                This section is optional. Add languages to highlight your communication skills.#}
+{#            </p>#}
+{#            <button type="button" class="btn btn-primary add-another-btn" onclick="addForm(this, '{{ formset.prefix }}')">#}
+{#                <i class="fa-solid fa-plus mr-2"></i> Add a Language#}
+{#            </button>#}
+{#        </div>#}
+{#        {% endfor %}#}
+{#    </div> {# End languages_container #}
+{##}
+     {# Template for adding new forms #}
+{#    <template id="{{ formset.prefix }}-form-template">#}
+{#         <div class="form-row bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-5 language-entry" id="{{ formset.prefix }}-__prefix__-row" data-index="__prefix__">#}
+{#              {% with form=formset.empty_form %} {# Use empty_form for template structure #}
+{#              <div class="hidden"><input type="checkbox" name="{{ form.prefix }}-DELETE" id="id_{{ form.prefix }}-DELETE"></div>#}
+{#              <div class="flex justify-between items-center mb-4"><h3>New Language</h3><button type="button" onclick="deleteForm(this, '{{ formset.prefix }}')">Remove</button></div>#}
+{#               <div class="grid grid-cols-1 md:grid-cols-2 gap-5">#}
+{#                    <div><label>Language</label>{% render_field form.language_name class+="input input-bordered w-full pl-10" %}</div>#}
+{#                    <div><label>Proficiency</label>{% render_field form.proficiency class+="select select-bordered w-full pl-10" %}</div>#}
+{#               </div>#}
+               {# Add inputs for other optional fields if needed #}
+{#              {% endwith %}#}
+{#         </div>#}
+{#    </template>#}
+{##}
+    {# Add Language button (Always show, but JS might hide empty state) #}
+{#    <div class="flex justify-center mt-8">#}
+{#        <button type="button" class="btn btn-primary add-another-btn" onclick="addForm(this, '{{ formset.prefix }}')">#}
+{#             <i class="fa-solid fa-plus mr-2"></i> Add Another Language#}
+{#        </button>#}
+{#    </div>#}
+{##}
+    {# Proficiency Guide section kept #}
+{#    <div class="mt-10 bg-base-100 border border-gray-100 dark:border-gray-700 rounded-xl shadow-md p-6">#}
+{#        <h3 class="font-medium text-lg mb-4 flex items-center"><i class="fa-solid fa-info-circle text-primary mr-2"></i> Language Proficiency Guide</h3>#}
+        {# ... Include the Proficiency Guide HTML here ... #}
+{#        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">#}
+{#            <div class="space-y-4">#}
+{#                <div class="flex items-start gap-3"><div class="mt-1"><span class="badge badge-primary">Native</span></div><div><p class="font-medium">First language or mother tongue</p><p class="text-sm text-gray-600 dark:text-gray-400">Spoken from childhood with complete fluency...</p></div></div>#}
+{#                <div class="flex items-start gap-3"><div class="mt-1"><span class="badge badge-success">Advanced</span></div><div><p class="font-medium">Professional working proficiency</p><p class="text-sm text-gray-600 dark:text-gray-400">Can handle complex discussions...</p></div></div>#}
+{#            </div>#}
+{#            <div class="space-y-4">#}
+{#                <div class="flex items-start gap-3"><div class="mt-1"><span class="badge badge-warning">Intermediate</span></div><div><p class="font-medium">Limited working proficiency</p><p class="text-sm text-gray-600 dark:text-gray-400">Can participate in routine conversations...</p></div></div>#}
+{#                <div class="flex items-start gap-3"><div class="mt-1"><span class="badge badge-ghost">Basic</span></div><div><p class="font-medium">Elementary proficiency</p><p class="text-sm text-gray-600 dark:text-gray-400">Can understand and use familiar everyday expressions...</p></div></div>#}
+{#            </div>#}
+{#        </div>#}
+        {# ... Other guide parts ... #}
+{#    </div>#}
+{##}
+    {# Quick Add section kept #}
+{#     <div class="mt-6">#}
+{#        <h3 class="font-medium mb-4 flex items-center"><i class="fa-solid fa-plus text-primary mr-2"></i> Quick Add Common Languages</h3>#}
+        {# ... Include the Quick Add HTML buttons here ... #}
+{#        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">#}
+{#            <button type="button" class="btn btn-outline btn-sm" onclick="quickAddLanguage('English')"><span class="flag-icon">🇺🇸</span> English</button>#}
+{#            <button type="button" class="btn btn-outline btn-sm" onclick="quickAddLanguage('Spanish')"><span class="flag-icon">🇪🇸</span> Spanish</button>#}
+             {# ... more buttons ... #}
+{#        </div>#}
+{#     </div>#}
+{#</form>#}
+{##}
+{# Ensure necessary JS functions (addForm, deleteForm, quickAddLanguage etc.) are available #}
+{#<script>#}
+{#    // Basic JS (ensure these are robust in your actual implementation)#}
+{#    if (typeof addForm !== 'function') {#}
+{#         function addForm(button, prefix) {#}
+{#             console.warn("addForm function not fully defined. Using basic example.");#}
+{#             const formContainer = document.getElementById('languages_container'); // Target specific container#}
+{#             const totalFormsInput = document.getElementById('id_' + prefix + '-TOTAL_FORMS');#}
+{#             const template = document.getElementById(prefix + '-form-template');#}
+{#             if (!formContainer || !totalFormsInput || !template) { console.error("Missing elements for addForm"); return; }#}
+{#             const formNum = parseInt(totalFormsInput.value);#}
+{#             let newFormHtml = template.innerHTML.replace(/__prefix__/g, formNum);#}
+{#             const tempDiv = document.createElement('div');#}
+{#             tempDiv.innerHTML = newFormHtml;#}
+{#             const newFormElement = tempDiv.firstElementChild;#}
+{#             const emptyState = document.getElementById('langs-empty-state');#}
+{#             if(emptyState) emptyState.classList.add('hidden'); // Hide empty state#}
+{#             formContainer.appendChild(newFormElement);#}
+{#             totalFormsInput.value = formNum + 1;#}
+{##}
+{#             // Show 'Add Another' button if it was hidden by empty state logic (if any)#}
+{#             const addAnotherButton = document.querySelector('.add-another-btn'); // Adjust selector if needed#}
+{#              if(addAnotherButton) addAnotherButton.style.display = 'flex'; // Or 'block', 'inline-flex' etc.#}
+{#         }#}
+{#     }#}
+{#     if (typeof deleteForm !== 'function') {#}
+{#         function deleteForm(button, prefix) {#}
+{#             console.warn("deleteForm function not fully defined. Using basic example.");#}
+{#             const formRow = button.closest('.form-row');#}
+{#             const deleteInput = formRow.querySelector('input[name$="-DELETE"]');#}
+{#             if (deleteInput) {#}
+{#                 deleteInput.checked = true;#}
+{#                 formRow.style.display = 'none'; // Hide the form visually#}
+{#             } else {#}
+{#                  formRow.remove(); // Remove if no DELETE field (likely extra form)#}
+{#             }#}
+{#             // Check if remaining forms are all hidden (or none left) to show empty state#}
+{#             const container = document.getElementById('languages_container');#}
+{#             const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');#}
+{#             const emptyState = document.getElementById('langs-empty-state');#}
+{#             if(visibleForms.length === 0 && emptyState) {#}
+{#                 emptyState.classList.remove('hidden');#}
+{#                 const addAnotherButton = document.querySelector('.add-another-btn'); // Hide 'Add Another' if empty#}
+{#                  if(addAnotherButton) addAnotherButton.style.display = 'none';#}
+{#             }#}
+{#         }#}
+{#     }#}
+{#      // Basic Quick Add Example (ensure full JS logic exists elsewhere)#}
+{#      function quickAddLanguage(langName) {#}
+{#          const addBtn = document.querySelector('#languages_container .add-another-btn, #langs-empty-state .add-another-btn');#}
+{#          if (addBtn) {#}
+{#              addBtn.click(); // Trigger adding a new form#}
+{#              // Wait briefly for form to add, then populate#}
+{#              setTimeout(() => {#}
+{#                 const forms = document.querySelectorAll('#languages_container .form-row');#}
+{#                 const lastForm = forms[forms.length - 1]; // Assuming added at the end#}
+{#                 if (lastForm) {#}
+{#                     const nameInput = lastForm.querySelector('input[name$="-language_name"]');#}
+{#                     const profSelect = lastForm.querySelector('select[name$="-proficiency"]');#}
+{#                     if (nameInput) nameInput.value = langName;#}
+{#                     if (profSelect) profSelect.value = 'intermediate'; // Default#}
+{#                     lastForm.scrollIntoView({behavior: 'smooth'});#}
+{#                 }#}
+{#              }, 100); // Adjust delay if needed#}
+{#          }#}
+{#      }#}
+{##}
+{#      // Initial check for empty state on load#}
+{#     document.addEventListener('DOMContentLoaded', function() {#}
+{#         const container = document.getElementById('languages_container');#}
+{#         const emptyState = document.getElementById('langs-empty-state');#}
+{#         if (container && emptyState) {#}
+{#             const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');#}
+{#             if (visibleForms.length > 0) {#}
+{#                 emptyState.classList.add('hidden');#}
+{#             } else {#}
+{#                 emptyState.classList.remove('hidden');#}
+{#                 // Hide 'Add Another' button if initially empty#}
+{#                  const addAnotherButton = document.querySelector('.add-another-btn');#}
+{#                  if(addAnotherButton) addAnotherButton.style.display = 'none';#}
+{#             }#}
+{#         }#}
+{#     });#}
+{#</script>#}
+{#{% endblock %}#}
+{##}
 {#{% extends 'resumes/wizard_base.html' %}#}
 {#{% load resume_extras %}#}
 {#{% load static %}#}

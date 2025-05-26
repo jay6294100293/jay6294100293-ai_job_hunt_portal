@@ -1,568 +1,860 @@
-{% load resume_extras %}
-<div class="template-6">
-  <style>
-    .template-6 {
-      font-family: 'Roboto', 'Arial', sans-serif;
-      color: #333;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 30px;
-      line-height: 1.6;
-      background-color: #fff;
-    }
-    .template-6 .header {
-      text-align: center;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 2px solid #5D9CEC;
-    }
-    .template-6 h1 {
-      margin: 0;
-      font-size: 28px;
-      color: #333;
-      font-weight: 500;
-      letter-spacing: 0.5px;
-    }
-    .template-6 .job-title {
-      font-size: 18px;
-      color: #5D9CEC;
-      margin: 10px 0;
-    }
-    .template-6 .contact-info {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 15px;
-      margin-top: 15px;
-      font-size: 15px;
-    }
-    .template-6 .contact-item {
-      display: flex;
-      align-items: center;
-    }
-    .template-6 .contact-icon { /* Unicode icons, consider text or proper icon font/SVG */
-      margin-right: 8px;
-      color: #5D9CEC;
-    }
-    .template-6 a {
-      color: #5D9CEC;
-      text-decoration: none;
-    }
-    .template-6 a:hover {
-      text-decoration: underline;
-    }
-    .template-6 .main-content {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 30px;
-    }
-    .template-6 .left-column {
-      /* Left column styles */
-    }
-    .template-6 .right-column { /* This is a div, not an aside element */
-      /* Right column styles */
-    }
-    .template-6 .section {
-      margin-bottom: 25px;
-    }
-    .template-6 .section-title {
-      font-size: 18px;
-      color: #333;
-      margin-bottom: 15px;
-      padding-bottom: 5px;
-      border-bottom: 1px solid #ddd;
-      position: relative;
-    }
-    .template-6 .section-title::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      bottom: -1px; /* Sits on top of the border-bottom */
-      width: 50px;
-      height: 2px;
-      background-color: #5D9CEC;
-    }
-    .template-6 .entry {
-      margin-bottom: 20px;
-    }
-    .template-6 .entry-title {
-      font-weight: 600;
-      font-size: 16px;
-      color: #333;
-      margin-bottom: 5px;
-    }
-    .template-6 .entry-subtitle {
-      font-size: 15px;
-      color: #666;
-      margin-bottom: 5px;
-    }
-    .template-6 .entry-details {
-      display: flex;
-      justify-content: space-between;
-      font-size: 14px;
-      color: #888;
-      margin-bottom: 8px;
-    }
-    .template-6 .bullet-points {
-      padding-left: 20px;
-      margin: 8px 0;
-    }
-    .template-6 .bullet-points li {
-      margin-bottom: 6px;
-      color: #555;
-    }
-    .template-6 .skills-group {
-      margin-bottom: 20px;
-    }
-    .template-6 .skills-title {
-      font-weight: 600;
-      margin-bottom: 10px;
-      color: #333;
-      font-size: 15px;
-    }
-    .template-6 .skills-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .template-6 .skill-tag {
-      background-color: #EEF4FD;
-      color: #5D9CEC;
-      padding: 5px 10px;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-    .template-6 .education-item {
-      margin-bottom: 15px;
-    }
-    .template-6 .project-tech {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      margin: 10px 0;
-    }
-    .template-6 .tech-tag {
-      background-color: #F1F1F1;
-      color: #666;
-      padding: 3px 8px;
-      border-radius: 3px;
-      font-size: 13px;
-    }
-    .template-6 .language-item {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
-    .template-6 .language-level {
-      color: #888;
-    }
-    .template-6 .certification-item {
-      margin-bottom: 15px;
-    }
-    .template-6 .certification-title {
-      font-weight: 600;
-      color: #333;
-    }
-    .template-6 .certification-details {
-      font-size: 14px;
-      color: #666;
-    }
-    .template-6 .highlight-box {
-      background-color: #F9FAFC;
-      border-left: 3px solid #5D9CEC;
-      padding: 15px;
-      margin-bottom: 20px;
-    }
-    .template-6 .highlight-title {
-      font-weight: 600;
-      margin-bottom: 8px;
-      color: #333;
-    }
-    .template-6 .course-item {
-      margin-bottom: 10px;
-    }
-    .template-6 .course-name {
-      font-weight: 600;
-    }
-    .template-6 .course-details {
-      font-size: 14px;
-      color: #666;
-    }
-    @media print {
-      body {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      .template-6 {
-        padding: 0.5in; /* Standard margins for print */
-        font-size: 10pt; /* Adjusted for A4 */
-        max-width: 100%;
-        line-height: 1.4;
-      }
-      @page {
-        margin: 0.5in;
-        size: A4;
-      }
-      .template-6 .skill-tag, .template-6 .tech-tag {
-        border: 1px solid #ddd !important;
-        background-color: #fff !important; /* Ensure background is white for print */
-        color: #000 !important;
-      }
-      .template-6 .highlight-box {
-        border-left: 1px solid #999 !important;
-        background-color: #fff !important;
-      }
-      .template-6 a {
-        color: #5D9CEC !important; /* Or #000 */
-        text-decoration: none;
-      }
-      .template-6 .section-title::after {
-        background-color: #5D9CEC !important;
-      }
-      .template-6 .main-content { /* Ensure single column for print */
-        grid-template-columns: 1fr;
-      }
-      .template-6 .right-column {
-         margin-top: 20px; /* Add space if it stacks below */
-      }
-    }
-    @media screen and (max-width: 768px) {
-      .template-6 .main-content {
-        grid-template-columns: 1fr; /* Single column for smaller screens */
-        gap: 20px;
-      }
-      .template-6 .right-column {
-         margin-top: 20px; /* Space when sidebar stacks below */
-      }
-       .template-6 .contact-info {
-        flex-direction: column;
-        align-items: center;
-      }
-      .template-6 .entry-details {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-       .template-6 .entry-details span:last-child {
-        margin-top: 3px;
-      }
-    }
-  </style>
+{# templates/resumes/templates/template6.html #}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ resume.title }} - {{ resume.full_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/resume-templates.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <div class="header">
-    <h1>{{ resume.full_name }}</h1>
-    <div class="job-title">{{ resume.title|default:"Graduate Software Engineer" }}</div>
-    <div class="contact-info">
-      {% if resume.email %}
-      <div class="contact-item">
-        <span class="contact-icon">📧</span> {# Placeholder emoji, consider text or proper icon #}
-        <span>{{ resume.email }}</span>
-      </div>
-      {% endif %}
-      {% if resume.phone %}
-      <div class="contact-item">
-        <span class="contact-icon">📞</span> {# Placeholder emoji #}
-        <span>{{ resume.phone }}</span>
-      </div>
-      {% endif %}
-      {% if resume.address %}
-      <div class="contact-item">
-        <span class="contact-icon">📍</span> {# Placeholder emoji #}
-        <span>{{ resume.address }}</span>
-      </div>
-      {% endif %}
-      {% if resume.linkedin %}
-      <div class="contact-item">
-        <span class="contact-icon">🔗</span> {# Placeholder emoji #}
-        <a href="{{ resume.linkedin }}" target="_blank">LinkedIn</a>
-      </div>
-      {% endif %}
-      {% if resume.github %}
-      <div class="contact-item">
-        <span class="contact-icon">💻</span> {# Placeholder emoji #}
-        <a href="{{ resume.github }}" target="_blank">GitHub</a>
-      </div>
-      {% endif %}
-      {% if resume.portfolio %}
-      <div class="contact-item">
-        <span class="contact-icon">🌐</span> {# Placeholder emoji #}
-        <a href="{{ resume.portfolio }}" target="_blank">Portfolio</a>
-      </div>
-      {% endif %}
+    <style>
+        /* Styles for Template 6 - Header Band & Clear Sections */
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            @apply bg-gray-200; /* Slightly different background */
+            font-family: 'Raleway', 'Arial', sans-serif;
+            font-size: 10pt;
+            line-height: 1.5;
+            color: #2d3748; /* Tailwind gray-800 */
+        }
+        .resume-container-template6 {
+            @apply bg-white shadow-xl mx-auto my-8;
+            width: 210mm;
+            min-height: 297mm;
+            box-sizing: border-box;
+            /* No main padding, header and content will manage their own */
+        }
+        .header-banner-template6 {
+            @apply bg-gray-700 text-white p-6 text-center; /* Dark header band */
+        }
+        .header-banner-template6 h1 { /* Name */
+            @apply text-3xl font-bold tracking-tight;
+             margin-bottom: 0.25rem;
+        }
+        .contact-icons-template6 {
+            @apply flex flex-wrap justify-center items-center gap-x-4 gap-y-1 text-xs mt-2;
+        }
+        .contact-icons-template6 a, .contact-icons-template6 span {
+            @apply text-gray-300 hover:text-white;
+        }
+         .contact-icons-template6 i { @apply mr-1; }
+
+        .content-area-template6 {
+            @apply p-6;
+        }
+        .section-template6 h2 { /* Section Titles */
+            @apply text-lg font-semibold text-gray-700 mt-4 mb-2 border-b border-gray-300 pb-1;
+        }
+        .section-item-template6 {
+            @apply mb-3;
+        }
+        .item-header-template6 h3 { /* Job Title, Degree */
+            @apply text-base font-semibold text-gray-800;
+        }
+        .item-header-template6 .date-location-template6 {
+            @apply text-xs text-gray-500 block;
+        }
+        .item-subheader-template6 h4 { /* Company, School */
+            @apply text-sm text-gray-600;
+        }
+        ul.bullet-points-template6 {
+            @apply list-disc list-outside pl-5 mt-1 space-y-0.5 text-sm text-gray-700;
+        }
+        .skills-columns-template6 {
+            @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4;
+        }
+        .skill-group-template6 .category-name {
+            @apply font-semibold text-sm text-gray-700 mb-0.5;
+        }
+        .skill-name-template6 {
+             @apply text-sm text-gray-600;
+        }
+
+
+        @media print {
+            body { background-color: #fff; margin: 0; font-size: 9.5pt;}
+            .resume-container-template6 { margin: 0; box-shadow: none; border: none; padding: 0; min-height:0;}
+            .header-banner-template6 { background-color: #4a5568 !important; /* gray-700 */ color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print text-center py-4">
+        <button onclick="window.print()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            <i class="fas fa-print mr-2"></i> Print / Save as PDF
+        </button>
+         <a href="{% if resume.id %}{% url 'job_portal:resume_wizard' resume_id=resume.id step='personal_info' %}{% else %}#{% endif %}" class="ml-2 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+            <i class="fas fa-edit mr-2"></i> Back to Editor
+        </a>
     </div>
-  </div>
 
-  <div class="main-content">
-    <div class="left-column">
-      {% if resume.summary %}
-      <div class="section">
-        <div class="section-title">Professional Summary</div>
-        <div class="highlight-box">
-          {% comment %}
-            Handles if resume.summary is an object with a 'summary' attribute,
-            or if resume.summary itself is the direct text.
-            Adjust path if resume.summary has a deeper structure like resume.summary.description.description
-          {% endcomment %}
-          {% if resume.summary.summary is not None %}
-            <p>{{ resume.summary.summary }}</p>
-          {% elif resume.summary is not None %}
-            <p>{{ resume.summary }}</p>
-          {% else %}
-            <p>&nbsp;</p> {% comment %} Placeholder if summary is completely empty {% endcomment %}
-          {% endif %}
-        </div>
-      </div>
-      {% endif %}
-
-      {% if resume.experiences.exists %}
-      <div class="section">
-        <div class="section-title">Work Experience</div>
-        {% for experience in resume.experiences.all %}
-        <div class="entry">
-          <div class="entry-title">{{ experience.job_title }}</div>
-          <div class="entry-subtitle">{{ experience.employer }}</div>
-          <div class="entry-details">
-            <span>{{ experience.location }}</span>
-            <span>
-              {% if experience.start_date %}{{ experience.start_date|date:"M Y" }}{% endif %} -
-              {% if experience.is_current %}Present{% elif experience.end_date %}{{ experience.end_date|date:"M Y" }}{% endif %}
-            </span>
-          </div>
-          {% if experience.bullet_points.all %}
-          <ul class="bullet-points">
-            {% for point in experience.bullet_points.all %}
-              {% comment %}
-                CORRECTED LOGIC: Assuming point.description is a dictionary: {'description': 'Actual text'}
-                Access point.description.description
-              {% endcomment %}
-              {% if point.description and point.description.description is not None %}
-                <li>{{ point.description.description }}</li>
-              {% elif point.description %}
-                <li>{{ point.description }}</li>
-              {% else %}
-                <li>{{ point }}</li>
-              {% endif %}
-            {% endfor %}
-          </ul>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-
-      {% if resume.educations.exists %}
-      <div class="section">
-        <div class="section-title">Education</div>
-        {% for education in resume.educations.all %}
-        <div class="entry">
-          <div class="entry-title">{{ education.degree }}{% if education.field_of_study %} in {{ education.field_of_study }}{% endif %}</div>
-          <div class="entry-subtitle">{{ education.school_name }}</div>
-          <div class="entry-details">
-            <span>{{ education.location }}</span>
-            <span>
-              {% if education.start_date %}{{ education.start_date|date:"Y" }} - {% endif %}
-              {% if education.graduation_date %}{{ education.graduation_date|date:"Y" }}{% endif %}
-            </span>
-          </div>
-          {% if education.gpa %}<div><strong>GPA:</strong> {{ education.gpa }}</div>{% endif %}
-          {% if education.achievements %}
-          <ul class="bullet-points">
-            {% for achievement in education.achievements.splitlines %}
-            {% if achievement|trim %}
-            <li>{{ achievement }}</li>
+    <div class="resume-container-template6" id="resume-content-template6">
+        <header class="header-banner-template6">
+            {% if resume.full_name %}
+                <h1>{{ resume.full_name }}</h1>
             {% endif %}
-            {% endfor %}
-          </ul>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-
-      {% if resume.projects.exists %}
-      <div class="section">
-        <div class="section-title">Projects</div>
-        {% for project in resume.projects.all %}
-        <div class="entry">
-          <div class="entry-title">{{ project.project_name }}</div>
-          <div class="entry-details">
-            <span>
-              {% if project.start_date %}{{ project.start_date|date:"M Y" }}{% endif %}
-              {% if project.completion_date %} - {{ project.completion_date|date:"M Y" }}{% endif %}
-            </span>
-          </div>
-          {% if project.summary %}<p>{{ project.summary }}</p>{% endif %}
-
-          {% if project.technologies.exists %}
-          <div class="project-tech">
-            {% for tech in project.technologies.all %}
-            <span class="tech-tag">{{ tech.skill_name }}</span>
-            {% endfor %}
-          </div>
-          {% endif %}
-          {% if project.bullet_points.all %}
-          <ul class="bullet-points">
-            {% for point in project.bullet_points.all %}
-              {% comment %}
-                CORRECTED LOGIC: Assuming point.description is a dictionary: {'description': 'Actual text'}
-                Access point.description.description
-              {% endcomment %}
-              {% if point.description and point.description.description is not None %}
-                <li>{{ point.description.description }}</li>
-              {% elif point.description %}
-                <li>{{ point.description }}</li>
-              {% else %}
-                <li>{{ point }}</li>
-              {% endif %}
-            {% endfor %}
-          </ul>
-          {% endif %}
-          {% if project.github_link or project.project_link %}
-          <div style="margin-top:5px;">
-            {% if project.github_link %}<a href="{{ project.github_link }}" target="_blank">GitHub</a>{% endif %}
-            {% if project.project_link %}{% if project.github_link %} | {% endif %}<a href="{{ project.project_link }}" target="_blank">Live Demo</a>{% endif %}
-          </div>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-
-      {% if resume.custom_data.exists %}
-      <div class="section">
-        <div class="section-title">Additional Information</div>
-        {% for custom_item in resume.custom_data.all %}
-        <div class="entry">
-          <div class="entry-title">{{ custom_item.name }}</div>
-          {% if custom_item.institution_name %}
-          <div class="entry-subtitle">{{ custom_item.institution_name }}</div>
-          {% endif %}
-          {% if custom_item.completion_date %}
-          <div class="entry-details">
-            <span>{{ custom_item.completion_date|date:"Y" }}</span>
-          </div>
-          {% endif %}
-          {% if custom_item.description %}<p>{{ custom_item.description }}</p>{% endif %}
-          {% if custom_item.bullet_points %}
-          <ul class="bullet-points">
-            {% for point in custom_item.bullet_points.splitlines %}
-            {% if point|trim %}
-            <li>{{ point }}</li>
-            {% endif %}
-            {% endfor %}
-          </ul>
-          {% endif %}
-          {% if custom_item.link %}<div><a href="{{ custom_item.link }}" target="_blank">More Information</a></div>{% endif %}
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-    </div> <div class="right-column"> {# This is a div, not an aside, and is correctly closed #}
-      {% if resume.skills.exists %}
-      <div class="section">
-        <div class="section-title">Skills</div>
-        {% regroup resume.skills.all by skill_type as skills_by_type %}
-        {% for skill_group in skills_by_type %}
-          <div class="skills-group">
-            <div class="skills-title">
-              {% if skill_group.grouper == 'technical' %}Technical Skills
-              {% elif skill_group.grouper == 'language'%}Programming Languages
-              {% elif skill_group.grouper == 'tool'%}Tools & Platforms
-              {% elif skill_group.grouper == 'soft'%}Soft Skills
-              {% else %}{{ skill_group.grouper|capfirst|default:"Other Skills" }}
-              {% endif %}
+            {# Optional: A target job title can go here #}
+            {# <p class="text-gray-300 text-sm mb-2">Marketing Specialist</p> #}
+            <div class="contact-icons-template6">
+                {% if resume.phone %}<span><i class="fas fa-phone-square-alt"></i>{{ resume.phone }}</span>{% endif %}
+                {% if resume.email %}<span><i class="fas fa-envelope-square"></i><a href="mailto:{{ resume.email }}">{{ resume.email }}</a></span>{% endif %}
+                {% if resume.address %}<span><i class="fas fa-map-marked-alt"></i>{{ resume.address }}</span>{% endif %}
+                {% if resume.linkedin %}<span><i class="fab fa-linkedin"></i><a href="{{ resume.linkedin }}" target="_blank">LinkedIn</a></span>{% endif %}
+                {% if resume.github %}<span><i class="fab fa-github-square"></i><a href="{{ resume.github }}" target="_blank">GitHub</a></span>{% endif %}
+                {% if resume.portfolio %}<span><i class="fas fa-briefcase"></i><a href="{{ resume.portfolio }}" target="_blank">Portfolio</a></span>{% endif %}
             </div>
-            <div class="skills-list">
-              {% for skill in skill_group.list %}
-              <span class="skill-tag">{{ skill.skill_name }}</span>
-              {% endfor %}
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-      {% endif %}
+        </header>
 
-      {% if resume.certifications.exists %}
-      <div class="section">
-        <div class="section-title">Certifications</div>
-        {% for certification in resume.certifications.all %}
-        <div class="certification-item">
-          <div class="certification-title">{{ certification.name }}</div>
-          <div class="certification-details">
-            {% if certification.institute %}{{ certification.institute }}{% endif %}
-            {% if certification.completion_date %} | {{ certification.completion_date|date:"Y" }}{% endif %}
-          </div>
-          {% if certification.description %}<p style="font-size:13px;">{{ certification.description }}</p>{% endif %}
-          {% if certification.link %}<div><a href="{{ certification.link }}" target="_blank">Verify</a></div>{% endif %}
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-
-      {% if resume.languages.exists %}
-      <div class="section">
-        <div class="section-title">Languages</div>
-        {% for language in resume.languages.all %}
-        <div class="language-item">
-          <span>{{ language.language_name }}</span>
-          <span class="language-level">{{ language.get_proficiency_display }}</span>
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-
-      {% if resume.relevant_coursework.exists %}
-      <div class="section">
-        <div class="section-title">Relevant Coursework</div>
-        {% for course in resume.relevant_coursework.all %}
-        <div class="course-item">
-          <div class="course-name">{{ course.name }}</div>
-          {% if course.details %}<div class="course-details">{{ course.details }}</div>{% endif %}
-        </div>
-        {% endfor %}
-      </div>
-      {% else %}
-       <div class="section">
-        <div class="section-title">Relevant Coursework</div>
-          <div class="course-item">
-            <div class="course-name">Data Structures & Algorithms</div>
-            <div class="course-details">Implemented various data structures and algorithms in practical applications</div>
-          </div>
-          <div class="course-item">
-            <div class="course-name">Database Management Systems</div>
-            <div class="course-details">Learned SQL and database design principles</div>
-          </div>
-       </div>
-      {% endif %}
-
-      {% if resume.activities.exists %}
-      <div class="section">
-        <div class="section-title">Activities & Involvement</div>
-        {% if resume.activities.all %}
-        <ul class="bullet-points">
-          {% for activity in resume.activities.all %}
-            {% comment %} Assuming 'activity' object itself is the text, or has a .description or .name field {% endcomment %}
-            {% if activity.description %}
-                <li>{{ activity.description }}</li>
-            {% elif activity.name %}
-                <li>{{ activity.name }}</li>
-            {% else %}
-                <li>{{ activity }}</li>
+        <div class="content-area-template6">
+            {% if resume.summary %}
+            <section class="section-template6 summary-section">
+                <h2>Summary</h2>
+                <p class="text-sm text-gray-700">{{ resume.summary|linebreaksbr }}</p>
+            </section>
             {% endif %}
-          {% endfor %}
-        </ul>
-        {% endif %}
-      </div>
-      {% else %}
-      <div class="section">
-        <div class="section-title">Activities</div>
-        <ul class="bullet-points">
-          <li>Member of University Coding Club (2022-2023)</li>
-          <li>Participated in Hackathon XYZ (2022)</li>
-        </ul>
-      </div>
-      {% endif %}
-    </div> </div> </div>
 
+            {% if resume.experiences.all %}
+            <section class="section-template6 experience-section">
+                <h2>Experience</h2>
+                {% for exp in resume.experiences.all %}
+                <div class="section-item-template6">
+                    <div class="item-header-template6">
+                        <h3>{{ exp.job_title }}</h3>
+                    </div>
+                    <div class="item-subheader-template6">
+                        <h4>{{ exp.employer }}</h4>
+                    </div>
+                    <span class="date-location-template6">
+                        {{ exp.start_date|date:"M Y" }} – {% if exp.is_current %}Present{% else %}{{ exp.end_date|date:"M Y" }}{% endif %}
+                        {% if exp.location %} | {{ exp.location }}{% endif %}
+                    </span>
+                    {% if exp.bullet_points.all %}
+                    <ul class="bullet-points-template6">
+                        {% for bullet in exp.bullet_points.all %}
+                        <li>{{ bullet.description }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </section>
+            {% endif %}
+
+            {% if resume.projects.all %}
+            <section class="section-template6 projects-section">
+                <h2>Projects</h2>
+                {% for project in resume.projects.all %}
+                <div class="section-item-template6">
+                    <div class="item-header-template6">
+                        <h3>{{ project.project_name }}</h3>
+                    </div>
+                    <span class="date-location-template6">
+                         {% if project.start_date %}{{ project.start_date|date:"M Y" }}{% endif %}
+                        {% if project.start_date and project.completion_date %} – {% endif %}
+                        {% if project.completion_date %}{{ project.completion_date|date:"M Y" }}{% elif project.start_date %} – Present{% endif %}
+                    </span>
+                    {% if project.summary %}<p class="text-sm text-gray-700 mb-1">{{ project.summary|linebreaksbr }}</p>{% endif %}
+                     {% if project.project_link or project.github_link %}
+                    <div class="text-xs mb-1">
+                        {% if project.project_link %}<a href="{{ project.project_link }}" class="text-blue-600 hover:text-blue-800 mr-3"><i class="fas fa-link mr-1"></i>Project Link</a>{% endif %}
+                        {% if project.github_link %}<a href="{{ project.github_link }}" class="text-blue-600 hover:text-blue-800"><i class="fab fa-github mr-1"></i>Repository</a>{% endif %}
+                    </div>
+                    {% endif %}
+                     {% if project.bullet_points.all %}
+                    <ul class="bullet-points-template6">
+                        {% for bullet in project.bullet_points.all %}
+                        <li>{{ bullet.description }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% if project.technologies.all %}
+                        <p class="text-xs text-gray-500 mt-1.5"><em>Technologies:</em> {% for tech in project.technologies.all %}{{ tech.skill_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </section>
+            {% endif %}
+
+            {% if resume.educations.all %}
+            <section class="section-template6 education-section">
+                <h2>Education</h2>
+                {% for edu in resume.educations.all %}
+                <div class="section-item-template6">
+                     <div class="item-header-template6">
+                        <h3>{{ edu.degree_name }}</h3>
+                    </div>
+                    <div class="item-subheader-template6">
+                        <h4>{{ edu.school_name }}</h4>
+                    </div>
+                     <span class="date-location-template6">
+                        {% if edu.graduation_date %}{{ edu.graduation_date|date:"M Y" }}{% else %}Date N/A{% endif %}
+                        {% if edu.location %} | {{ edu.location }}{% endif %}
+                    </span>
+                    {% if edu.field_of_study %}<p class="text-sm text-gray-600"><em>Field: {{ edu.field_of_study }}</em></p>{% endif %}
+                    {% if edu.gpa %}<p class="text-xs text-gray-500">GPA: {{ edu.gpa }}</p>{% endif %}
+                    {% if edu.description %}<p class="text-xs text-gray-500 mt-0.5">{{ edu.description|linebreaksbr }}</p>{% endif %}
+                </div>
+                {% endfor %}
+            </section>
+            {% endif %}
+
+            {% if resume.skills.all %}
+            <section class="section-template6 skills-section">
+                <h2>Skills</h2>
+                <div class="skills-columns-template6">
+                {% regroup resume.skills.all|dictsort:"skill_category_choice" by effective_skill_category as skills_by_category %}
+                    {% for category_group in skills_by_category %}
+                    <div class="skill-group-template6">
+                        {% if category_group.grouper != "Uncategorized" and category_group.grouper %}
+                        <h4 class="category-name">{{ category_group.grouper }}</h4>
+                        {% endif %}
+                        <ul class="list-none space-y-0.5">
+                            {% for skill in category_group.list|dictsort:"skill_name" %}
+                            <li class="skill-name-template6">
+                                {{ skill.skill_name }}
+                                {% if skill.proficiency_level > 0 %}
+                                    <span class="text-xs text-blue-500">(Level {{skill.proficiency_level}}/5)</span>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            {% if resume.certifications.all %}
+            <section class="section-template6 certifications-section">
+                <h2>Certifications</h2>
+                {% for cert in resume.certifications.all %}
+                <div class="section-item-template6">
+                    <div class="item-header-template6">
+                        <h3>{{ cert.name }}</h3>
+                    </div>
+                    {% if cert.issuing_organization %}<div class="item-subheader-template6"><h4>{{ cert.issuing_organization }}{% if cert.issue_date %} - {{ cert.issue_date|date:"M Y" }}{% endif %}</h4></div>{% endif %}
+                    {% if cert.credential_id %}<p class="text-xs text-gray-500">ID: {{ cert.credential_id }}</p>{% endif %}
+                     {% if cert.link %}<p class="text-xs"><a href="{{ cert.link }}" class="text-blue-600 hover:text-blue-800"><i class="fas fa-external-link-alt mr-1"></i>View Credential</a></p>{% endif %}
+                     {% if cert.description %}<p class="text-xs text-gray-500 mt-0.5">{{ cert.description|linebreaksbr }}</p>{% endif %}
+                </div>
+                {% endfor %}
+            </section>
+            {% endif %}
+
+            {% if resume.languages.all %}
+            <section class="section-template6 languages-section">
+                <h2>Languages</h2>
+                <p class="text-sm text-gray-700">
+                    {% for lang in resume.languages.all %}
+                        {{ lang.language_name }} <span class="text-xs text-gray-500">({{ lang.get_proficiency_display }})</span>{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </p>
+            </section>
+            {% endif %}
+
+            {% if resume.custom_sections.all %}
+                {% for custom_section in resume.custom_sections.all %}
+                <section class="section-template6 custom-section">
+                    <h2>{{ custom_section.name }}</h2>
+                     {% if custom_section.institution_name or custom_section.completion_date %}
+                    <div class="item-subheader-template6 mb-0.5">
+                        <h4>
+                            {% if custom_section.institution_name %}{{ custom_section.institution_name }}{% endif %}
+                            {% if custom_section.institution_name and custom_section.completion_date %} - {% endif %}
+                            {% if custom_section.completion_date %}{{ custom_section.completion_date|date:"F Y" }}{% endif %}
+                        </h4>
+                    </div>
+                    {% endif %}
+                    {% if custom_section.description %}<p class="text-sm text-gray-700 mb-1">{{ custom_section.description|linebreaksbr }}</p>{% endif %}
+                    {% if custom_section.bullet_points %}
+                    <ul class="bullet-points-template6">
+                        {% for bullet in custom_section.bullet_points|linebreaksbrsplit %}
+                            {% if bullet|strip %}<li>{{ bullet|strip }}</li>{% endif %}
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                     {% if custom_section.link %}<p class="text-xs mt-1"><a href="{{ custom_section.link }}" class="text-blue-600 hover:text-blue-800"><i class="fas fa-link mr-1"></i>Relevant Link</a></p>{% endif %}
+                </section>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
+
+{#{% load resume_extras %}#}
+{#<div class="template-6">#}
+{#  <style>#}
+{#    .template-6 {#}
+{#      font-family: 'Roboto', 'Arial', sans-serif;#}
+{#      color: #333;#}
+{#      max-width: 800px;#}
+{#      margin: 0 auto;#}
+{#      padding: 30px;#}
+{#      line-height: 1.6;#}
+{#      background-color: #fff;#}
+{#    }#}
+{#    .template-6 .header {#}
+{#      text-align: center;#}
+{#      margin-bottom: 30px;#}
+{#      padding-bottom: 20px;#}
+{#      border-bottom: 2px solid #5D9CEC;#}
+{#    }#}
+{#    .template-6 h1 {#}
+{#      margin: 0;#}
+{#      font-size: 28px;#}
+{#      color: #333;#}
+{#      font-weight: 500;#}
+{#      letter-spacing: 0.5px;#}
+{#    }#}
+{#    .template-6 .job-title {#}
+{#      font-size: 18px;#}
+{#      color: #5D9CEC;#}
+{#      margin: 10px 0;#}
+{#    }#}
+{#    .template-6 .contact-info {#}
+{#      display: flex;#}
+{#      flex-wrap: wrap;#}
+{#      justify-content: center;#}
+{#      gap: 15px;#}
+{#      margin-top: 15px;#}
+{#      font-size: 15px;#}
+{#    }#}
+{#    .template-6 .contact-item {#}
+{#      display: flex;#}
+{#      align-items: center;#}
+{#    }#}
+{#    .template-6 .contact-icon { /* Unicode icons, consider text or proper icon font/SVG */#}
+{#      margin-right: 8px;#}
+{#      color: #5D9CEC;#}
+{#    }#}
+{#    .template-6 a {#}
+{#      color: #5D9CEC;#}
+{#      text-decoration: none;#}
+{#    }#}
+{#    .template-6 a:hover {#}
+{#      text-decoration: underline;#}
+{#    }#}
+{#    .template-6 .main-content {#}
+{#      display: grid;#}
+{#      grid-template-columns: 2fr 1fr;#}
+{#      gap: 30px;#}
+{#    }#}
+{#    .template-6 .left-column {#}
+{#      /* Left column styles */#}
+{#    }#}
+{#    .template-6 .right-column { /* This is a div, not an aside element */#}
+{#      /* Right column styles */#}
+{#    }#}
+{#    .template-6 .section {#}
+{#      margin-bottom: 25px;#}
+{#    }#}
+{#    .template-6 .section-title {#}
+{#      font-size: 18px;#}
+{#      color: #333;#}
+{#      margin-bottom: 15px;#}
+{#      padding-bottom: 5px;#}
+{#      border-bottom: 1px solid #ddd;#}
+{#      position: relative;#}
+{#    }#}
+{#    .template-6 .section-title::after {#}
+{#      content: '';#}
+{#      position: absolute;#}
+{#      left: 0;#}
+{#      bottom: -1px; /* Sits on top of the border-bottom */#}
+{#      width: 50px;#}
+{#      height: 2px;#}
+{#      background-color: #5D9CEC;#}
+{#    }#}
+{#    .template-6 .entry {#}
+{#      margin-bottom: 20px;#}
+{#    }#}
+{#    .template-6 .entry-title {#}
+{#      font-weight: 600;#}
+{#      font-size: 16px;#}
+{#      color: #333;#}
+{#      margin-bottom: 5px;#}
+{#    }#}
+{#    .template-6 .entry-subtitle {#}
+{#      font-size: 15px;#}
+{#      color: #666;#}
+{#      margin-bottom: 5px;#}
+{#    }#}
+{#    .template-6 .entry-details {#}
+{#      display: flex;#}
+{#      justify-content: space-between;#}
+{#      font-size: 14px;#}
+{#      color: #888;#}
+{#      margin-bottom: 8px;#}
+{#    }#}
+{#    .template-6 .bullet-points {#}
+{#      padding-left: 20px;#}
+{#      margin: 8px 0;#}
+{#    }#}
+{#    .template-6 .bullet-points li {#}
+{#      margin-bottom: 6px;#}
+{#      color: #555;#}
+{#    }#}
+{#    .template-6 .skills-group {#}
+{#      margin-bottom: 20px;#}
+{#    }#}
+{#    .template-6 .skills-title {#}
+{#      font-weight: 600;#}
+{#      margin-bottom: 10px;#}
+{#      color: #333;#}
+{#      font-size: 15px;#}
+{#    }#}
+{#    .template-6 .skills-list {#}
+{#      display: flex;#}
+{#      flex-wrap: wrap;#}
+{#      gap: 8px;#}
+{#    }#}
+{#    .template-6 .skill-tag {#}
+{#      background-color: #EEF4FD;#}
+{#      color: #5D9CEC;#}
+{#      padding: 5px 10px;#}
+{#      border-radius: 4px;#}
+{#      font-size: 14px;#}
+{#    }#}
+{#    .template-6 .education-item {#}
+{#      margin-bottom: 15px;#}
+{#    }#}
+{#    .template-6 .project-tech {#}
+{#      display: flex;#}
+{#      flex-wrap: wrap;#}
+{#      gap: 5px;#}
+{#      margin: 10px 0;#}
+{#    }#}
+{#    .template-6 .tech-tag {#}
+{#      background-color: #F1F1F1;#}
+{#      color: #666;#}
+{#      padding: 3px 8px;#}
+{#      border-radius: 3px;#}
+{#      font-size: 13px;#}
+{#    }#}
+{#    .template-6 .language-item {#}
+{#      display: flex;#}
+{#      justify-content: space-between;#}
+{#      margin-bottom: 10px;#}
+{#    }#}
+{#    .template-6 .language-level {#}
+{#      color: #888;#}
+{#    }#}
+{#    .template-6 .certification-item {#}
+{#      margin-bottom: 15px;#}
+{#    }#}
+{#    .template-6 .certification-title {#}
+{#      font-weight: 600;#}
+{#      color: #333;#}
+{#    }#}
+{#    .template-6 .certification-details {#}
+{#      font-size: 14px;#}
+{#      color: #666;#}
+{#    }#}
+{#    .template-6 .highlight-box {#}
+{#      background-color: #F9FAFC;#}
+{#      border-left: 3px solid #5D9CEC;#}
+{#      padding: 15px;#}
+{#      margin-bottom: 20px;#}
+{#    }#}
+{#    .template-6 .highlight-title {#}
+{#      font-weight: 600;#}
+{#      margin-bottom: 8px;#}
+{#      color: #333;#}
+{#    }#}
+{#    .template-6 .course-item {#}
+{#      margin-bottom: 10px;#}
+{#    }#}
+{#    .template-6 .course-name {#}
+{#      font-weight: 600;#}
+{#    }#}
+{#    .template-6 .course-details {#}
+{#      font-size: 14px;#}
+{#      color: #666;#}
+{#    }#}
+{#    @media print {#}
+{#      body {#}
+{#        -webkit-print-color-adjust: exact;#}
+{#        print-color-adjust: exact;#}
+{#      }#}
+{#      .template-6 {#}
+{#        padding: 0.5in; /* Standard margins for print */#}
+{#        font-size: 10pt; /* Adjusted for A4 */#}
+{#        max-width: 100%;#}
+{#        line-height: 1.4;#}
+{#      }#}
+{#      @page {#}
+{#        margin: 0.5in;#}
+{#        size: A4;#}
+{#      }#}
+{#      .template-6 .skill-tag, .template-6 .tech-tag {#}
+{#        border: 1px solid #ddd !important;#}
+{#        background-color: #fff !important; /* Ensure background is white for print */#}
+{#        color: #000 !important;#}
+{#      }#}
+{#      .template-6 .highlight-box {#}
+{#        border-left: 1px solid #999 !important;#}
+{#        background-color: #fff !important;#}
+{#      }#}
+{#      .template-6 a {#}
+{#        color: #5D9CEC !important; /* Or #000 */#}
+{#        text-decoration: none;#}
+{#      }#}
+{#      .template-6 .section-title::after {#}
+{#        background-color: #5D9CEC !important;#}
+{#      }#}
+{#      .template-6 .main-content { /* Ensure single column for print */#}
+{#        grid-template-columns: 1fr;#}
+{#      }#}
+{#      .template-6 .right-column {#}
+{#         margin-top: 20px; /* Add space if it stacks below */#}
+{#      }#}
+{#    }#}
+{#    @media screen and (max-width: 768px) {#}
+{#      .template-6 .main-content {#}
+{#        grid-template-columns: 1fr; /* Single column for smaller screens */#}
+{#        gap: 20px;#}
+{#      }#}
+{#      .template-6 .right-column {#}
+{#         margin-top: 20px; /* Space when sidebar stacks below */#}
+{#      }#}
+{#       .template-6 .contact-info {#}
+{#        flex-direction: column;#}
+{#        align-items: center;#}
+{#      }#}
+{#      .template-6 .entry-details {#}
+{#        flex-direction: column;#}
+{#        align-items: flex-start;#}
+{#      }#}
+{#       .template-6 .entry-details span:last-child {#}
+{#        margin-top: 3px;#}
+{#      }#}
+{#    }#}
+{#  </style>#}
+{##}
+{#  <div class="header">#}
+{#    <h1>{{ resume.full_name }}</h1>#}
+{#    <div class="job-title">{{ resume.title|default:"Graduate Software Engineer" }}</div>#}
+{#    <div class="contact-info">#}
+{#      {% if resume.email %}#}
+{#      <div class="contact-item">#}
+{#        <span class="contact-icon">📧</span> {# Placeholder emoji, consider text or proper icon #}
+{#        <span>{{ resume.email }}</span>#}
+{#      </div>#}
+{#      {% endif %}#}
+{#      {% if resume.phone %}#}
+{#      <div class="contact-item">#}
+{#        <span class="contact-icon">📞</span> {# Placeholder emoji #}
+{#        <span>{{ resume.phone }}</span>#}
+{#      </div>#}
+{#      {% endif %}#}
+{#      {% if resume.address %}#}
+{#      <div class="contact-item">#}
+{#        <span class="contact-icon">📍</span> {# Placeholder emoji #}
+{#        <span>{{ resume.address }}</span>#}
+{#      </div>#}
+{#      {% endif %}#}
+{#      {% if resume.linkedin %}#}
+{#      <div class="contact-item">#}
+{#        <span class="contact-icon">🔗</span> {# Placeholder emoji #}
+{#        <a href="{{ resume.linkedin }}" target="_blank">LinkedIn</a>#}
+{#      </div>#}
+{#      {% endif %}#}
+{#      {% if resume.github %}#}
+{#      <div class="contact-item">#}
+{#        <span class="contact-icon">💻</span> {# Placeholder emoji #}
+{#        <a href="{{ resume.github }}" target="_blank">GitHub</a>#}
+{#      </div>#}
+{#      {% endif %}#}
+{#      {% if resume.portfolio %}#}
+{#      <div class="contact-item">#}
+{#        <span class="contact-icon">🌐</span> {# Placeholder emoji #}
+{#        <a href="{{ resume.portfolio }}" target="_blank">Portfolio</a>#}
+{#      </div>#}
+{#      {% endif %}#}
+{#    </div>#}
+{#  </div>#}
+{##}
+{#  <div class="main-content">#}
+{#    <div class="left-column">#}
+{#      {% if resume.summary %}#}
+{#      <div class="section">#}
+{#        <div class="section-title">Professional Summary</div>#}
+{#        <div class="highlight-box">#}
+{#          {% comment %}#}
+{#            Handles if resume.summary is an object with a 'summary' attribute,#}
+{#            or if resume.summary itself is the direct text.#}
+{#            Adjust path if resume.summary has a deeper structure like resume.summary.description.description#}
+{#          {% endcomment %}#}
+{#          {% if resume.summary.summary is not None %}#}
+{#            <p>{{ resume.summary.summary }}</p>#}
+{#          {% elif resume.summary is not None %}#}
+{#            <p>{{ resume.summary }}</p>#}
+{#          {% else %}#}
+{#            <p>&nbsp;</p> {% comment %} Placeholder if summary is completely empty {% endcomment %}#}
+{#          {% endif %}#}
+{#        </div>#}
+{#      </div>#}
+{#      {% endif %}#}
+{##}
+{#      {% if resume.experiences.exists %}#}
+{#      <div class="section">#}
+{#        <div class="section-title">Work Experience</div>#}
+{#        {% for experience in resume.experiences.all %}#}
+{#        <div class="entry">#}
+{#          <div class="entry-title">{{ experience.job_title }}</div>#}
+{#          <div class="entry-subtitle">{{ experience.employer }}</div>#}
+{#          <div class="entry-details">#}
+{#            <span>{{ experience.location }}</span>#}
+{#            <span>#}
+{#              {% if experience.start_date %}{{ experience.start_date|date:"M Y" }}{% endif %} -#}
+{#              {% if experience.is_current %}Present{% elif experience.end_date %}{{ experience.end_date|date:"M Y" }}{% endif %}#}
+{#            </span>#}
+{#          </div>#}
+{#          {% if experience.bullet_points.all %}#}
+{#          <ul class="bullet-points">#}
+{#            {% for point in experience.bullet_points.all %}#}
+{#              {% comment %}#}
+{#                CORRECTED LOGIC: Assuming point.description is a dictionary: {'description': 'Actual text'}#}
+{#                Access point.description.description#}
+{#              {% endcomment %}#}
+{#              {% if point.description and point.description.description is not None %}#}
+{#                <li>{{ point.description.description }}</li>#}
+{#              {% elif point.description %}#}
+{#                <li>{{ point.description }}</li>#}
+{#              {% else %}#}
+{#                <li>{{ point }}</li>#}
+{#              {% endif %}#}
+{#            {% endfor %}#}
+{#          </ul>#}
+{#          {% endif %}#}
+{#        </div>#}
+{#        {% endfor %}#}
+{#      </div>#}
+{#      {% endif %}#}
+{##}
+{#      {% if resume.educations.exists %}#}
+{#      <div class="section">#}
+{#        <div class="section-title">Education</div>#}
+{#        {% for education in resume.educations.all %}#}
+{#        <div class="entry">#}
+{#          <div class="entry-title">{{ education.degree }}{% if education.field_of_study %} in {{ education.field_of_study }}{% endif %}</div>#}
+{#          <div class="entry-subtitle">{{ education.school_name }}</div>#}
+{#          <div class="entry-details">#}
+{#            <span>{{ education.location }}</span>#}
+{#            <span>#}
+{#              {% if education.start_date %}{{ education.start_date|date:"Y" }} - {% endif %}#}
+{#              {% if education.graduation_date %}{{ education.graduation_date|date:"Y" }}{% endif %}#}
+{#            </span>#}
+{#          </div>#}
+{#          {% if education.gpa %}<div><strong>GPA:</strong> {{ education.gpa }}</div>{% endif %}#}
+{#          {% if education.achievements %}#}
+{#          <ul class="bullet-points">#}
+{#            {% for achievement in education.achievements.splitlines %}#}
+{#            {% if achievement|trim %}#}
+{#            <li>{{ achievement }}</li>#}
+{#            {% endif %}#}
+{#            {% endfor %}#}
+{#          </ul>#}
+{#          {% endif %}#}
+{#        </div>#}
+{#        {% endfor %}#}
+{#      </div>#}
+{#      {% endif %}#}
+{##}
+{#      {% if resume.projects.exists %}#}
+{#      <div class="section">#}
+{#        <div class="section-title">Projects</div>#}
+{#        {% for project in resume.projects.all %}#}
+{#        <div class="entry">#}
+{#          <div class="entry-title">{{ project.project_name }}</div>#}
+{#          <div class="entry-details">#}
+{#            <span>#}
+{#              {% if project.start_date %}{{ project.start_date|date:"M Y" }}{% endif %}#}
+{#              {% if project.completion_date %} - {{ project.completion_date|date:"M Y" }}{% endif %}#}
+{#            </span>#}
+{#          </div>#}
+{#          {% if project.summary %}<p>{{ project.summary }}</p>{% endif %}#}
+{##}
+{#          {% if project.technologies.exists %}#}
+{#          <div class="project-tech">#}
+{#            {% for tech in project.technologies.all %}#}
+{#            <span class="tech-tag">{{ tech.skill_name }}</span>#}
+{#            {% endfor %}#}
+{#          </div>#}
+{#          {% endif %}#}
+{#          {% if project.bullet_points.all %}#}
+{#          <ul class="bullet-points">#}
+{#            {% for point in project.bullet_points.all %}#}
+{#              {% comment %}#}
+{#                CORRECTED LOGIC: Assuming point.description is a dictionary: {'description': 'Actual text'}#}
+{#                Access point.description.description#}
+{#              {% endcomment %}#}
+{#              {% if point.description and point.description.description is not None %}#}
+{#                <li>{{ point.description.description }}</li>#}
+{#              {% elif point.description %}#}
+{#                <li>{{ point.description }}</li>#}
+{#              {% else %}#}
+{#                <li>{{ point }}</li>#}
+{#              {% endif %}#}
+{#            {% endfor %}#}
+{#          </ul>#}
+{#          {% endif %}#}
+{#          {% if project.github_link or project.project_link %}#}
+{#          <div style="margin-top:5px;">#}
+{#            {% if project.github_link %}<a href="{{ project.github_link }}" target="_blank">GitHub</a>{% endif %}#}
+{#            {% if project.project_link %}{% if project.github_link %} | {% endif %}<a href="{{ project.project_link }}" target="_blank">Live Demo</a>{% endif %}#}
+{#          </div>#}
+{#          {% endif %}#}
+{#        </div>#}
+{#        {% endfor %}#}
+{#      </div>#}
+{#      {% endif %}#}
+{##}
+{#      {% if resume.custom_data.exists %}#}
+{#      <div class="section">#}
+{#        <div class="section-title">Additional Information</div>#}
+{#        {% for custom_item in resume.custom_data.all %}#}
+{#        <div class="entry">#}
+{#          <div class="entry-title">{{ custom_item.name }}</div>#}
+{#          {% if custom_item.institution_name %}#}
+{#          <div class="entry-subtitle">{{ custom_item.institution_name }}</div>#}
+{#          {% endif %}#}
+{#          {% if custom_item.completion_date %}#}
+{#          <div class="entry-details">#}
+{#            <span>{{ custom_item.completion_date|date:"Y" }}</span>#}
+{#          </div>#}
+{#          {% endif %}#}
+{#          {% if custom_item.description %}<p>{{ custom_item.description }}</p>{% endif %}#}
+{#          {% if custom_item.bullet_points %}#}
+{#          <ul class="bullet-points">#}
+{#            {% for point in custom_item.bullet_points.splitlines %}#}
+{#            {% if point|trim %}#}
+{#            <li>{{ point }}</li>#}
+{#            {% endif %}#}
+{#            {% endfor %}#}
+{#          </ul>#}
+{#          {% endif %}#}
+{#          {% if custom_item.link %}<div><a href="{{ custom_item.link }}" target="_blank">More Information</a></div>{% endif %}#}
+{#        </div>#}
+{#        {% endfor %}#}
+{#      </div>#}
+{#      {% endif %}#}
+{#    </div> <div class="right-column"> {# This is a div, not an aside, and is correctly closed #}
+{#      {% if resume.skills.exists %}#}
+{#      <div class="section">#}
+{#        <div class="section-title">Skills</div>#}
+{#        {% regroup resume.skills.all by skill_type as skills_by_type %}#}
+{#        {% for skill_group in skills_by_type %}#}
+{#          <div class="skills-group">#}
+{#            <div class="skills-title">#}
+{#              {% if skill_group.grouper == 'technical' %}Technical Skills#}
+{#              {% elif skill_group.grouper == 'language'%}Programming Languages#}
+{#              {% elif skill_group.grouper == 'tool'%}Tools & Platforms#}
+{#              {% elif skill_group.grouper == 'soft'%}Soft Skills#}
+{#              {% else %}{{ skill_group.grouper|capfirst|default:"Other Skills" }}#}
+{#              {% endif %}#}
+{#            </div>#}
+{#            <div class="skills-list">#}
+{#              {% for skill in skill_group.list %}#}
+{#              <span class="skill-tag">{{ skill.skill_name }}</span>#}
+{#              {% endfor %}#}
+{#            </div>#}
+{#          </div>#}
+{#        {% endfor %}#}
+{#      </div>#}
+{#      {% endif %}#}
+{##}
+{#      {% if resume.certifications.exists %}#}
+{#      <div class="section">#}
+{#        <div class="section-title">Certifications</div>#}
+{#        {% for certification in resume.certifications.all %}#}
+{#        <div class="certification-item">#}
+{#          <div class="certification-title">{{ certification.name }}</div>#}
+{#          <div class="certification-details">#}
+{#            {% if certification.institute %}{{ certification.institute }}{% endif %}#}
+{#            {% if certification.completion_date %} | {{ certification.completion_date|date:"Y" }}{% endif %}#}
+{#          </div>#}
+{#          {% if certification.description %}<p style="font-size:13px;">{{ certification.description }}</p>{% endif %}#}
+{#          {% if certification.link %}<div><a href="{{ certification.link }}" target="_blank">Verify</a></div>{% endif %}#}
+{#        </div>#}
+{#        {% endfor %}#}
+{#      </div>#}
+{#      {% endif %}#}
+{##}
+{#      {% if resume.languages.exists %}#}
+{#      <div class="section">#}
+{#        <div class="section-title">Languages</div>#}
+{#        {% for language in resume.languages.all %}#}
+{#        <div class="language-item">#}
+{#          <span>{{ language.language_name }}</span>#}
+{#          <span class="language-level">{{ language.get_proficiency_display }}</span>#}
+{#        </div>#}
+{#        {% endfor %}#}
+{#      </div>#}
+{#      {% endif %}#}
+{##}
+{#      {% if resume.relevant_coursework.exists %}#}
+{#      <div class="section">#}
+{#        <div class="section-title">Relevant Coursework</div>#}
+{#        {% for course in resume.relevant_coursework.all %}#}
+{#        <div class="course-item">#}
+{#          <div class="course-name">{{ course.name }}</div>#}
+{#          {% if course.details %}<div class="course-details">{{ course.details }}</div>{% endif %}#}
+{#        </div>#}
+{#        {% endfor %}#}
+{#      </div>#}
+{#      {% else %}#}
+{#       <div class="section">#}
+{#        <div class="section-title">Relevant Coursework</div>#}
+{#          <div class="course-item">#}
+{#            <div class="course-name">Data Structures & Algorithms</div>#}
+{#            <div class="course-details">Implemented various data structures and algorithms in practical applications</div>#}
+{#          </div>#}
+{#          <div class="course-item">#}
+{#            <div class="course-name">Database Management Systems</div>#}
+{#            <div class="course-details">Learned SQL and database design principles</div>#}
+{#          </div>#}
+{#       </div>#}
+{#      {% endif %}#}
+{##}
+{#      {% if resume.activities.exists %}#}
+{#      <div class="section">#}
+{#        <div class="section-title">Activities & Involvement</div>#}
+{#        {% if resume.activities.all %}#}
+{#        <ul class="bullet-points">#}
+{#          {% for activity in resume.activities.all %}#}
+{#            {% comment %} Assuming 'activity' object itself is the text, or has a .description or .name field {% endcomment %}#}
+{#            {% if activity.description %}#}
+{#                <li>{{ activity.description }}</li>#}
+{#            {% elif activity.name %}#}
+{#                <li>{{ activity.name }}</li>#}
+{#            {% else %}#}
+{#                <li>{{ activity }}</li>#}
+{#            {% endif %}#}
+{#          {% endfor %}#}
+{#        </ul>#}
+{#        {% endif %}#}
+{#      </div>#}
+{#      {% else %}#}
+{#      <div class="section">#}
+{#        <div class="section-title">Activities</div>#}
+{#        <ul class="bullet-points">#}
+{#          <li>Member of University Coding Club (2022-2023)</li>#}
+{#          <li>Participated in Hackathon XYZ (2022)</li>#}
+{#        </ul>#}
+{#      </div>#}
+{#      {% endif %}#}
+{#    </div> </div> </div>#}
+{##}
 {##}
 {##}
 {#<!-- Template 6: Fresh Graduate/Entry-Level (ATS Optimized) -->#}

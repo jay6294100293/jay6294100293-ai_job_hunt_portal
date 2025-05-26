@@ -1,51 +1,96 @@
-{% comment %}
-This is the updated partial template for a project bullet point form row
-Save as 'resumes/theme_partials/bullet_point_form_row.html'
-{% endcomment %}
+{# templates/resumes/partials/project_ai/project_bullet_point_form_row.html #}
+{% load widget_tweaks static i18n %}
 
-<div class="bullet-point-row flex items-start gap-3 group hover:bg-gray-50/80 dark:hover:bg-gray-800/20 p-2 rounded-md transition-colors">
-    <div class="mt-3 text-blue-600 dark:text-blue-400">•</div>
+{# Parameters passed from parent (project_form_row.html or projects.html for empty form):
+   - form: A single ProjectBulletPointForm instance.
+   - parent_index: The index of the parent Project form (project_index).
+   - index: The index of this bullet_form within the project's bullet_points_formset.
+   - prefix: The full HTML name prefix for fields in this form (e.g., "projects-0-bullets-0").
+   - is_empty_form: Boolean, true if this is for the __prefix__ template.
+   - bullet_text: The initial text for the bullet (used by your uploaded version).
+   - formset_prefix: The prefix of the parent ProjectFormSet (e.g., "projects"). Needed for constructing IDs of project-level fields.
+#}
+
+<div class="bullet-point-row flex items-start gap-3 group p-2 rounded-md transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/30"
+     data-bullet-form-index="{{ index }}"
+     data-parent-index="{{ parent_index }}">
+
+    {# Render the ID field for existing forms, crucial for updates and deletions #}
+    {% if not is_empty_form and form.instance.pk %}{{ form.id }}{% endif %}
+
+    {# Render any other hidden fields for the bullet point form (e.g., foreign keys if not handled by formset) #}
+    {% for hidden_field in form.hidden_fields %}
+        {% if hidden_field.name != 'id' %}{{ hidden_field }}{% endif %}
+    {% endfor %}
+
+    <div class="mt-3 text-blue-600 dark:text-blue-400 flex-shrink-0">
+        {# Using a consistent icon with the one in your uploaded file #}
+        <i class="fas fa-caret-right"></i>
+    </div>
     <div class="flex-1">
         <div class="relative">
-            <textarea class="w-full min-h-24 p-2 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                id="bullet_{{ parent_index }}_{{ index }}"
-                name="bullet_{{ parent_index }}_{{ index }}"
-                placeholder="Describe your project achievement with action verbs and measurable results (e.g., 'Developed a responsive dashboard that reduced data retrieval time by 40%')"
-                onkeyup="checkBulletQuality(this)"
-                data-parent="{{ parent_index }}"
-                data-index="{{ index }}">{{ bullet_text|default:'' }}</textarea>
+            {# The ID for the textarea needs to be unique and predictable for JS targeting #}
+            {% with textarea_id="id_"|add:prefix|add:"-description" %}
+                {% render_field form.description class+="form-input text-sm py-1.5 project-bullet-description w-full min-h-[60px]" rows="2" placeholder="Describe a key feature or your contribution (e.g., 'Engineered a new module that improved performance by 15%')" id=textarea_id value=bullet_text %}
+                {% if form.description.help_text %}
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ form.description.help_text|safe }}</p>
+                {% endif %}
+                {% for error in form.description.errors %}
+                    <p class="form-error-text text-xs mt-1">{{ error }}</p>
+                {% endfor %}
+            {% endwith %}
         </div>
-        <div class="flex justify-between mt-1">
-            <div class="bullet-quality text-xs"></div>
-            <div class="text-xs text-gray-500">
-                <span class="current">{{ bullet_text|default:''|length }}</span>/<span class="max">100-150 optimal</span>
+        <div class="flex justify-between items-center mt-1">
+            <div class="bullet-quality text-xs text-slate-500 dark:text-slate-400" id="bullet_quality_{{ parent_index }}_{{ index }}">
+                {# Your JS `checkBulletQuality` can populate this #}
+            </div>
+            <div class="text-xs char-counter text-slate-400 dark:text-slate-500" id="char_counter_{{ parent_index }}_{{ index }}">
+                {# Your JS can populate this #}
             </div>
         </div>
     </div>
-    <div class="flex flex-col gap-2">
-        <button type="button" class="mt-3 h-8 w-8 rounded-full text-red-600 bg-red-100 opacity-70 hover:opacity-100 hover:bg-red-200 flex items-center justify-center"
-                onclick="removeBulletPoint(this, '{{ parent_index }}')">
-            <i class="fa-solid fa-times"></i>
-        </button>
+    <div class="flex flex-col gap-2 items-center ml-2 flex-shrink-0 pt-2">
+        {% if form.DELETE %}
+            <button type="button"
+                    class="remove-project-bullet-form btn-icon-danger btn-xs opacity-50 group-hover:opacity-100 transition-opacity"
+                    title="Remove this bullet point">
+                <i class="fas fa-times"></i>
+            </button>
+            {# The actual DELETE checkbox should be hidden and controlled by the button via JS #}
+            <label for="{{ form.DELETE.id_for_label }}" class="sr-only">Mark bullet for deletion</label>
+            {% render_field form.DELETE class+="hidden delete-project-bullet-checkbox" %}
+        {% elif is_empty_form %} {# For the __prefix__ template, still show a remove button #}
+             <button type="button"
+                    class="remove-project-bullet-form btn-icon-danger btn-xs opacity-50 group-hover:opacity-100 transition-opacity"
+                    title="Remove this bullet point">
+                <i class="fas fa-times"></i>
+            </button>
+        {% endif %}
+
         <button type="button"
-                class="h-8 w-8 rounded-full text-blue-600 bg-blue-100 opacity-70 hover:opacity-100 hover:bg-blue-200 flex items-center justify-center project-enhance-btn"
-                data-parent="{{ parent_index }}"
-                data-index="{{ index }}"
-                data-project-name="{{ project_name|default:'' }}"
-                data-project-title="{{ project_title|default:'' }}"
-                data-project-summary="{{ project_summary|default:'' }}"
-                onclick="openProjectEnhanceModal('{{ parent_index }}', '{{ index }}', '{{ project_name|default:'' }}', '{{ project_title|default:'' }}', '{{ project_summary|default:'' }}')">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                class="ai-enhance-project-bullet-btn btn-icon-secondary btn-xs opacity-50 group-hover:opacity-100 transition-opacity"
+                title="Enhance this bullet point with AI"
+                data-project-index="{{ parent_index }}"
+                data-bullet-index="{{ index }}"
+                data-bullet-text-selector="#id_{{ prefix }}-description"
+                data-project-name-selector="#id_{{ formset_prefix }}-{{ parent_index }}-project_name"
+                data-project-summary-selector="#id_{{ formset_prefix }}-{{ parent_index }}-summary">
+            <i class="fas fa-magic"></i>
         </button>
-        <span id="enhance_indicator_{{ parent_index }}_{{ index }}" class="htmx-indicator hidden">
-            <span class="inline-block animate-spin text-blue-500">⟳</span>
-        </span>
     </div>
+
+    {% if form.non_field_errors %}
+        <div class="w-full mt-1 pl-5 text-left"> {# Ensure non-field errors are also clearly visible #}
+            {% for error in form.non_field_errors %}
+                <p class="form-error-text text-xs">{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
 </div>
 
 {#{% comment %}#}
 {#CORRECTED partial template for a bullet point form row#}
-{#File: resumes/theme_partials/bullet_point_form_row.html#}
+{#File: resumes/theme_partials/project_bullet_point_form_row.html#}
 {#{% endcomment %}#}
 {##}
 {#<div class="bullet-point-row flex items-start gap-3 group hover:bg-gray-50/80 dark:hover:bg-gray-800/20 p-2 rounded-md transition-colors">#}
@@ -101,7 +146,7 @@ Save as 'resumes/theme_partials/bullet_point_form_row.html'
 {##}
 {#{% comment %}#}
 {#This is the updated partial template for a bullet point form row#}
-{#Save as 'resumes/theme_partials/bullet_point_form_row.html'#}
+{#Save as 'resumes/theme_partials/project_bullet_point_form_row.html'#}
 {#{% endcomment %}#}
 {##}
 {#<div class="bullet-point-row flex items-start gap-3 group hover:bg-gray-50/80 dark:hover:bg-gray-800/20 p-2 rounded-md transition-colors">#}
@@ -139,7 +184,7 @@ Save as 'resumes/theme_partials/bullet_point_form_row.html'
 {#    </div>#}
 {#</div>#}
 {##}
-{# resumes/theme_partials/bullet_point_form_row.html #}
+{# resumes/theme_partials/project_bullet_point_form_row.html #}
 {#<div class="bullet-point-row flex items-start gap-3 group hover:bg-gray-50/80 dark:hover:bg-gray-800/20 p-2 rounded-md transition-colors">#}
 {#    <div class="mt-3 text-primary">•</div>#}
 {#    <div class="form-control flex-1">#}

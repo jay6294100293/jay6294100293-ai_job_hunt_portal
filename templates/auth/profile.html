@@ -1,167 +1,267 @@
+{# templates/auth/profile.html #}
 {% extends 'base_authenticated.html' %}
+{% load static %}
 
-{% block title %}Dashboard - AI Job Portal{% endblock %}
+{% block title %}My Profile{% endblock %}
 
 {% block content %}
-<div class="container mx-auto">
-    <div class="mb-8 p-6 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg shadow-md">
-        <h1 class="text-3xl font-semibold">Dashboard Overview</h1>
-        <p class="mt-1 text-primary-100">Welcome back, {{ user.get_full_name|default:user.username }}!</p>
-    </div>
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white dark:bg-slate-800 shadow-xl rounded-lg overflow-hidden">
+        <div class="md:flex">
+            <div class="md:w-1/3 p-6 bg-gradient-to-br from-primary-500 to-secondary-500 dark:from-primary-700 dark:to-secondary-700 flex flex-col items-center justify-center">
+                {% if user.profile.profile_picture %}
+                    <img class="h-32 w-32 rounded-full object-cover border-4 border-white dark:border-slate-300 shadow-lg mx-auto" src="{{ user.profile.profile_picture.url }}" alt="Profile picture">
+                {% else %}
+                    <span class="flex items-center justify-center h-32 w-32 rounded-full bg-white/30 dark:bg-slate-700/50 border-4 border-white dark:border-slate-300 shadow-lg mx-auto text-5xl font-bold text-white dark:text-slate-200">
+                        {{ user.username|slice:":1"|upper }}
+                    </span>
+                {% endif %}
+                <h2 class="mt-4 text-2xl font-semibold text-white dark:text-slate-100 text-center">{{ user.get_full_name|default:user.username }}</h2>
+                <p class="text-sm text-primary-100 dark:text-primary-300 text-center">@{{ user.username }}</p>
+                <a href="{% url 'edit_profile' %}" class="mt-5 btn-secondary-outline border-white text-white hover:bg-white hover:text-primary-600 py-2 px-4 text-sm w-full text-center">
+                    <i class="fas fa-edit mr-1.5"></i> Edit Profile
+                </a>
+            </div>
 
-    {% if not profile_complete %}
-    <div class="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-md">
-        <div class="flex">
-            <div class="flex-shrink-0">
-                <i class="fa-solid fa-exclamation-circle text-yellow-400 mt-0.5"></i>
-            </div>
-            <div class="ml-3">
-                <h3 class="text-sm font-medium text-yellow-800">Complete Your Profile</h3>
-                <div class="mt-2 text-sm text-yellow-700">
-                    <p>Your profile is incomplete. Complete your profile to enhance your resume building experience.</p>
-                    <a href="{% url 'edit_profile' %}" class="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
-                        Complete Profile
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
+            <div class="md:w-2/3 p-6 md:p-8">
+                <h3 class="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-1">Account Information</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Manage your account details.</p>
 
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
-            <div class="p-5">
-                 <div class="flex items-center">
-                    <div class="flex-shrink-0 p-3 bg-blue-100 rounded-full">
-                        <i class="fa-solid fa-file-lines text-blue-500 text-xl"></i>
+                <dl class="space-y-4">
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Full Name</dt>
+                        <dd class="mt-1 text-md text-slate-700 dark:text-slate-200">{{ user.get_full_name|default:"Not set" }}</dd>
                     </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Saved Resumes</dt>
-                            <dd><div class="text-2xl font-semibold text-gray-900">{{ resume_count }}</div></dd>
-                        </dl>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Username</dt>
+                        <dd class="mt-1 text-md text-slate-700 dark:text-slate-200">{{ user.username }}</dd>
                     </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-5 py-3">
-                <a href="{% url 'job_portal:resume_list' %}" class="text-sm font-medium text-primary-600 hover:text-primary-700">View Resumes</a>
-            </div>
-        </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Email Address</dt>
+                        <dd class="mt-1 text-md text-slate-700 dark:text-slate-200">{{ user.email }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Date Joined</dt>
+                        <dd class="mt-1 text-md text-slate-700 dark:text-slate-200">{{ user.date_joined|date:"F j, Y" }}</dd>
+                    </div>
 
-        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 p-3 bg-green-100 rounded-full">
-                        <i class="fa-solid fa-key text-green-500 text-xl"></i>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">API Keys Status</dt>
-                            <dd>
-                                <div class="text-sm font-medium text-gray-900 mt-1">
-                                     {% if user.chatgpt_api_key and user.gemini_api_key %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>
-                                          All Configured
-                                        </span>
-                                     {% elif user.chatgpt_api_key or user.gemini_api_key %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-yellow-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>
-                                          Partially Configured
-                                        </span>
-                                     {% else %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-red-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>
-                                          Not Configured
-                                        </span>
-                                     {% endif %}
-                                </div>
-                            </dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-             <div class="bg-gray-50 px-5 py-3">
-                <a href="{% url 'update_api_keys' %}" class="text-sm font-medium text-primary-600 hover:text-primary-700">Manage Keys</a>
-            </div>
-        </div>
+                    <hr class="my-6 border-slate-200 dark:border-slate-700">
 
-        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">
-            <div class="p-5">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 p-3 bg-purple-100 rounded-full">
-                        <i class="fa-solid fa-user-circle text-purple-500 text-xl"></i>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Profile Status</dt>
-                            <dd>
-                                <div class="text-sm font-medium text-gray-900 mt-1">
-                                     {% if profile_complete %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>
-                                          Complete
-                                        </span>
-                                     {% else %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-yellow-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>
-                                          Incomplete
-                                        </span>
-                                     {% endif %}
-                                </div>
-                            </dd>
-                        </dl>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-5 py-3">
-                <a href="{% url 'profile' %}" class="text-sm font-medium text-primary-600 hover:text-primary-700">View Profile</a>
-            </div>
-        </div>
-    </div>
+                    <h3 class="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-1 pt-4">Profile Information</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Additional profile details.</p>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">Recent Resumes</h2>
-            {% if recent_resumes %}
-                <ul class="space-y-3">
-                    {% for resume in recent_resumes %}
-                        <li class="flex justify-between items-center p-3 bg-gray-50 rounded-md hover:bg-gray-100">
-                            <span class="font-medium text-gray-700">{{ resume.full_name }}</span>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs text-gray-500">Updated {{ resume.updated_at|timesince }} ago</span>
-                                <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" class="text-primary-600 hover:text-primary-800 text-sm"><i class="fa-solid fa-eye"></i></a>
-                                <a href="{% url 'job_portal:edit_resume' resume_id=resume.id %}" class="text-primary-600 hover:text-primary-800 text-sm"><i class="fa-solid fa-edit"></i></a>
-                            </div>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="text-gray-500">No resumes created yet.</p>
-            {% endif %}
-        </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Phone Number</dt>
+                        <dd class="mt-1 text-md text-slate-700 dark:text-slate-200">{{ user.profile.phone_number|default:"Not set" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Location</dt>
+                        <dd class="mt-1 text-md text-slate-700 dark:text-slate-200">{{ user.profile.location|default:"Not set" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">LinkedIn Profile</dt>
+                        <dd class="mt-1 text-md text-slate-700 dark:text-slate-200">
+                            {% if user.profile.linkedin_url %}
+                                <a href="{{ user.profile.linkedin_url }}" target="_blank" rel="noopener noreferrer" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 underline">
+                                    {{ user.profile.linkedin_url }} <i class="fas fa-external-link-alt text-xs ml-1"></i>
+                                </a>
+                            {% else %}
+                                Not set
+                            {% endif %}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Portfolio/Website</dt>
+                        <dd class="mt-1 text-md text-slate-700 dark:text-slate-200">
+                            {% if user.profile.portfolio_url %}
+                                <a href="{{ user.profile.portfolio_url }}" target="_blank" rel="noopener noreferrer" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 underline">
+                                    {{ user.profile.portfolio_url }} <i class="fas fa-external-link-alt text-xs ml-1"></i>
+                                </a>
+                            {% else %}
+                                Not set
+                            {% endif %}
+                        </dd>
+                    </div>
 
-        <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
-             <h2 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
-             <div class="space-y-3">
-                 <a href="{% url 'job_portal:resume_creation_choice' %}" class="block w-full text-center px-4 py-3 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition font-medium">
-                    <i class="fa-solid fa-plus-circle mr-2"></i>Create/Upload Resume
-                 </a>
-                 <a href="{% url 'edit_profile' %}" class="block w-full text-center px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition font-medium">
-                    <i class="fa-solid fa-user-edit mr-2"></i>Update Profile
-                 </a>
-                 <a href="{% url 'update_api_keys' %}" class="block w-full text-center px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition font-medium">
-                    <i class="fa-solid fa-key mr-2"></i>Update API Keys
-                 </a>
-                 <a href="#" class="block w-full text-center px-4 py-3 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed font-medium">
-                    <i class="fa-solid fa-briefcase mr-2"></i>Track Applications (Soon)
-                 </a>
-             </div>
+                    <div class="pt-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                        <a href="{% url 'password_change' %}" class="btn-neutral w-full sm:w-auto">
+                            <i class="fas fa-key mr-1.5"></i> Change Password
+                        </a>
+                         <a href="{% url 'update_api_keys' %}" class="btn-neutral w-full sm:w-auto">
+                            <i class="fas fa-cogs mr-1.5"></i> Manage API Keys
+                        </a>
+                    </div>
+                </dl>
+            </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
+{#{% extends 'base_authenticated.html' %}#}
+{##}
+{#{% block title %}Dashboard - AI Job Portal{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#<div class="container mx-auto">#}
+{#    <div class="mb-8 p-6 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg shadow-md">#}
+{#        <h1 class="text-3xl font-semibold">Dashboard Overview</h1>#}
+{#        <p class="mt-1 text-primary-100">Welcome back, {{ user.get_full_name|default:user.username }}!</p>#}
+{#    </div>#}
+{##}
+{#    {% if not profile_complete %}#}
+{#    <div class="mb-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-md">#}
+{#        <div class="flex">#}
+{#            <div class="flex-shrink-0">#}
+{#                <i class="fa-solid fa-exclamation-circle text-yellow-400 mt-0.5"></i>#}
+{#            </div>#}
+{#            <div class="ml-3">#}
+{#                <h3 class="text-sm font-medium text-yellow-800">Complete Your Profile</h3>#}
+{#                <div class="mt-2 text-sm text-yellow-700">#}
+{#                    <p>Your profile is incomplete. Complete your profile to enhance your resume building experience.</p>#}
+{#                    <a href="{% url 'edit_profile' %}" class="mt-2 inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">#}
+{#                        Complete Profile#}
+{#                    </a>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{#    {% endif %}#}
+{##}
+{#    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">#}
+{#        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">#}
+{#            <div class="p-5">#}
+{#                 <div class="flex items-center">#}
+{#                    <div class="flex-shrink-0 p-3 bg-blue-100 rounded-full">#}
+{#                        <i class="fa-solid fa-file-lines text-blue-500 text-xl"></i>#}
+{#                    </div>#}
+{#                    <div class="ml-5 w-0 flex-1">#}
+{#                        <dl>#}
+{#                            <dt class="text-sm font-medium text-gray-500 truncate">Saved Resumes</dt>#}
+{#                            <dd><div class="text-2xl font-semibold text-gray-900">{{ resume_count }}</div></dd>#}
+{#                        </dl>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#            <div class="bg-gray-50 px-5 py-3">#}
+{#                <a href="{% url 'job_portal:resume_list' %}" class="text-sm font-medium text-primary-600 hover:text-primary-700">View Resumes</a>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">#}
+{#            <div class="p-5">#}
+{#                <div class="flex items-center">#}
+{#                    <div class="flex-shrink-0 p-3 bg-green-100 rounded-full">#}
+{#                        <i class="fa-solid fa-key text-green-500 text-xl"></i>#}
+{#                    </div>#}
+{#                    <div class="ml-5 w-0 flex-1">#}
+{#                         <dl>#}
+{#                            <dt class="text-sm font-medium text-gray-500 truncate">API Keys Status</dt>#}
+{#                            <dd>#}
+{#                                <div class="text-sm font-medium text-gray-900 mt-1">#}
+{#                                     {% if user.chatgpt_api_key and user.gemini_api_key %}#}
+{#                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">#}
+{#                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>#}
+{#                                          All Configured#}
+{#                                        </span>#}
+{#                                     {% elif user.chatgpt_api_key or user.gemini_api_key %}#}
+{#                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">#}
+{#                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-yellow-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>#}
+{#                                          Partially Configured#}
+{#                                        </span>#}
+{#                                     {% else %}#}
+{#                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">#}
+{#                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-red-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>#}
+{#                                          Not Configured#}
+{#                                        </span>#}
+{#                                     {% endif %}#}
+{#                                </div>#}
+{#                            </dd>#}
+{#                        </dl>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#             <div class="bg-gray-50 px-5 py-3">#}
+{#                <a href="{% url 'update_api_keys' %}" class="text-sm font-medium text-primary-600 hover:text-primary-700">Manage Keys</a>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#        <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-lg transition-shadow">#}
+{#            <div class="p-5">#}
+{#                <div class="flex items-center">#}
+{#                    <div class="flex-shrink-0 p-3 bg-purple-100 rounded-full">#}
+{#                        <i class="fa-solid fa-user-circle text-purple-500 text-xl"></i>#}
+{#                    </div>#}
+{#                    <div class="ml-5 w-0 flex-1">#}
+{#                        <dl>#}
+{#                            <dt class="text-sm font-medium text-gray-500 truncate">Profile Status</dt>#}
+{#                            <dd>#}
+{#                                <div class="text-sm font-medium text-gray-900 mt-1">#}
+{#                                     {% if profile_complete %}#}
+{#                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">#}
+{#                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-green-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>#}
+{#                                          Complete#}
+{#                                        </span>#}
+{#                                     {% else %}#}
+{#                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">#}
+{#                                          <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-yellow-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"></circle></svg>#}
+{#                                          Incomplete#}
+{#                                        </span>#}
+{#                                     {% endif %}#}
+{#                                </div>#}
+{#                            </dd>#}
+{#                        </dl>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#            <div class="bg-gray-50 px-5 py-3">#}
+{#                <a href="{% url 'profile' %}" class="text-sm font-medium text-primary-600 hover:text-primary-700">View Profile</a>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">#}
+{#        <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">#}
+{#            <h2 class="text-xl font-semibold text-gray-800 mb-4">Recent Resumes</h2>#}
+{#            {% if recent_resumes %}#}
+{#                <ul class="space-y-3">#}
+{#                    {% for resume in recent_resumes %}#}
+{#                        <li class="flex justify-between items-center p-3 bg-gray-50 rounded-md hover:bg-gray-100">#}
+{#                            <span class="font-medium text-gray-700">{{ resume.full_name }}</span>#}
+{#                            <div class="flex items-center gap-2">#}
+{#                                <span class="text-xs text-gray-500">Updated {{ resume.updated_at|timesince }} ago</span>#}
+{#                                <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" class="text-primary-600 hover:text-primary-800 text-sm"><i class="fa-solid fa-eye"></i></a>#}
+{#                                <a href="{% url 'job_portal:edit_resume' resume_id=resume.id %}" class="text-primary-600 hover:text-primary-800 text-sm"><i class="fa-solid fa-edit"></i></a>#}
+{#                            </div>#}
+{#                        </li>#}
+{#                    {% endfor %}#}
+{#                </ul>#}
+{#            {% else %}#}
+{#                <p class="text-gray-500">No resumes created yet.</p>#}
+{#            {% endif %}#}
+{#        </div>#}
+{##}
+{#        <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">#}
+{#             <h2 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>#}
+{#             <div class="space-y-3">#}
+{#                 <a href="{% url 'job_portal:resume_creation_choice' %}" class="block w-full text-center px-4 py-3 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 transition font-medium">#}
+{#                    <i class="fa-solid fa-plus-circle mr-2"></i>Create/Upload Resume#}
+{#                 </a>#}
+{#                 <a href="{% url 'edit_profile' %}" class="block w-full text-center px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition font-medium">#}
+{#                    <i class="fa-solid fa-user-edit mr-2"></i>Update Profile#}
+{#                 </a>#}
+{#                 <a href="{% url 'update_api_keys' %}" class="block w-full text-center px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition font-medium">#}
+{#                    <i class="fa-solid fa-key mr-2"></i>Update API Keys#}
+{#                 </a>#}
+{#                 <a href="#" class="block w-full text-center px-4 py-3 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed font-medium">#}
+{#                    <i class="fa-solid fa-briefcase mr-2"></i>Track Applications (Soon)#}
+{#                 </a>#}
+{#             </div>#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
+{#{% endblock %}#}
+{##}
 {#{% extends 'base_authenticated.html' %}#}
 {#{% load custom_filters %}#}
 {##}

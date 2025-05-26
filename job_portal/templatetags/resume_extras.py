@@ -6,6 +6,98 @@ register = template.Library()
 
 from django import template
 
+# job_portal/templatetags/resume_extras.py
+from django import template
+from job_portal.models import Resume  # Import Resume model
+
+@register.filter
+def get_item(dictionary, key):
+    """
+    Allows accessing dictionary items with a variable key in Django templates.
+    Usage: {{ my_dictionary|get_item:my_key_variable }}
+    """
+    return dictionary.get(key)
+
+
+@register.simple_tag
+def step_status(resume, step_key, current_step_key, wizard_steps_config=None):
+    """
+    Determines the CSS class for a wizard step based on its completion status.
+    Args:
+        resume (Resume): The current Resume object.
+        step_key (str): The key of the step being evaluated (e.g., 'personal_info').
+        current_step_key (str): The key of the currently active step in the wizard.
+        wizard_steps_config (dict): The WIZARD_STEPS configuration from the view,
+                                    containing model and form info if needed for complex checks.
+    Returns:
+        str: CSS class ('active', 'completed', or 'default').
+    """
+    if step_key == current_step_key:
+        return 'active'
+
+    completed = False
+    if resume and resume.pk:  # Ensure resume object is not None and has been saved
+        try:
+            if step_key == 'personal_info':
+                # Check for essential personal info fields directly on the Resume model
+                # For example, if first_name and email are considered essential for completion.
+                # You can adjust this logic based on what you deem "complete" for this step.
+                completed = bool(resume.first_name and resume.email and resume.phone)
+            elif step_key == 'summary':
+                # Check for the summary field directly on the Resume model
+                completed = bool(resume.summary and resume.summary.strip())
+            elif step_key == 'experience':
+                completed = resume.experiences.exists()  # related_name='experiences'
+            elif step_key == 'education':
+                completed = resume.educations.exists()  # related_name='educations'
+            elif step_key == 'skills':
+                completed = resume.skills.exists()  # related_name='skills'
+            elif step_key == 'projects':
+                completed = resume.projects.exists()  # related_name='projects'
+            elif step_key == 'certifications':
+                completed = resume.certifications.exists()  # related_name='certifications'
+            elif step_key == 'languages':
+                completed = resume.languages.exists()  # related_name='languages'
+            elif step_key == 'custom_sections':  # Key used in WIZARD_STEPS
+                # CustomData model has related_name='custom_sections'
+                completed = resume.custom_sections.exists()
+            # Add more steps here if your WIZARD_STEPS dict in views.py has other keys
+
+        except AttributeError:
+            # This can happen if a related object accessor doesn't exist yet
+            completed = False
+        except Exception:
+            # Catch any other potential errors during attribute checking
+            completed = False  # Default to not completed on error
+
+    return 'completed' if completed else 'default'
+
+
+@register.filter(name='get_form_field_value')
+def get_form_field_value(form, field_name):
+    """
+    Retrieves the value of a form field.
+    Useful for pre-filling fields or debugging.
+    """
+    field = form.fields.get(field_name)
+    if field:
+        return form[field_name].value()
+    return None
+
+
+@register.filter(name='get_formset_field_value')
+def get_formset_field_value(form, field_name):
+    """
+    Retrieves the value of a field within a formset's form.
+    """
+    if hasattr(form, 'initial') and field_name in form.initial:
+        return form.initial[field_name]
+    if hasattr(form, 'cleaned_data') and field_name in form.cleaned_data:
+        return form.cleaned_data[field_name]
+    bound_field = form[field_name]
+    if bound_field:
+        return bound_field.value()
+    return ''
 
 @register.filter(name='get_item')
 def get_item(dictionary, key):

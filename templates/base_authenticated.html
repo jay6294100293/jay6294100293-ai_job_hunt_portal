@@ -1,155 +1,286 @@
+{# templates/base_authenticated.html #}
+
+{# templates/base_authenticated.html #}
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Dashboard - AI Job Portal{% endblock %}</title>
 
-    <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
+{% block body_content %}
+<div class="flex h-screen overflow-hidden bg-slate-100 dark:bg-slate-900" x-data="{ sidebarOpen: window.innerWidth >= 1024 }">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    {# Sidebar -- Using 'theme_partials/_sidebar.html' as per the code you provided #}
+    {% include 'theme_partials/_sidebar.html' %}
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {# Mobile Overlay for Sidebar -- ADDED HERE for correct top-accessed menu behavior #}
+    {# This div dims the main content when the sidebar is open on smaller screens #}
+    <div x-show="sidebarOpen && window.innerWidth < 1024"
+         class="fixed inset-0 bg-slate-900 bg-opacity-60 dark:bg-opacity-75 z-20 transition-opacity duration-200 lg:hidden"
+         @click="sidebarOpen = false"
+         aria-hidden="true"
+         x-cloak
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+    </div>
 
-    <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    {# Main Content Area #}
+    <div class="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
 
-    <style>
-        /* Base font family */
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        /* Optional: hide elements managed by Alpine until it's initialized to prevent FOUC */
-        [x-cloak] {
-            display: none !important;
-        }
-    </style>
+        {# Topbar -- Using 'theme_partials/_topbar.html' as per the code you provided #}
+        {% include 'theme_partials/_topbar.html' %}
 
-    {% block extra_css %}{% endblock %}
-</head>
-<body class="bg-gray-100 antialiased"
-      x-data="{ sidebarOpen: window.innerWidth >= 1024, userMenuOpen: false }"
-      @resize.window="if (window.innerWidth < 1024 && sidebarOpen) {
-                          /* Optionally close sidebar on resize to mobile if it was open */
-                          /* sidebarOpen = false; */
-                      } else if (window.innerWidth >= 1024 && !sidebarOpen) {
-                          /* Optionally open sidebar on resize to desktop if it was closed */
-                          /* sidebarOpen = true; */
-                      }"
-      @click.away="userMenuOpen = false"
-      x-cloak>
-
-    <div class="flex h-screen overflow-hidden">
-        {% include "_sidebar.html" %}
-
-        <div class="flex-1 flex flex-col overflow-hidden">
-            <!-- Modified _topbar.html to include user profile dropdown -->
-            <header class="bg-white shadow-sm z-10">
-                <div class="px-4 sm:px-6 lg:px-8 py-4">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <button @click="sidebarOpen = !sidebarOpen" class="text-gray-500 focus:outline-none lg:hidden">
-                                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M4 6H20M4 12H20M4 18H11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                                </svg>
-                            </button>
-                            <div class="text-xl font-semibold text-gray-800 lg:hidden ml-3">
-                                AI Job Portal
-                            </div>
-                        </div>
-
-                        <div class="flex items-center space-x-4">
-                            <div class="relative" x-data="{ userMenuOpen: false }">
-                                <button @click="userMenuOpen = !userMenuOpen" class="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
-                                    <span class="sr-only">Open user menu</span>
-                                    {% if user.profile_picture %}
-                                        <img class="h-8 w-8 rounded-full object-cover" src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name|default:user.username }}">
-                                    {% else %}
-                                        <div class="h-8 w-8 rounded-full bg-primary-500 flex items-center justify-center text-white">
-                                            {{ user.username.0|upper }}
-                                        </div>
-                                    {% endif %}
-                                </button>
-
-                                <!-- Dropdown menu -->
-                                <div x-show="userMenuOpen"
-                                     x-transition:enter="transition ease-out duration-100"
-                                     x-transition:enter-start="transform opacity-0 scale-95"
-                                     x-transition:enter-end="transform opacity-100 scale-100"
-                                     x-transition:leave="transition ease-in duration-75"
-                                     x-transition:leave-start="transform opacity-100 scale-100"
-                                     x-transition:leave-end="transform opacity-0 scale-95"
-                                     class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
-                                     role="menu"
-                                     aria-orientation="vertical"
-                                     aria-labelledby="user-menu-button"
-                                     tabindex="-1"
-                                     @click.away="userMenuOpen = false">
-
-                                    <div class="px-4 py-2 border-b border-gray-100">
-                                        <p class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</p>
-                                        <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
-                                    </div>
-
-                                    <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
-                                        <i class="fa-solid fa-user mr-2"></i> My Profile
-                                    </a>
-                                    <a href="{% url 'edit_profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
-                                        <i class="fa-solid fa-user-edit mr-2"></i> Edit Profile
-                                    </a>
-                                    <a href="{% url 'update_api_keys' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
-                                        <i class="fa-solid fa-key mr-2"></i> API Keys
-                                    </a>
-                                    <a href="{% url 'dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
-                                        <i class="fa-solid fa-chart-pie mr-2"></i> Dashboard
-                                    </a>
-                                    <div class="border-t border-gray-100 my-1"></div>
-                                    <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
-                                        <i class="fa-solid fa-sign-out-alt mr-2"></i> Sign out
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 sm:p-6 lg:p-8">
+        <main class="flex-1">
+            <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
+                {# Display Django Messages #}
                 {% if messages %}
-                <div class="mb-6 space-y-4">
+                    <div class="mb-6 space-y-3">
                     {% for message in messages %}
-                        <div class="flex items-center justify-between p-4 rounded-md shadow-md
-                                    {% if message.tags == 'error' %}bg-red-50 text-red-700 border-l-4 border-red-500{% elif message.tags == 'success' %}bg-green-50 text-green-700 border-l-4 border-green-500{% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-700 border-l-4 border-yellow-500{% else %}bg-blue-50 text-blue-700 border-l-4 border-blue-500{% endif %}"
+                        {# Alpine.js to show/hide and then remove the message after a delay #}
+                        <div x-data="{ show: true }"
+                             x-show="show"
+                             x-init="setTimeout(() => { show = false; setTimeout(() => $el.remove(), 500); }, 5000)"
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0 translate-y-2"
+                             x-transition:enter-end="opacity-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-300"
+                             x-transition:leave-start="opacity-100 translate-y-0"
+                             x-transition:leave-end="opacity-0 -translate-y-2"
+                             class="flex items-center justify-between p-4 rounded-md shadow-lg
+                                    {% if message.tags == 'success' %} bg-green-500 border border-green-600 text-white
+                                    {% elif message.tags == 'error' %} bg-red-500 border border-red-600 text-white
+                                    {% elif message.tags == 'warning' %} bg-yellow-400 border border-yellow-500 text-slate-900 dark:text-slate-800
+                                    {% elif message.tags == 'info' %} bg-blue-500 border border-blue-600 text-white
+                                    {% else %} bg-slate-500 border border-slate-600 text-white {% endif %}" {# Default message style for other tags #}
                              role="alert">
                             <div class="flex items-center">
-                                {% if message.tags == 'error' %}<i class="fa-solid fa-circle-exclamation mr-3 text-lg"></i>
-                                {% elif message.tags == 'success' %}<i class="fa-solid fa-check-circle mr-3 text-lg"></i>
-                                {% elif message.tags == 'warning' %}<i class="fa-solid fa-triangle-exclamation mr-3 text-lg"></i>
-                                {% else %}<i class="fa-solid fa-info-circle mr-3 text-lg"></i>
+                                {% if message.tags == 'success' %}<i class="fas fa-check-circle mr-3 text-lg"></i>
+                                {% elif message.tags == 'error' %}<i class="fas fa-exclamation-circle mr-3 text-lg"></i>
+                                {% elif message.tags == 'warning' %}<i class="fas fa-exclamation-triangle mr-3 text-lg"></i>
+                                {% elif message.tags == 'info' %}<i class="fas fa-info-circle mr-3 text-lg"></i>
+                                {% else %}<i class="fas fa-bell mr-3 text-lg"></i> {# Default icon #}
                                 {% endif %}
-                                <span>{{ message }}</span>
+                               <span>{{ message|safe }}</span> {# Added |safe filter if messages might contain HTML; remove if messages are always plain text #}
                             </div>
-                            <button type="button" @click="$event.target.closest('[role=alert]').remove()" class="text-current opacity-75 hover:opacity-100 ml-4">
+                            <button @click="show = false; setTimeout(() => $el.remove(), 300);" class="ml-4 text-current opacity-75 hover:opacity-100 focus:outline-none">
                                 <span class="sr-only">Close</span>
-                                <i class="fa-solid fa-times"></i>
+                                <i class="fas fa-times"></i>
                             </button>
                         </div>
                     {% endfor %}
-                </div>
+                    </div>
                 {% endif %}
 
                 {% block content %}{% endblock %}
-            </main>
-        </div>
+            </div>
+        </main>
     </div>
+</div>
 
-    {% block extra_js %}{% endblock %}
-</body>
-</html>
-
+{% block extra_js %}{% endblock extra_js %}
+{% endblock body_content %}
+{#{% extends 'base.html' %}#}
+{#{% load static %}#}
+{##}
+{#{% block body_content %}#}
+{#<div class="flex h-screen overflow-hidden bg-slate-100 dark:bg-slate-900" x-data="{ sidebarOpen: window.innerWidth >= 1024 }">#}
+{##}
+{#    {% include 'theme_partials/_sidebar.html' %}#}
+{##}
+{#    <div class="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">#}
+{##}
+{#        {% include 'theme_partials/_topbar.html' %}#}
+{##}
+{##}
+{#        <main class="flex-1">#}
+{#            <div class="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">#}
+                {# Display Django Messages #}
+{#                {% if messages %}#}
+{#                    <div class="mb-6 space-y-3">#}
+{#                    {% for message in messages %}#}
+{#                        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"#}
+{#                             class="flex items-center justify-between p-4 rounded-md shadow-sm#}
+{#                                    {% if message.tags == 'success' %} bg-green-500 border-green-600 text-white#}
+{#                                    {% elif message.tags == 'error' %} bg-red-500 border-red-600 text-white#}
+{#                                    {% elif message.tags == 'warning' %} bg-yellow-500 border-yellow-600 text-slate-800#}
+{#                                    {% else %} bg-blue-500 border-blue-600 text-white#}
+{#                                    {% endif %}"#}
+{#                             role="alert">#}
+{#                            <div class="flex items-center">#}
+{#                                {% if message.tags == 'success' %}<i class="fas fa-check-circle mr-2"></i>#}
+{#                                {% elif message.tags == 'error' %}<i class="fas fa-exclamation-circle mr-2"></i>#}
+{#                                {% elif message.tags == 'warning' %}<i class="fas fa-exclamation-triangle mr-2"></i>#}
+{#                                {% else %}<i class="fas fa-info-circle mr-2"></i>#}
+{#                                {% endif %}#}
+{#                               <span>{{ message }}</span>#}
+{#                            </div>#}
+{#                            <button @click="show = false" class="ml-4 text-current opacity-70 hover:opacity-100">#}
+{#                                <i class="fas fa-times"></i>#}
+{#                            </button>#}
+{#                        </div>#}
+{#                    {% endfor %}#}
+{#                    </div>#}
+{#                {% endif %}#}
+{##}
+{#                {% block content %}{% endblock %}#}
+{#            </div>#}
+{#        </main>#}
+{#    </div>#}
+{#</div>#}
+{#{% endblock body_content %}#}
+{#{% load static %}#}
+{#<!DOCTYPE html>#}
+{#<html lang="en">#}
+{#<head>#}
+{#    <meta charset="UTF-8">#}
+{#    <meta name="viewport" content="width=device-width, initial-scale=1.0">#}
+{#    <title>{% block title %}Dashboard - AI Job Portal{% endblock %}</title>#}
+{##}
+{#    <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">#}
+{##}
+{#    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">#}
+{##}
+{#    <link rel="preconnect" href="https://fonts.googleapis.com">#}
+{#    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>#}
+{#    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">#}
+{##}
+{#    <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>#}
+{#    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>#}
+{##}
+{#    <style>#}
+{#        /* Base font family */#}
+{#        body {#}
+{#            font-family: 'Inter', sans-serif;#}
+{#        }#}
+{#        /* Optional: hide elements managed by Alpine until it's initialized to prevent FOUC */#}
+{#        [x-cloak] {#}
+{#            display: none !important;#}
+{#        }#}
+{#    </style>#}
+{##}
+{#    {% block extra_css %}{% endblock %}#}
+{#</head>#}
+{#<body class="bg-gray-100 antialiased"#}
+{#      x-data="{ sidebarOpen: window.innerWidth >= 1024, userMenuOpen: false }"#}
+{#      @resize.window="if (window.innerWidth < 1024 && sidebarOpen) {#}
+{#                          /* Optionally close sidebar on resize to mobile if it was open */#}
+{#                          /* sidebarOpen = false; */#}
+{#                      } else if (window.innerWidth >= 1024 && !sidebarOpen) {#}
+{#                          /* Optionally open sidebar on resize to desktop if it was closed */#}
+{#                          /* sidebarOpen = true; */#}
+{#                      }"#}
+{#      @click.away="userMenuOpen = false"#}
+{#      x-cloak>#}
+{##}
+{#    <div class="flex h-screen overflow-hidden">#}
+{#        {% include "_sidebar.html" %}#}
+{##}
+{#        <div class="flex-1 flex flex-col overflow-hidden">#}
+{#            <!-- Modified _topbar.html to include user profile dropdown -->#}
+{#            <header class="bg-white shadow-sm z-10">#}
+{#                <div class="px-4 sm:px-6 lg:px-8 py-4">#}
+{#                    <div class="flex items-center justify-between">#}
+{#                        <div class="flex items-center">#}
+{#                            <button @click="sidebarOpen = !sidebarOpen" class="text-gray-500 focus:outline-none lg:hidden">#}
+{#                                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">#}
+{#                                    <path d="M4 6H20M4 12H20M4 18H11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>#}
+{#                                </svg>#}
+{#                            </button>#}
+{#                            <div class="text-xl font-semibold text-gray-800 lg:hidden ml-3">#}
+{#                                AI Job Portal#}
+{#                            </div>#}
+{#                        </div>#}
+{##}
+{#                        <div class="flex items-center space-x-4">#}
+{#                            <div class="relative" x-data="{ userMenuOpen: false }">#}
+{#                                <button @click="userMenuOpen = !userMenuOpen" class="flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500" id="user-menu-button" aria-expanded="false" aria-haspopup="true">#}
+{#                                    <span class="sr-only">Open user menu</span>#}
+{#                                    {% if user.profile_picture %}#}
+{#                                        <img class="h-8 w-8 rounded-full object-cover" src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name|default:user.username }}">#}
+{#                                    {% else %}#}
+{#                                        <div class="h-8 w-8 rounded-full bg-primary-500 flex items-center justify-center text-white">#}
+{#                                            {{ user.username.0|upper }}#}
+{#                                        </div>#}
+{#                                    {% endif %}#}
+{#                                </button>#}
+{##}
+{#                                <!-- Dropdown menu -->#}
+{#                                <div x-show="userMenuOpen"#}
+{#                                     x-transition:enter="transition ease-out duration-100"#}
+{#                                     x-transition:enter-start="transform opacity-0 scale-95"#}
+{#                                     x-transition:enter-end="transform opacity-100 scale-100"#}
+{#                                     x-transition:leave="transition ease-in duration-75"#}
+{#                                     x-transition:leave-start="transform opacity-100 scale-100"#}
+{#                                     x-transition:leave-end="transform opacity-0 scale-95"#}
+{#                                     class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"#}
+{#                                     role="menu"#}
+{#                                     aria-orientation="vertical"#}
+{#                                     aria-labelledby="user-menu-button"#}
+{#                                     tabindex="-1"#}
+{#                                     @click.away="userMenuOpen = false">#}
+{##}
+{#                                    <div class="px-4 py-2 border-b border-gray-100">#}
+{#                                        <p class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</p>#}
+{#                                        <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>#}
+{#                                    </div>#}
+{##}
+{#                                    <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">#}
+{#                                        <i class="fa-solid fa-user mr-2"></i> My Profile#}
+{#                                    </a>#}
+{#                                    <a href="{% url 'edit_profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">#}
+{#                                        <i class="fa-solid fa-user-edit mr-2"></i> Edit Profile#}
+{#                                    </a>#}
+{#                                    <a href="{% url 'update_api_keys' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">#}
+{#                                        <i class="fa-solid fa-key mr-2"></i> API Keys#}
+{#                                    </a>#}
+{#                                    <a href="{% url 'dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">#}
+{#                                        <i class="fa-solid fa-chart-pie mr-2"></i> Dashboard#}
+{#                                    </a>#}
+{#                                    <div class="border-t border-gray-100 my-1"></div>#}
+{#                                    <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">#}
+{#                                        <i class="fa-solid fa-sign-out-alt mr-2"></i> Sign out#}
+{#                                    </a>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </header>#}
+{##}
+{#            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 sm:p-6 lg:p-8">#}
+{#                {% if messages %}#}
+{#                <div class="mb-6 space-y-4">#}
+{#                    {% for message in messages %}#}
+{#                        <div class="flex items-center justify-between p-4 rounded-md shadow-md#}
+{#                                    {% if message.tags == 'error' %}bg-red-50 text-red-700 border-l-4 border-red-500{% elif message.tags == 'success' %}bg-green-50 text-green-700 border-l-4 border-green-500{% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-700 border-l-4 border-yellow-500{% else %}bg-blue-50 text-blue-700 border-l-4 border-blue-500{% endif %}"#}
+{#                             role="alert">#}
+{#                            <div class="flex items-center">#}
+{#                                {% if message.tags == 'error' %}<i class="fa-solid fa-circle-exclamation mr-3 text-lg"></i>#}
+{#                                {% elif message.tags == 'success' %}<i class="fa-solid fa-check-circle mr-3 text-lg"></i>#}
+{#                                {% elif message.tags == 'warning' %}<i class="fa-solid fa-triangle-exclamation mr-3 text-lg"></i>#}
+{#                                {% else %}<i class="fa-solid fa-info-circle mr-3 text-lg"></i>#}
+{#                                {% endif %}#}
+{#                                <span>{{ message }}</span>#}
+{#                            </div>#}
+{#                            <button type="button" @click="$event.target.closest('[role=alert]').remove()" class="text-current opacity-75 hover:opacity-100 ml-4">#}
+{#                                <span class="sr-only">Close</span>#}
+{#                                <i class="fa-solid fa-times"></i>#}
+{#                            </button>#}
+{#                        </div>#}
+{#                    {% endfor %}#}
+{#                </div>#}
+{#                {% endif %}#}
+{##}
+{#                {% block content %}{% endblock %}#}
+{#            </main>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    {% block extra_js %}{% endblock %}#}
+{#</body>#}
+{#</html>#}
+{##}
 {#{% load static %}#}
 {#<!DOCTYPE html>#}
 {#<html lang="en">#}

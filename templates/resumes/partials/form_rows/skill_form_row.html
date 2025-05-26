@@ -1,74 +1,171 @@
-{% comment %} {% extends 'resumes/wizard_base.html' %} {% endcomment %}
-{% load widget_tweaks %}
-{# *** Skill Card Design - Inspired by work_experience.html card style *** #}
-<div class="skill-card bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 p-4 mb-3 flex items-center relative group"
-     id="skill_card_{{ index }}">
+{# templates/resumes/partials/form_rows/skill_form_row.html #}
+{% load widget_tweaks static i18n %}
 
-    {# Hidden fields to store data #}
-    <input type="hidden" name="skill_name_{{ index }}" value="{{ skill_name }}">
-    <input type="hidden" name="skill_type_{{ index }}" value="{{ skill_type }}">
-    <input type="hidden" name="proficiency_level_{{ index }}" value="{{ proficiency }}">
-    <input type="hidden" name="years_{{ index }}" value="{{ years }}">
+{# Parameters passed: skill_form, formset_prefix, is_empty_form, skill_index #}
+<div class="skill-form bg-slate-50 dark:bg-slate-800/60 p-5 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 relative"
+     data-skill-form-index="{{ skill_index }}"
+     x-data="{ skillCategory_{{ skill_index }}: '{{ skill_form.skill_category_choice.value|default_if_none:'' }}' }"> {# Unique Alpine state #}
 
-    {# Leading icon/indicator #}
-    <div class="flex-shrink-0 w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center mr-4 shadow-sm">
-        <i class="fa-solid fa-star text-indigo-600 text-sm"></i> {# Or use fa-code, fa-check, etc. #}
+    {% if not is_empty_form and skill_form.instance.pk %}{{ skill_form.id }}{% endif %}
+
+    <div class="flex justify-between items-start mb-4 pb-3 border-b border-slate-200 dark:border-slate-700">
+        <h3 class="text-lg font-medium text-primary-700 dark:text-primary-400 flex items-center">
+            <i class="fas fa-cogs mr-2"></i>
+            Skill #<span class="skill-form-counter">{% if not is_empty_form %}{{ forloop.counter }}{% else %}{{ skill_index|replace:"__prefix__","New" }}{% endif %}</span>
+        </h3>
+        <div class="flex items-center space-x-2">
+            {% if skill_form.DELETE %}
+                <div class="flex items-center">
+                    {% render_field skill_form.DELETE class+="form-checkbox-sm text-red-600 focus:ring-red-500 delete-skill-checkbox" data_form_index=skill_index %}
+                    <label for="{{ skill_form.DELETE.id_for_label }}" class="ml-1.5 text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 cursor-pointer">
+                        Delete
+                    </label>
+                </div>
+            {% endif %}
+            <button type="button" class="remove-skill-form btn-icon-danger btn-xs" title="Remove this skill">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
     </div>
 
-    {# Skill Name #}
-    <div class="font-medium text-gray-800 group-hover:text-indigo-700 transition-colors duration-200 flex-grow mr-4 min-w-0">
-        <span class="truncate">{{ skill_name }}</span> {# Added truncate for long names #}
+    {% for hidden_field in skill_form.hidden_fields %}
+        {% if hidden_field.name != 'id' %}{{ hidden_field }}{% endif %}
+    {% endfor %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
+        <div class="md:col-span-2">
+            <label for="{{ skill_form.skill_name.id_for_label }}" class="form-label">Skill Name <span class="text-red-500">*</span></label>
+            {% render_field skill_form.skill_name class+="form-input" placeholder="e.g., Python, Project Management" %}
+            {% for error in skill_form.skill_name.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+
+        <div>
+            <label for="{{ skill_form.skill_category_choice.id_for_label }}" class="form-label">Category (Optional)</label>
+            {% render_field skill_form.skill_category_choice class+="form-select" x_model="skillCategory_"|add:skill_index %}
+            {% for error in skill_form.skill_category_choice.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+
+        <div x-show="skillCategory_{{ skill_index }} === 'OTHER'">
+            <label for="{{ skill_form.skill_category_other.id_for_label }}" class="form-label">Other Category <span class="text-red-500">*</span></label>
+            {% render_field skill_form.skill_category_other class+="form-input" placeholder="Specify other category" %}
+            {% for error in skill_form.skill_category_other.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+    </div>
+    <div class="mt-4">
+        <label for="{{ skill_form.proficiency_level.id_for_label }}" class="form-label">Proficiency Level (0-5, Optional)</label>
+        <div class="proficiency-slider-container mt-1">
+            {% render_field skill_form.proficiency_level type="range" min="0" max="5" step="1" class+="form-range w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer" id=skill_form.proficiency_level.auto_id %}
+            <output class="proficiency-slider-output ml-3 font-semibold text-primary-600 dark:text-primary-400 w-8 text-center"
+                    for="{{ skill_form.proficiency_level.auto_id }}">{{ skill_form.proficiency_level.value|default_if_none:0 }}</output>
+        </div>
+        {% if is_empty_form %} {# Add script only for empty form template to be cloned by JS #}
+        <script>
+            (function() {
+                const slider = document.getElementById("{{ skill_form.proficiency_level.auto_id|replace:'__prefix__'-skill_index }}"); // This ID will be wrong until JS fixes prefix
+                const output = slider.nextElementSibling;
+                if (slider && output) {
+                    output.textContent = slider.value;
+                    slider.addEventListener('input', function() { output.textContent = this.value; });
+                }
+            })();
+        </script>
+        {% else %} {# For already rendered forms, attach event listeners properly #}
+         <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const slider_{{ skill_index }} = document.getElementById("{{ skill_form.proficiency_level.id_for_label }}");
+                const output_{{ skill_index }} = slider_{{ skill_index }}.nextElementSibling;
+                if (slider_{{ skill_index }} && output_{{ skill_index }}) {
+                    output_{{ skill_index }}.textContent = slider_{{ skill_index }}.value;
+                    slider_{{ skill_index }}.addEventListener('input', function() {
+                        output_{{ skill_index }}.textContent = this.value;
+                    });
+                }
+            });
+        </script>
+        {% endif %}
+        {% for error in skill_form.proficiency_level.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
     </div>
 
-    {# Skill Type Badge #}
-    <div class="flex-shrink-0 w-32 mr-4">
-        <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 whitespace-nowrap">
-            {% for type_value, type_label in skill_types.items %}
-                {% if skill_type == type_value %}{{ type_label }}{% endif %}
+    {% if skill_form.non_field_errors %}
+        <div class="mt-3 p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700/60 rounded-md text-sm text-red-600 dark:text-red-300">
+            {% for error in skill_form.non_field_errors %}
+                <p>{{ error }}</p>
             {% endfor %}
-        </span>
-    </div>
-
-    {# --- Proficiency Bar and Percentage Text --- #}
-    <div class="flex-grow flex items-center min-w-[150px] mr-4">
-        {# Background of the progress bar #}
-        <div class="w-full bg-gray-200 rounded-full h-2.5 mr-3 relative overflow-hidden">
-            {# Actual progress fill - Width driven by proficiency %} #}
-            <div class="bg-gradient-to-r from-indigo-500 to-blue-500 h-2.5 rounded-full"
-                 style="width: {{ proficiency }}%">
-            </div>
         </div>
-        {# Percentage Text - Displayed next to the bar #}
-        <div class="flex-shrink-0 text-sm font-semibold text-indigo-700 w-10 text-right">
-            {{ proficiency }}%
-        </div>
-    </div>
-    {# --- End Proficiency Section --- #}
-
-    {# Years Experience (Optional) #}
-    {% if years %}
-    <div class="flex-shrink-0 w-24 text-sm text-gray-500 mr-4 text-right">
-        {{ years }} year{% if years != 1 %}s{% endif %}
-    </div>
-    {% else %}
-    <div class="flex-shrink-0 w-24 mr-4"></div> {# Spacer #}
     {% endif %}
-
-    {# Action Buttons (Edit/Delete) - Appear on hover #}
-    <div class="flex-shrink-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 bg-white text-indigo-500 hover:bg-indigo-50 hover:text-indigo-700 tooltip tooltip-left"
-                data-tip="Edit skill"
-                onclick="editSkill({{ index }})">
-            <i class="fa-solid fa-pen-to-square text-xs"></i>
-        </button>
-        <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 bg-white text-red-500 hover:bg-red-50 hover:text-red-700 tooltip tooltip-left"
-                data-tip="Remove skill"
-                onclick="removeSkill({{ index }})">
-            <i class="fa-solid fa-times text-xs"></i>
-        </button>
-    </div>
 </div>
 
+{#{% comment %} {% extends 'resumes/wizard_base.html' %} {% endcomment %}#}
+{#{% load widget_tweaks %}#}
+{# *** Skill Card Design - Inspired by work_experience.html card style *** #}
+{#<div class="skill-card bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 p-4 mb-3 flex items-center relative group"#}
+{#     id="skill_card_{{ index }}">#}
+{##}
+    {# Hidden fields to store data #}
+{#    <input type="hidden" name="skill_name_{{ index }}" value="{{ skill_name }}">#}
+{#    <input type="hidden" name="skill_type_{{ index }}" value="{{ skill_type }}">#}
+{#    <input type="hidden" name="proficiency_level_{{ index }}" value="{{ proficiency }}">#}
+{#    <input type="hidden" name="years_{{ index }}" value="{{ years }}">#}
+{##}
+    {# Leading icon/indicator #}
+{#    <div class="flex-shrink-0 w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center mr-4 shadow-sm">#}
+{#        <i class="fa-solid fa-star text-indigo-600 text-sm"></i> {# Or use fa-code, fa-check, etc. #}
+{#    </div>#}
+{##}
+    {# Skill Name #}
+{#    <div class="font-medium text-gray-800 group-hover:text-indigo-700 transition-colors duration-200 flex-grow mr-4 min-w-0">#}
+{#        <span class="truncate">{{ skill_name }}</span> {# Added truncate for long names #}
+{#    </div>#}
+{##}
+    {# Skill Type Badge #}
+{#    <div class="flex-shrink-0 w-32 mr-4">#}
+{#        <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 whitespace-nowrap">#}
+{#            {% for type_value, type_label in skill_types.items %}#}
+{#                {% if skill_type == type_value %}{{ type_label }}{% endif %}#}
+{#            {% endfor %}#}
+{#        </span>#}
+{#    </div>#}
+{##}
+    {# --- Proficiency Bar and Percentage Text --- #}
+{#    <div class="flex-grow flex items-center min-w-[150px] mr-4">#}
+        {# Background of the progress bar #}
+{#        <div class="w-full bg-gray-200 rounded-full h-2.5 mr-3 relative overflow-hidden">#}
+            {# Actual progress fill - Width driven by proficiency %} #}
+{#            <div class="bg-gradient-to-r from-indigo-500 to-blue-500 h-2.5 rounded-full"#}
+{#                 style="width: {{ proficiency }}%">#}
+{#            </div>#}
+{#        </div>#}
+        {# Percentage Text - Displayed next to the bar #}
+{#        <div class="flex-shrink-0 text-sm font-semibold text-indigo-700 w-10 text-right">#}
+{#            {{ proficiency }}%#}
+{#        </div>#}
+{#    </div>#}
+    {# --- End Proficiency Section --- #}
+{##}
+    {# Years Experience (Optional) #}
+{#    {% if years %}#}
+{#    <div class="flex-shrink-0 w-24 text-sm text-gray-500 mr-4 text-right">#}
+{#        {{ years }} year{% if years != 1 %}s{% endif %}#}
+{#    </div>#}
+{#    {% else %}#}
+{#    <div class="flex-shrink-0 w-24 mr-4"></div> {# Spacer #}
+{#    {% endif %}#}
+{##}
+    {# Action Buttons (Edit/Delete) - Appear on hover #}
+{#    <div class="flex-shrink-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">#}
+{#        <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 bg-white text-indigo-500 hover:bg-indigo-50 hover:text-indigo-700 tooltip tooltip-left"#}
+{#                data-tip="Edit skill"#}
+{#                onclick="editSkill({{ index }})">#}
+{#            <i class="fa-solid fa-pen-to-square text-xs"></i>#}
+{#        </button>#}
+{#        <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 bg-white text-red-500 hover:bg-red-50 hover:text-red-700 tooltip tooltip-left"#}
+{#                data-tip="Remove skill"#}
+{#                onclick="removeSkill({{ index }})">#}
+{#            <i class="fa-solid fa-times text-xs"></i>#}
+{#        </button>#}
+{#    </div>#}
+{#</div>#}
+{##}
 {#<!-- Enhanced Skill Card with Proper Spacing and Progress Bar -->#}
 {#<div class="skill-card bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-4 mb-4 flex items-center relative group"#}
 {#     id="skill_card_{{ index }}">#}

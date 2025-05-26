@@ -1,0 +1,125 @@
+{# templates/resumes/create_resume_meta.html #}
+{% extends 'base_authenticated.html' %}
+{% load widget_tweaks static i18n %}
+{% load resume_extras %}
+
+
+{% block title %}{% trans "Start New Resume" %}{% endblock %}
+
+{% block extra_head %}
+{{ block.super }}
+<style>
+    .template-card {
+        @apply border-2 border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 ease-in-out bg-white dark:bg-slate-800;
+    }
+    .template-card:hover {
+        @apply shadow-xl border-primary-500 dark:border-primary-400 transform scale-105;
+    }
+    .template-card.selected {
+        @apply border-primary-600 dark:border-primary-400 ring-2 ring-offset-2 ring-primary-500 dark:ring-primary-400 shadow-xl scale-105;
+    }
+    .template-card img {
+        @apply w-full h-56 object-cover object-top transition-transform duration-300; /* Adjusted height */
+    }
+    .template-card.selected img {
+        /* Optional: further highlight selected image, e.g., a subtle overlay or border */
+    }
+    .template-card .template-info {
+        @apply p-3 text-center; /* Slightly reduced padding */
+    }
+    .template-card .template-name {
+        @apply text-sm font-semibold text-slate-800 dark:text-slate-100; /* Adjusted size */
+    }
+    .template-card .template-description { /* If you add descriptions to templates_info */
+        @apply text-xs text-slate-500 dark:text-slate-400 mt-1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white dark:bg-slate-800 shadow-xl rounded-lg p-6 sm:p-8">
+        <div class="text-center mb-8">
+            <i class="fas fa-pencil-ruler text-4xl text-primary-500 dark:text-primary-400 mb-3"></i>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">{% trans "Name Your Resume & Choose a Template" %}</h1>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                {% trans "Give your new resume a title and select a starting template. You can change the template later." %}
+            </p>
+        </div>
+
+        {# 'form' is the ResumeMetaForm instance passed from create_resume_meta_view #}
+        <form method="post" class="space-y-6" x-data="{ selectedTemplate: '{{ form.template_name.value|default_if_none:"template1" }}' }">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="mb-4 p-3 bg-red-100 dark:bg-red-800/30 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 rounded-md text-sm">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div>
+                <label for="{{ form.title.id_for_label }}" class="form-label">{% trans "Resume Title" %} <span class="text-red-500">*</span></label>
+                {% render_field form.title class+="form-input" placeholder="e.g., Software Engineer Resume, Marketing Specialist CV" %}
+                {% for error in form.title.errors %}
+                    <p class="form-error-text">{{ error }}</p>
+                {% endfor %}
+                {% if form.title.help_text %}
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ form.title.help_text|safe }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label class="form-label">{% trans "Choose a Template" %} <span class="text-red-500">*</span></label>
+                {# This hidden input will hold the actual value for the form submission #}
+                {% render_field form.template_name type="hidden" x-model="selectedTemplate" %}
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-2">
+                    {# The view create_resume_meta_view passes `templates_info` in context #}
+                    {% for template_id_value, template_display_name in form.fields.template_name.choices %}
+                        {% if template_id_value %} {# Skip empty choice if present #}
+                            {% with current_template_info=templates_info|get_item:template_id_value %}
+                                <div class="template-card" 
+                                     :class="{ 'selected': selectedTemplate === '{{ template_id_value }}' }"
+                                     @click="selectedTemplate = '{{ template_id_value }}'">
+                                    <img src="{% static current_template_info.thumbnail_path|default:'img/resume-thumbnails/default.png' %}" 
+                                         alt="{{ template_display_name }} Preview" 
+                                         onerror="this.onerror=null; this.src='{% static 'img/resume-thumbnails/default.png' %}';">
+                                    <div class="template-info">
+                                        <p class="template-name">{{ template_display_name }}</p>
+                                        {% if current_template_info.description %}
+                                        <p class="template-description">{{ current_template_info.description }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endwith %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                 {% for error in form.template_name.errors %}
+                    <p class="form-error-text mt-2">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="pt-6 flex items-center justify-between">
+                <a href="{% url 'job_portal:resume_creation_choice' %}" class="btn-neutral">
+                    <i class="fas fa-chevron-left mr-1.5"></i> {% trans "Back to Choice" %}
+                </a>
+                <button type="submit" class="btn-primary">
+                    {% trans "Start Building Resume" %} <i class="fas fa-arrow-right ml-1.5"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    // Alpine.js handles the template selection state (selectedTemplate)
+    // and applies the '.selected' class.
+    // No additional complex JS is strictly needed here for this functionality.
+</script>
+{% endblock %}

@@ -1,95 +1,173 @@
+{# templates/resumes/upload_resume.html #}
 {% extends 'base_authenticated.html' %}
-{% load static %}
+{% load widget_tweaks %}
 
 {% block title %}Upload Your Resume{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-10 md:py-12"> {# Added vertical padding #}
-    <div class="flex flex-col items-center mb-10"> {# Increased mb #}
-        <div class="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mb-4 text-primary-600 dark:text-primary-400"> {# Replaced accent/10 and text-accent with primary colors and rounded-full #}
-            <i class="fa-solid fa-file-arrow-up text-3xl"></i> {# Adjusted icon size #}
+<div class="max-w-lg mx-auto">
+    <div class="bg-white dark:bg-slate-800 shadow-xl rounded-lg p-6 sm:p-8">
+        <div class="text-center mb-8">
+            <i class="fas fa-cloud-upload-alt text-4xl text-primary-500 dark:text-primary-400 mb-3"></i>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">Upload Your Existing Resume</h1>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                Upload your resume in PDF, DOC, or TXT format. We'll attempt to parse its content.
+            </p>
         </div>
-        <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white text-center">Upload Your Resume</h1> {# Adjusted text color #}
-        <p class="text-gray-600 dark:text-gray-300 mt-2 text-center max-w-2xl mx-auto"> {# Adjusted text color, added mx-auto #}
-            Upload your existing resume and we'll help you enhance it with our AI tools
-        </p>
-    </div>
 
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border-4 border-primary-400 dark:border-primary-700 max-w-2xl mx-auto"> {# Increased border to border-4 and color to primary-400 for more visibility #}
-        <div class="p-8"> {# Replaced card-body p-8 with padding #}
-            <form method="post" enctype="multipart/form-data" class="space-y-6">
-                {% csrf_token %}
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
 
-                <div class="bg-gray-50 dark:bg-gray-700/30 p-6 rounded-lg border-2 border-gray-300 dark:border-gray-600"> {# Changed border to border-2 and color to gray-300 #}
-                    <div class="flex flex-col items-center space-y-4">
-                        <div class="text-center mb-4">
-                            <i class="fa-solid fa-file-import text-primary-600 dark:text-primary-400 text-4xl mb-2"></i> {# Replaced text-accent with primary colors and increased size #}
-                            <h3 class="font-semibold text-gray-900 dark:text-white">Select Resume File</h3> {# Adjusted font weight and text color #}
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1"> {# Adjusted text color #}
-                                Supported formats: PDF, DOC, DOCX, TXT, ODT
-                            </p>
+            {% if form.non_field_errors %}
+            <div class="p-3 bg-red-50 dark:bg-red-800/30 border border-red-200 dark:border-red-700 rounded-md text-sm text-red-700 dark:text-red-300">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div>
+                <label for="{{ form.title.id_for_label }}" class="form-label">Resume Title</label>
+                {% render_field form.title class+="form-input" placeholder="e.g., My Uploaded Resume, John Doe CV" %}
+                {% for error in form.title.errors %}
+                    <p class="form-error-text">{{ error }}</p>
+                {% endfor %}
+                 {% if form.title.help_text %}
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ form.title.help_text|safe }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="{{ form.resume_file.id_for_label }}" class="form-label">Resume File</label>
+                <div x-data="{ fileName: '' }" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 dark:border-slate-600 border-dashed rounded-md">
+                    <div class="space-y-1 text-center">
+                        <svg class="mx-auto h-12 w-12 text-slate-400 dark:text-slate-500" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <div class="flex text-sm text-slate-600 dark:text-slate-400">
+                            <label for="{{ form.resume_file.id_for_label }}" class="relative cursor-pointer bg-white dark:bg-slate-800 rounded-md font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 dark:focus-within:ring-offset-slate-800 focus-within:ring-primary-500">
+                                <span>Upload a file</span>
+                                {% render_field form.resume_file class+="sr-only" @change="fileName = $event.target.files[0] ? $event.target.files[0].name : ''" %}
+                            </label>
+                            <p class="pl-1">or drag and drop</p>
                         </div>
-
-                        <div class="w-full">
-                            {{ form.resume_file }}
-                            {% if form.resume_file.errors %}
-                                <div class="text-red-600 dark:text-red-500 text-sm mt-1"> {# Styled errors with red #}
-                                    {{ form.resume_file.errors }}
-                                </div>
-                            {% endif %}
-                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1"> {# Adjusted text color #}
-                                {{ form.resume_file.help_text }}
-                            </div>
-                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-500">PDF, DOC, DOCX, TXT up to 5MB</p>
+                        <p x-show="fileName" class="text-sm text-slate-500 dark:text-slate-400" x-text="fileName"></p>
                     </div>
                 </div>
+                {% for error in form.resume_file.errors %}
+                    <p class="form-error-text">{{ error }}</p>
+                {% endfor %}
+                 {% if form.resume_file.help_text %}
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ form.resume_file.help_text|safe }}</p>
+                {% endif %}
+            </div>
 
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border-2 border-gray-300 dark:border-gray-600"> {# Changed border to border-2 and color to gray-300 #}
-                    <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Choose AI Engine</h3> {# Adjusted font weight, text color, and mb #}
-                    <div class="flex flex-col space-y-3"> {# Replaced gap with space-y #}
-                        {% for radio in form.ai_engine %}
-                        <label class="flex items-center space-x-3 cursor-pointer text-gray-800 dark:text-gray-200"> {# Adjusted gap and text color #}
-                            {{ radio.tag }}
-                            <span>{{ radio.choice_label }}</span>
-                        </label>
-                        {% endfor %}
-                    </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-2"> {# Adjusted text color #}
-                        {{ form.ai_engine.help_text }}
-                    </div>
-                </div>
-
-                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border-2 border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-300"> {# Changed border to border-2 and color to blue-300 #}
-                    <div class="flex items-start space-x-3">
-                        <div class="flex-shrink-0 mt-0.5">
-                            <i class="fa-solid fa-info-circle text-blue-600 dark:text-blue-400 text-lg"></i> {# Adjusted text color to a slightly darker blue and size #}
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-blue-800 dark:text-blue-200 mb-1">What happens next?</h4> {# Adjusted font weight, text color, and added mb #}
-                            <ul class="text-sm text-blue-700 dark:text-blue-300 space-y-1 list-disc pl-4"> {# Adjusted text color and size #}
-                                <li>Our AI will analyze your resume content</li>
-                                <li>You'll select a professional template</li>
-                                <li>Review and edit the parsed content</li>
-                                <li>Download your enhanced ATS-optimized resume</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex flex-col-reverse md:flex-row justify-end gap-3 mt-8"> {# Adjusted gap and mt #}
-                    <a href="{% url 'job_portal:resume_creation_choice' %}" class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 text-base font-medium"> {# Replaced btn btn-outline #}
-                        <i class="fa-solid fa-arrow-left mr-2"></i> Back
-                    </a>
-                    <button type="submit" class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 text-base font-medium dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-600"> {# Replaced btn btn-accent with primary button styles #}
-                        <i class="fa-solid fa-upload mr-2"></i> Upload & Continue
-                    </button>
-                </div>
-            </form>
-        </div>
+            <div class="pt-4 flex items-center justify-between">
+                 <a href="{% url 'job_portal:resume_creation_choice' %}" class="btn-neutral">
+                    <i class="fas fa-chevron-left mr-1.5"></i> Back
+                </a>
+                <button type="submit" class="btn-primary">
+                    Upload and Process <i class="fas fa-cogs ml-1.5"></i>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
 
+{#{% extends 'base_authenticated.html' %}#}
+{#{% load static %}#}
+{##}
+{#{% block title %}Upload Your Resume{% endblock %}#}
+{##}
+{#{% block content %}#}
+{#<div class="container mx-auto px-4 py-10 md:py-12"> {# Added vertical padding #}
+{#    <div class="flex flex-col items-center mb-10"> {# Increased mb #}
+{#        <div class="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mb-4 text-primary-600 dark:text-primary-400"> {# Replaced accent/10 and text-accent with primary colors and rounded-full #}
+{#            <i class="fa-solid fa-file-arrow-up text-3xl"></i> {# Adjusted icon size #}
+{#        </div>#}
+{#        <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white text-center">Upload Your Resume</h1> {# Adjusted text color #}
+{#        <p class="text-gray-600 dark:text-gray-300 mt-2 text-center max-w-2xl mx-auto"> {# Adjusted text color, added mx-auto #}
+{#            Upload your existing resume and we'll help you enhance it with our AI tools#}
+{#        </p>#}
+{#    </div>#}
+{##}
+{#    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border-4 border-primary-400 dark:border-primary-700 max-w-2xl mx-auto"> {# Increased border to border-4 and color to primary-400 for more visibility #}
+{#        <div class="p-8"> {# Replaced card-body p-8 with padding #}
+{#            <form method="post" enctype="multipart/form-data" class="space-y-6">#}
+{#                {% csrf_token %}#}
+{##}
+{#                <div class="bg-gray-50 dark:bg-gray-700/30 p-6 rounded-lg border-2 border-gray-300 dark:border-gray-600"> {# Changed border to border-2 and color to gray-300 #}
+{#                    <div class="flex flex-col items-center space-y-4">#}
+{#                        <div class="text-center mb-4">#}
+{#                            <i class="fa-solid fa-file-import text-primary-600 dark:text-primary-400 text-4xl mb-2"></i> {# Replaced text-accent with primary colors and increased size #}
+{#                            <h3 class="font-semibold text-gray-900 dark:text-white">Select Resume File</h3> {# Adjusted font weight and text color #}
+{#                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1"> {# Adjusted text color #}
+{#                                Supported formats: PDF, DOC, DOCX, TXT, ODT#}
+{#                            </p>#}
+{#                        </div>#}
+{##}
+{#                        <div class="w-full">#}
+{#                            {{ form.resume_file }}#}
+{#                            {% if form.resume_file.errors %}#}
+{#                                <div class="text-red-600 dark:text-red-500 text-sm mt-1"> {# Styled errors with red #}
+{#                                    {{ form.resume_file.errors }}#}
+{#                                </div>#}
+{#                            {% endif %}#}
+{#                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1"> {# Adjusted text color #}
+{#                                {{ form.resume_file.help_text }}#}
+{#                            </div>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border-2 border-gray-300 dark:border-gray-600"> {# Changed border to border-2 and color to gray-300 #}
+{#                    <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Choose AI Engine</h3> {# Adjusted font weight, text color, and mb #}
+{#                    <div class="flex flex-col space-y-3"> {# Replaced gap with space-y #}
+{#                        {% for radio in form.ai_engine %}#}
+{#                        <label class="flex items-center space-x-3 cursor-pointer text-gray-800 dark:text-gray-200"> {# Adjusted gap and text color #}
+{#                            {{ radio.tag }}#}
+{#                            <span>{{ radio.choice_label }}</span>#}
+{#                        </label>#}
+{#                        {% endfor %}#}
+{#                    </div>#}
+{#                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-2"> {# Adjusted text color #}
+{#                        {{ form.ai_engine.help_text }}#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border-2 border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-300"> {# Changed border to border-2 and color to blue-300 #}
+{#                    <div class="flex items-start space-x-3">#}
+{#                        <div class="flex-shrink-0 mt-0.5">#}
+{#                            <i class="fa-solid fa-info-circle text-blue-600 dark:text-blue-400 text-lg"></i> {# Adjusted text color to a slightly darker blue and size #}
+{#                        </div>#}
+{#                        <div>#}
+{#                            <h4 class="font-semibold text-blue-800 dark:text-blue-200 mb-1">What happens next?</h4> {# Adjusted font weight, text color, and added mb #}
+{#                            <ul class="text-sm text-blue-700 dark:text-blue-300 space-y-1 list-disc pl-4"> {# Adjusted text color and size #}
+{#                                <li>Our AI will analyze your resume content</li>#}
+{#                                <li>You'll select a professional template</li>#}
+{#                                <li>Review and edit the parsed content</li>#}
+{#                                <li>Download your enhanced ATS-optimized resume</li>#}
+{#                            </ul>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <div class="flex flex-col-reverse md:flex-row justify-end gap-3 mt-8"> {# Adjusted gap and mt #}
+{#                    <a href="{% url 'job_portal:resume_creation_choice' %}" class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 text-base font-medium"> {# Replaced btn btn-outline #}
+{#                        <i class="fa-solid fa-arrow-left mr-2"></i> Back#}
+{#                    </a>#}
+{#                    <button type="submit" class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 text-base font-medium dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-600"> {# Replaced btn btn-accent with primary button styles #}
+{#                        <i class="fa-solid fa-upload mr-2"></i> Upload & Continue#}
+{#                    </button>#}
+{#                </div>#}
+{#            </form>#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
+{#{% endblock %}#}
+{##}
 {#<!-- resumes/upload_resume.html -->#}
 {#{% extends 'base_authenticated.html' %}#}
 {#{% load static %}#}

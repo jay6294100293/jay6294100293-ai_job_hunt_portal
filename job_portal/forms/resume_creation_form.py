@@ -38,7 +38,6 @@ class ResumeBasicInfoForm(forms.ModelForm):
         fields = [
             'first_name', 'mid_name', 'last_name', 'email',
             'phone', 'address', 'linkedin', 'github', 'portfolio',
-            'profile_picture'
         ]
         widgets = {
             'first_name': forms.TextInput(attrs={'class': tailwind_input_classes, 'placeholder': 'First Name'}),

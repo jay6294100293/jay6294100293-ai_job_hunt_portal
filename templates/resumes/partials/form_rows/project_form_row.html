@@ -1,0 +1,123 @@
+{# templates/resumes/partials/form_rows/project_form_row.html #}
+{% load widget_tweaks static i18n %}
+
+{# Parameters passed: proj_form, formset_prefix, is_empty_form, bullet_formset_empty, project_index #}
+<div class="project-form bg-slate-50 dark:bg-slate-800/60 p-5 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 relative"
+     data-project-form-index="{{ project_index }}">
+
+    {% if not is_empty_form and proj_form.instance.pk %}{{ proj_form.id }}{% endif %}
+
+    <div class="flex justify-between items-start mb-4 pb-3 border-b border-slate-200 dark:border-slate-700">
+        <h3 class="text-lg font-medium text-primary-700 dark:text-primary-400 flex items-center">
+            <i class="fas fa-project-diagram mr-2"></i>
+            Project #<span class="project-form-counter">{% if not is_empty_form %}{{ forloop.counter }}{% else %}{{ project_index|replace:"__prefix__","New" }}{% endif %}</span>
+        </h3>
+        <div class="flex items-center space-x-2">
+            {% if proj_form.DELETE %}
+                <div class="flex items-center">
+                    {% render_field proj_form.DELETE class+="form-checkbox-sm text-red-600 focus:ring-red-500 delete-project-checkbox" data_form_index=project_index %}
+                    <label for="{{ proj_form.DELETE.id_for_label }}" class="ml-1.5 text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 cursor-pointer">
+                        Delete
+                    </label>
+                </div>
+            {% endif %}
+            <button type="button" class="remove-project-form btn-icon-danger btn-xs" title="Remove this project entry">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
+    </div>
+
+    {% for hidden_field in proj_form.hidden_fields %}
+        {% if hidden_field.name != 'id' %}{{ hidden_field }}{% endif %}
+    {% endfor %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
+        <div class="md:col-span-2">
+            <label for="{{ proj_form.project_name.id_for_label }}" class="form-label">Project Name <span class="text-red-500">*</span></label>
+            {% render_field proj_form.project_name class+="form-input" placeholder="e.g., Personal Portfolio Website, AI Chatbot" %}
+            {% for error in proj_form.project_name.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+        <div class="md:col-span-2">
+            <label for="{{ proj_form.summary.id_for_label }}" class="form-label">Project Summary / Description (Optional)</label>
+            {% render_field proj_form.summary class+="form-input" rows="3" placeholder="Briefly describe the project, its purpose, and your role." %}
+            {% for error in proj_form.summary.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+         <div>
+            <label for="{{ proj_form.technologies.id_for_label }}" class="form-label">Technologies Used (Optional)</label>
+            {# Assuming 'form-multiselect' class will be targeted by JS for a rich select widget if needed #}
+            {% render_field proj_form.technologies class+="form-input" multiple="multiple" data_placeholder="Select or type technologies..." %}
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Select from existing skills. Your `Skill` model is used here.</p>
+            {% for error in proj_form.technologies.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+        <div class="grid grid-cols-2 gap-x-4">
+            <div>
+                <label for="{{ proj_form.start_date.id_for_label }}" class="form-label">Start Date (Optional)</label>
+                {% render_field proj_form.start_date type="month" class+="form-input" %}
+                {% for error in proj_form.start_date.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+            </div>
+            <div>
+                <label for="{{ proj_form.completion_date.id_for_label }}" class="form-label">Completion Date (Optional)</label>
+                {% render_field proj_form.completion_date type="month" class+="form-input" %}
+                {% for error in proj_form.completion_date.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+            </div>
+        </div>
+        <div>
+            <label for="{{ proj_form.project_link.id_for_label }}" class="form-label">Project URL (Optional)</label>
+            {% render_field proj_form.project_link type="url" class+="form-input" placeholder="e.g., https://liveprojectdemo.com" %}
+            {% for error in proj_form.project_link.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+        <div>
+            <label for="{{ proj_form.github_link.id_for_label }}" class="form-label">GitHub Repository URL (Optional)</label>
+            {% render_field proj_form.github_link type="url" class+="form-input" placeholder="e.g., https://github.com/user/project" %}
+            {% for error in proj_form.github_link.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+    </div>
+
+    {# Nested Bullet Points Formset for Projects #}
+    <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700/60">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
+            <h4 class="text-md font-medium text-slate-700 dark:text-slate-300">Key Features / Achievements:</h4>
+            <div class="flex space-x-2 flex-shrink-0">
+                <button type="button" class="ai-generate-project-bullets-btn btn-secondary-outline btn-xs"
+                        title="Generate bullet points for this project using AI"
+                        data-project-index="{{ project_index }}"
+                        data-project-name-selector="#{{ proj_form.project_name.id_for_label }}"
+                        data-project-summary-selector="#{{ proj_form.summary.id_for_label }}">
+                    <i class="fas fa-wand-magic-sparkles mr-1"></i> Generate Bullets (AI)
+                </button>
+                <button type="button" class="add-project-bullet-form btn-secondary-outline btn-xs" data-project-index="{{ project_index }}">
+                    <i class="fas fa-plus mr-1"></i> Add Bullet Point
+                </button>
+            </div>
+        </div>
+
+        {% with bullet_formset=proj_form.bullet_points_formset %}
+            {{ bullet_formset.management_form }}
+            <div class="nested-project-bullet-formset-container space-y-3" id="project-bullet-forms-{{ project_index }}">
+                {% for bullet_form in bullet_formset %}
+                    {% include "resumes/partials/project_ai/project_bullet_point_form_row.html" with form=bullet_form parent_index=project_index bullet_index=forloop.counter0 prefix=bullet_form.prefix is_empty_form=False related_object_name="project" %}
+                {% endfor %}
+            </div>
+            <div id="empty-project-bullet-form-{{ project_index }}" class="hidden">
+                 {% with empty_bullet_form_instance=bullet_formset_empty|default:bullet_formset.empty_form %}
+                {% include "resumes/partials/project_ai/project_bullet_point_form_row.html" with form=empty_bullet_form_instance parent_index=project_index bullet_index="__bullet_prefix__" prefix=proj_form.prefix|add:"-bullets-__bullet_prefix__" is_empty_form=True related_object_name="project" %}
+                {% endwith %}
+            </div>
+             {% if bullet_formset.non_form_errors %}
+                <div class="mt-2 p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700/60 rounded-md text-xs text-red-600 dark:text-red-300">
+                    {% for error in bullet_formset.non_form_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    {% if proj_form.non_field_errors %}
+        <div class="mt-3 p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700/60 rounded-md text-sm text-red-600 dark:text-red-300">
+            {% for error in proj_form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>

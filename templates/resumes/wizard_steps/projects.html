@@ -1,1084 +1,1280 @@
 {# templates/resumes/wizard_steps/projects.html #}
-{% extends 'resumes/wizard_base.html' %}
-{% load static %}
+{% extends "resumes/wizard_base.html" %}
+{% load widget_tweaks static i18n %}
 
-{# Removed widget_tweaks load as we add classes manually now #}
+{% block extra_head %}
+    {{ block.super }}
+    <script src="{% static 'js/project_enhancement.js' %}" defer></script>
+    {# Ensure resume_wizard.js or a specific script handles general formset logic #}
+    {# <script src="{% static 'js/resume_wizard.js' %}" defer></script> #}
+    <style>
+        /* Styles for project section, if any */
+    </style>
+{% endblock %}
 
-{% block step_title %}Projects{% endblock %}
-
-{% block step_icon %}<i class="fa-solid fa-diagram-project mr-3 text-blue-600 opacity-80"></i>{% endblock %}
-{% load widget_tweaks %}
-{% block step_content %}
-
-<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}">
+{% block wizard_content %}
+<form method="post" novalidate id="project-formset-container">
     {% csrf_token %}
+    {{ form.management_form }} {# Main ProjectFormSet management form #}
 
-    {# Management form is crucial for formsets #}
-    {{ formset.management_form }}
-
-    {# Informational Box #}
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-5 mb-8 dark:bg-gray-800 dark:border-gray-700">
-         <div class="flex items-start">
-            <div class="text-blue-500 text-xl mr-4 mt-1 shrink-0">
-                <i class="fa-solid fa-lightbulb"></i>
-            </div>
-            <div>
-                <p class="text-base text-gray-700 dark:text-gray-200">
-                    Add your notable projects below. Include personal projects, academic work, or significant
-                    contributions that showcase your skills and accomplishments.
-                </p>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                    <strong>Pro tip:</strong> For technical roles, include projects that demonstrate your technical abilities. Link to GitHub repositories or live demos whenever possible.
-                </p>
-            </div>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div>
+            <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-1">{{ current_step_display }}</h2>
+            <p class="text-sm text-slate-600 dark:text-slate-400">
+                Showcase your personal or academic projects. Describe the project, your role, and the technologies used.
+            </p>
         </div>
-    </div>
-
-    <div id="projects_container" class="space-y-8">
-        {% for form in formset.forms %}
-        <div class="form-row bg-white border border-gray-200 rounded-xl shadow-sm p-6 transition-all duration-300 hover:shadow-md project-entry dark:bg-gray-800 dark:border-gray-700" id="{{ form.prefix }}-row" data-index="{{ forloop.counter0 }}">
-             {# Hidden DELETE field for formset #}
-             {% if formset.can_delete %}
-                 <div class="hidden">{{ form.DELETE }}</div>
-             {% endif %}
-
-             {# Form Row Header #}
-             <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-200 dark:border-gray-600">
-                  <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center">
-                       <span class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3 dark:bg-blue-900/50">
-                           <i class="fa-solid fa-folder-open text-blue-600 dark:text-blue-400 text-sm"></i>
-                       </span>
-                       Project #{{ forloop.counter }}
-                  </h3>
-                  {% if formset.can_delete %}
-                  <button type="button" class="formset-delete-btn inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-                          onclick="deleteForm(this, '{{ formset.prefix }}')">
-                       <i class="fa-solid fa-trash-can mr-1 -ml-1 h-4 w-4"></i> Remove
-                  </button>
-                  {% endif %}
-             </div>
-
-             {# Project Name #}
-             <div class="mb-4">
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.project_name.id_for_label }}">
-                       Project Name <span class="text-red-500">*</span>
-                  </label>
-                  <div class="relative rounded-md shadow-sm">
-                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <i class="fa-solid fa-project-diagram text-gray-400 h-5 w-5"></i>
-                      </div>
-                      {{ form.project_name|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"placeholder:e.g., E-commerce Website"|attr:"required" }}
-                  </div>
-                  {% if form.project_name.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.project_name.errors|first }}</p>{% endif %}
-             </div>
-
-             {# Project Summary #}
-             <div class="mb-4">
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.summary.id_for_label }}">
-                       Project Summary <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span>
-                  </label>
-                   <div class="relative rounded-md shadow-sm">
-                       <div class="absolute top-3 left-0 pl-3 flex items-start pointer-events-none">
-                            <i class="fa-solid fa-align-left text-gray-400 h-5 w-5"></i>
-                       </div>
-                       {{ form.summary|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"rows:2"|attr:"placeholder:Brief overview..." }}
-                   </div>
-                   {% if form.summary.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.summary.errors|first }}</p>{% endif %}
-             </div>
-
-             {# Dates #}
-             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.start_date.id_for_label }}">
-                          Start Date <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span>
-                      </label>
-                      <div class="relative rounded-md shadow-sm">
-                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fa-solid fa-calendar-alt text-gray-400 h-5 w-5"></i>
-                           </div>
-                           {{ form.start_date|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"type:date" }}
-                      </div>
-                      {% if form.start_date.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.start_date.errors|first }}</p>{% endif %}
-                  </div>
-                  <div class="completion-date-container">
-                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.completion_date.id_for_label }}">
-                           Completion Date <span class="text-xs text-gray-500 dark:text-gray-400">(Leave blank if ongoing)</span>
-                       </label>
-                       <div class="relative rounded-md shadow-sm">
-                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fa-solid fa-calendar-check text-gray-400 h-5 w-5"></i>
-                           </div>
-                            {{ form.completion_date|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"type:date" }}
-                       </div>
-                       {% if form.completion_date.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.completion_date.errors|first }}</p>{% endif %}
-                  </div>
-             </div>
-
-              {# Links #}
-             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                 <div>
-                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.project_link.id_for_label }}">
-                          Project Link <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span>
-                      </label>
-                      <div class="relative rounded-md shadow-sm">
-                          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                              <i class="fa-solid fa-globe text-gray-400 h-5 w-5"></i>
-                          </div>
-                           {{ form.project_link|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"type:url"|attr:"placeholder:https://example.com" }}
-                      </div>
-                      {% if form.project_link.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.project_link.errors|first }}</p>{% endif %}
-                 </div>
-                 <div>
-                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.github_link.id_for_label }}">
-                          GitHub Link <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span>
-                      </label>
-                      <div class="relative rounded-md shadow-sm">
-                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                               <i class="fa-brands fa-github text-gray-400 h-5 w-5"></i>
-                           </div>
-                           {{ form.github_link|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"type:url"|attr:"placeholder:https://github.com/..." }}
-                      </div>
-                       {% if form.github_link.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.github_link.errors|first }}</p>{% endif %}
-                 </div>
-             </div>
-
-             {# Bullet Points - Enhanced with AI Functionality #}
-             <div class="mt-6 bullet-points-container">
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Project Details / Achievements <span class="text-xs text-gray-500 dark:text-gray-400">(Optional but recommended)</span>
-                  </label>
-                  <div class="bullet-points space-y-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600" id="bullet_points_container_{{ forloop.counter0 }}">
-                      {# Render existing bullet points from initial data #}
-                      {% for bullet_item in form.initial.bullet_points %}
-                          {% include 'resumes/partials/bullet_point_form_row.html' with parent_index=forloop.parentloop.counter0 index=forloop.counter0 bullet_text=bullet_item.description project_name=form.project_name.value project_title="" project_summary=form.summary.value %}
-                      {% empty %}
-                          {# Render the first empty bullet point row if none exist initially #}
-                           {% include 'resumes/partials/bullet_point_form_row.html' with parent_index=forloop.counter0 index=0 bullet_text="" project_name=form.project_name.value project_title="" project_summary=form.summary.value %}
-                      {% endfor %}
-                  </div>
-                  <div class="flex justify-end mt-2">
-                      <button type="button" class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-600 dark:text-gray-200 dark:border-gray-500 dark:hover:bg-gray-500" onclick="addBulletPoint('{{ forloop.counter0 }}', '{{ form.project_name.value|default:'' }}', '', '{{ form.summary.value|default:'' }}')">
-                          <i class="fa-solid fa-plus mr-1 -ml-1 h-4 w-4"></i> Add Detail
-                      </button>
-                  </div>
-             </div>
-        </div> {# End form-row #}
-        {% empty %}
-         {# Empty State #}
-         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8 text-center dark:bg-gray-800 dark:border-gray-700" id="projects-empty-state">
-              <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4 dark:bg-blue-900/50">
-                  <i class="fa-solid fa-diagram-project text-blue-600 dark:text-blue-400 text-2xl"></i>
-              </div>
-              <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">No Projects Added Yet</h3>
-              <p class="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
-                  This section is optional, but adding projects can significantly strengthen your resume, especially for technical roles.
-              </p>
-              <button type="button" class="add-another-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800" onclick="addForm(this, '{{ formset.prefix }}')">
-                  <i class="fa-solid fa-plus mr-2 -ml-1 h-5 w-5"></i> Add a Project
-              </button>
-         </div>
-        {% endfor %}
-    </div> {# End projects_container #}
-
-     {# Template for adding new forms via JavaScript #}
-    <template id="{{ formset.prefix }}-form-template">
-         <div class="form-row bg-white border border-gray-200 rounded-xl shadow-sm p-6 project-entry dark:bg-gray-800 dark:border-gray-700" id="{{ formset.prefix }}-__prefix__-row" data-index="__prefix__">
-              {% with form=formset.empty_form %} {# Use empty_form for template structure #}
-              {# Hidden DELETE field for formset #}
-              <div class="hidden">{{ form.DELETE }}</div>
-
-              {# Form Row Header for new forms #}
-              <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-200 dark:border-gray-600">
-                  <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center">
-                       <span class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3 dark:bg-blue-900/50">
-                           <i class="fa-solid fa-folder-open text-blue-600 dark:text-blue-400 text-sm"></i>
-                       </span>
-                       New Project
-                  </h3>
-                  <button type="button" class="formset-delete-btn inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-                          onclick="deleteForm(this, '{{ formset.prefix }}')">
-                       <i class="fa-solid fa-trash-can mr-1 -ml-1 h-4 w-4"></i> Remove
-                  </button>
-              </div>
-
-               {# Project Name #}
-               <div class="mb-4">
-                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="id_{{ form.prefix }}-project_name">Project Name <span class="text-red-500">*</span></label>
-                   <div class="relative rounded-md shadow-sm">
-                       <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-project-diagram text-gray-400 h-5 w-5"></i></div>
-                       {{ form.project_name|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"required" }}
-                   </div>
-               </div>
-               {# Project Summary #}
-               <div class="mb-4">
-                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="id_{{ form.prefix }}-summary">Summary <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span></label>
-                   <div class="relative rounded-md shadow-sm">
-                        <div class="absolute top-3 left-0 pl-3 flex items-start pointer-events-none"><i class="fa-solid fa-align-left text-gray-400 h-5 w-5"></i></div>
-                       {{ form.summary|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"rows:2" }}
-                   </div>
-               </div>
-                {# Dates #}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                     <div>
-                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="id_{{ form.prefix }}-start_date">Start Date <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span></label>
-                         <div class="relative rounded-md shadow-sm">
-                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-calendar-alt text-gray-400 h-5 w-5"></i></div>
-                             {{ form.start_date|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"type:date" }}
-                         </div>
-                     </div>
-                     <div class="completion-date-container">
-                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="id_{{ form.prefix }}-completion_date">Completion Date <span class="text-xs text-gray-500 dark:text-gray-400">(Leave blank if ongoing)</span></label>
-                         <div class="relative rounded-md shadow-sm">
-                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-calendar-check text-gray-400 h-5 w-5"></i></div>
-                             {{ form.completion_date|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"type:date" }}
-                         </div>
-                     </div>
-                </div>
-                {# Links #}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="id_{{ form.prefix }}-project_link">Project Link <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span></label>
-                          <div class="relative rounded-md shadow-sm">
-                               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-globe text-gray-400 h-5 w-5"></i></div>
-                              {{ form.project_link|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"type:url" }}
-                          </div>
-                      </div>
-                      <div>
-                          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="id_{{ form.prefix }}-github_link">GitHub Link <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span></label>
-                          <div class="relative rounded-md shadow-sm">
-                              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-brands fa-github text-gray-400 h-5 w-5"></i></div>
-                              {{ form.github_link|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"type:url" }}
-                          </div>
-                      </div>
-                </div>
-               {# Bullet Points #}
-               <div class="mt-6 bullet-points-container">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Details/Achievements</label>
-                    <div class="bullet-points space-y-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600" id="bullet_points_container___prefix__">
-                          {# Include the template for a single empty bullet point row #}
-                          {% include 'resumes/partials/bullet_point_form_row.html' with parent_index='__prefix__' index=0 bullet_text="" project_name="" project_title="" project_summary="" %}
-                    </div>
-                     <div class="flex justify-end mt-2">
-                        <button type="button" class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-600 dark:text-gray-200 dark:border-gray-500 dark:hover:bg-gray-500" onclick="addBulletPoint('__prefix__')">
-                            <i class="fa-solid fa-plus mr-1 -ml-1 h-4 w-4"></i> Add Detail
-                        </button>
-                    </div>
-               </div>
-              {% endwith %} {# End with form=formset.empty_form #}
-         </div>
-    </template>
-
-    {# 'Add Another Project' button #}
-    {# Always present, but might be hidden by JS if emptyState is shown #}
-    <div class="flex justify-center mt-8">
-        <button type="button" class="add-another-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800" onclick="addForm(this, '{{ formset.prefix }}')">
-             <i class="fa-solid fa-plus mr-2 -ml-1 h-5 w-5"></i> Add Another Project
+        <button type="button" id="add-project-form" class="btn-secondary-outline text-sm w-full sm:w-auto flex-shrink-0">
+            <i class="fas fa-plus mr-1.5"></i> Add Project
         </button>
     </div>
 
-    {# Project Ideas Section - Enhanced Styling #}
-     <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-        <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-5 flex items-center">
-            <i class="fa-solid fa-lightbulb text-yellow-500 mr-3"></i>
-            Project Ideas by Field
-            <span class="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">(Optional inspiration)</span>
-        </h3>
+    {% if form.non_form_errors %}
+        <div class="mb-4 p-3 bg-red-100 dark:bg-red-800/30 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 rounded-md text-sm">
+            {% for error in form.non_form_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
 
-        <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden dark:bg-gray-800 dark:border-gray-700">
-            {# Tabs - Refined Styling #}
-            <div class="border-b border-gray-200 dark:border-gray-700">
-                <nav class="-mb-px flex space-x-4 sm:space-x-6 overflow-x-auto px-4 sm:px-6" aria-label="Tabs">
-                    {# Added icons to tabs for visual interest #}
-                    <a href="#" class="tab group inline-flex items-center shrink-0 border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm" onclick="switchTab(this, 'software'); return false;" aria-current="page">
-                        <i class="fa-solid fa-laptop-code mr-2 h-4 w-4"></i> Software Dev
-                    </a>
-                    <a href="#" class="tab group inline-flex items-center shrink-0 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm" onclick="switchTab(this, 'data'); return false;">
-                         <i class="fa-solid fa-magnifying-glass-chart mr-2 h-4 w-4"></i> Data Science
-                    </a>
-                    <a href="#" class="tab group inline-flex items-center shrink-0 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm" onclick="switchTab(this, 'design'); return false;">
-                         <i class="fa-solid fa-palette mr-2 h-4 w-4"></i> UX/UI Design
-                    </a>
-                    <a href="#" class="tab group inline-flex items-center shrink-0 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm" onclick="switchTab(this, 'marketing'); return false;">
-                        <i class="fa-solid fa-bullhorn mr-2 h-4 w-4"></i> Marketing
-                    </a>
-                    <a href="#" class="tab group inline-flex items-center shrink-0 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm" onclick="switchTab(this, 'business'); return false;">
-                         <i class="fa-solid fa-briefcase mr-2 h-4 w-4"></i> Business
-                    </a>
-                </nav>
-            </div>
+    <div id="project-forms" class="space-y-8">
+        {% for proj_form in form %} {# Iterating through each Project form in the ProjectFormSet #}
+            <div class="project-form bg-slate-50 dark:bg-slate-800/60 p-5 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 relative" data-project-form-index="{{ forloop.counter0 }}">
+                {% if proj_form.instance.pk %}{{ proj_form.id }}{% endif %}
 
-            <div class="p-5 sm:p-6">
-                {# Software Development Ideas - Assume JS handles visibility #}
-                <div id="software-tab" class="tab-content">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {# Example Idea Card - Enhanced Styling #}
-                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Personal Portfolio Website', 'A personal website showcasing your projects, skills, and experience.', 'software')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Personal Website/Portfolio</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Create a personal website to showcase your projects and skills.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200">
-                                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-                            </span>
-                        </div>
-                         <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('E-commerce Platform', 'An online store with product listings, shopping cart, and checkout functionality.', 'software')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">E-commerce Platform</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Build an online store with product listings, cart, and checkout.</p>
-                             <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200">
-                                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-                            </span>
-                        </div>
-                         <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Task Management App', 'A productivity app for organizing and tracking tasks with categories and reminders.', 'software')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Task Management App</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Develop a to-do list app with features like categories and reminders.</p>
-                             <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200">
-                                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-                            </span>
-                        </div>
-                         <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Real-time Chat Application', 'A messaging platform that enables instant communication between users.', 'software')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Chat Application</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Create a real-time messaging app using WebSockets.</p>
-                             <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200">
-                                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-                            </span>
-                        </div>
+                <div class="flex justify-between items-start mb-4 pb-3 border-b border-slate-200 dark:border-slate-700">
+                    <h3 class="text-lg font-medium text-primary-700 dark:text-primary-400 flex items-center">
+                        <i class="fas fa-project-diagram mr-2"></i>
+                        Project #<span class="project-form-counter">{{ forloop.counter }}</span>
+                    </h3>
+                     <div class="flex items-center space-x-2">
+                        {% if proj_form.DELETE %}
+                            <div class="flex items-center">
+                                {% render_field proj_form.DELETE class+="form-checkbox-sm text-red-600 focus:ring-red-500 delete-project-checkbox" data_form_index=forloop.counter0 %}
+                                <label for="{{ proj_form.DELETE.id_for_label }}" class="ml-1.5 text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 cursor-pointer">
+                                    Delete
+                                </label>
+                            </div>
+                        {% endif %}
+                        <button type="button" class="remove-project-form btn-icon-danger btn-xs" title="Remove this project entry">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
                 </div>
 
-                {# Data Science Ideas (Hidden initially) - Apply similar styling #}
-                <div id="data-tab" class="tab-content hidden">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Housing Price Prediction Model', 'A machine learning model that predicts housing prices based on various features.', 'data')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Predictive Model</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Build a model to predict outcomes like housing prices or customer behavior.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>
+                {% for hidden_field in proj_form.hidden_fields %}
+                     {% if hidden_field.name != 'id' %}{{ hidden_field }}{% endif %}
+                {% endfor %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
+                    <div class="md:col-span-2">
+                        <label for="{{ proj_form.project_name.id_for_label }}" class="form-label">Project Name <span class="text-red-500">*</span></label>
+                        {% render_field proj_form.project_name class+="form-input" placeholder="e.g., Personal Portfolio Website, AI Chatbot" %}
+                        {% for error in proj_form.project_name.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="{{ proj_form.summary.id_for_label }}" class="form-label">Project Summary / Description (Optional)</label>
+                        {% render_field proj_form.summary class+="form-input" rows="3" placeholder="Briefly describe the project, its purpose, and your role." %}
+                        {% for error in proj_form.summary.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+                    </div>
+                     <div>
+                        <label for="{{ proj_form.technologies.id_for_label }}" class="form-label">Technologies Used (Optional)</label>
+                        {% render_field proj_form.technologies class+="form-multiselect" multiple="multiple" data_placeholder="Select or add technologies..." %}
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Select from existing skills or this will be plain text if not a ManyToMany to Skills.</p>
+                        {% for error in proj_form.technologies.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-4">
+                        <div>
+                            <label for="{{ proj_form.start_date.id_for_label }}" class="form-label">Start Date (Optional)</label>
+                            {% render_field proj_form.start_date type="month" class+="form-input" %}
+                            {% for error in proj_form.start_date.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
                         </div>
-                         <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Interactive Data Visualization Dashboard', 'A web-based dashboard featuring interactive charts and graphs to explore a dataset.', 'data')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Data Visualization Dashboard</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Create interactive visualizations of a dataset.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>
+                        <div>
+                            <label for="{{ proj_form.completion_date.id_for_label }}" class="form-label">Completion Date (Optional)</label>
+                            {% render_field proj_form.completion_date type="month" class+="form-input" %}
+                            {% for error in proj_form.completion_date.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
                         </div>
-                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Social Media Sentiment Analysis', 'An algorithm that analyzes sentiment in text data from social media platforms.', 'data')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Sentiment Analysis</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Analyze sentiment in text data like social media or reviews.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>
-                        </div>
-                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Content Recommendation System', 'A system that recommends products or content based on user preferences and behavior.', 'data')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Recommendation System</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Build a system that recommends products or content based on user preferences.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>
-                        </div>
+                    </div>
+                    <div>
+                        <label for="{{ proj_form.project_link.id_for_label }}" class="form-label">Project URL (Optional)</label>
+                        {% render_field proj_form.project_link type="url" class+="form-input" placeholder="e.g., https://liveprojectdemo.com" %}
+                        {% for error in proj_form.project_link.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+                    </div>
+                    <div>
+                        <label for="{{ proj_form.github_link.id_for_label }}" class="form-label">GitHub Repository URL (Optional)</label>
+                        {% render_field proj_form.github_link type="url" class+="form-input" placeholder="e.g., https://github.com/user/project" %}
+                        {% for error in proj_form.github_link.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
                     </div>
                 </div>
 
-                 {# UX/UI Design Ideas (Hidden initially) #}
-                 <div id="design-tab" class="tab-content hidden">
-                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Mobile App Redesign', 'A comprehensive redesign of an existing mobile app to improve usability and aesthetics.', 'design')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Mobile App Redesign</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Redesign the UI of an existing mobile app to improve usability.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>
-                        </div>
-                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Design System Creation', 'A comprehensive design system with components, guidelines, and documentation.', 'design')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Design System</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Create a comprehensive design system with components and guidelines.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>
-                        </div>
-                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Interactive Website Prototype', 'A high-fidelity website prototype with interactive elements and responsive design.', 'design')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Website Prototype</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Design and prototype a website with interactive elements.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>
-                        </div>
-                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('User Research Study', 'A comprehensive user research study with interviews, usability testing, and insights.', 'design')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">User Research Study</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Conduct and document a user research study to improve a product.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>
-                        </div>
-                     </div>
-                 </div>
-
-                 {# Marketing Ideas (Hidden initially) #}
-                 <div id="marketing-tab" class="tab-content hidden">
-                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Digital Marketing Campaign', 'A multi-channel marketing campaign for a product or service with measurable results.', 'marketing')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Marketing Campaign</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Design and execute a marketing campaign for a product or service.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>
-                        </div>
-                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Social Media Strategy', 'A comprehensive social media strategy for a brand with content calendar and analytics.', 'marketing')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Social Media Strategy</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Develop a comprehensive social media strategy for a brand.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>
-                        </div>
-                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Content Marketing Plan', 'A strategic content marketing plan with editorial calendar and distribution strategy.', 'marketing')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Content Marketing Plan</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Create a content calendar and strategy to drive engagement.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>
-                        </div>
-                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Marketing Analytics Dashboard', 'A dashboard to track and analyze marketing metrics across multiple channels.', 'marketing')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Analytics Dashboard</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Build a dashboard to track and analyze marketing metrics.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>
+                {# Nested Bullet Points Formset for Projects #}
+                <div class="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700/60">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
+                        <h4 class="text-md font-medium text-slate-700 dark:text-slate-300">Key Features / Achievements:</h4>
+                        <div class="flex space-x-2 flex-shrink-0">
+                            <button type="button" class="ai-generate-project-bullets-btn btn-secondary-outline btn-xs"
+                                    title="Generate bullet points for this project using AI"
+                                    data-project-index="{{ forloop.counter0 }}"
+                                    data-project-name-selector="#{{ proj_form.project_name.id_for_label }}"
+                                    data-project-summary-selector="#{{ proj_form.summary.id_for_label }}">
+                                <i class="fas fa-wand-magic-sparkles mr-1"></i> Generate Bullets (AI)
+                            </button>
+                            <button type="button" class="add-project-bullet-form btn-secondary-outline btn-xs" data-project-index="{{ forloop.counter0 }}">
+                                <i class="fas fa-plus mr-1"></i> Add Bullet Point
+                            </button>
                         </div>
                     </div>
-                 </div>
 
-                 {# Business Ideas (Hidden initially) #}
-                 <div id="business-tab" class="tab-content hidden">
-                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Business Plan Development', 'A comprehensive business plan for a startup or new product with market analysis and financials.', 'business')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Business Plan</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Develop a comprehensive business plan for a startup or new product.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>
+                    {% with bullet_formset=proj_form.bullet_points_formset %}
+                        {{ bullet_formset.management_form }}
+                        <div class="nested-project-bullet-formset-container space-y-3" id="project-bullet-forms-{{ forloop.parentloop.counter0 }}">
+                            {% for bullet_form in bullet_formset %}
+                                {# Use a generic or project-specific bullet point form row partial #}
+                                {% include "resumes/partials/project_ai/project_bullet_point_form_row.html" with form=bullet_form parent_index=forloop.parentloop.counter0 bullet_index=forloop.counter0 prefix=bullet_form.prefix is_empty_form=False related_object_name="project" %}
+                            {% endfor %}
                         </div>
-                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Market Research Analysis', 'A detailed market analysis for an industry or product with competitive landscape and opportunities.', 'business')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Market Analysis</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Conduct and document a market analysis for an industry or product.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>
+                        <div id="empty-project-bullet-form-{{ forloop.parentloop.counter0 }}" class="hidden">
+                            {% include "resumes/partials/project_ai/project_bullet_point_form_row.html" with form=bullet_formset.empty_form parent_index=forloop.parentloop.counter0 bullet_index="__bullet_prefix__" prefix=proj_form.prefix|add:"-bullets-__bullet_prefix__" is_empty_form=True related_object_name="project" %}
                         </div>
-                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Financial Model Creation', 'A detailed financial projection model for a business with revenue forecasts and cash flow analysis.', 'business')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Financial Model</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Create a financial projection model for a business.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>
-                        </div>
-                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Process Improvement Initiative', 'A project documenting how you improved a business process to increase efficiency or reduce costs.', 'business')">
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Process Improvement</h4>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Document a project where you improved a business process.</p>
-                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>
-                        </div>
-                     </div>
-                 </div>
-            </div> {# End p-5 sm:p-6 #}
-        </div> {# End card div #}
+                         {% if bullet_formset.non_form_errors %}
+                            <div class="mt-2 p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700/60 rounded-md text-xs text-red-600 dark:text-red-300">
+                                {% for error in bullet_formset.non_form_errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+                {% if proj_form.non_field_errors %}
+                    <div class="mt-3 p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700/60 rounded-md text-sm text-red-600 dark:text-red-300">
+                        {% for error in proj_form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div> {# End .project-form #}
+        {% endfor %}
+    </div> {# End #project-forms #}
+
+    <div id="empty-project-form" class="hidden">
+        {# This assumes you have a partial: resumes/partials/form_rows/project_form_row.html #}
+        {# Create this partial if it doesn't exist, similar to experience_form_row.html #}
+        {% include "resumes/partials/form_rows/project_form_row.html" with proj_form=form.empty_form formset_prefix=form.prefix is_empty_form=True bullet_formset_empty=form.empty_form.bullet_points_formset.empty_form project_index="__prefix__" %}
     </div>
-    {# End Project Ideas Section #}
-</form>
-    {% include 'resumes/partials/project_ai/project_enhancement_modal.html' %}
-    <script src="https://unpkg.com/htmx.org@1.9.0"></script>
-     <script>
-    // Basic JS - Enhanced for project bullet point functionality
-
-    // --- Global variable to store detected formset prefix ---
-    let formsetPrefix = 'form'; // Default fallback
-
-    // --- Helper Functions ---
-
-    // Helper function to attach listeners to enhancement buttons within a scope
-    function attachEnhancementButtonListeners(scopeElement = document) {
-        scopeElement.querySelectorAll('.project-enhance-btn').forEach(btn => {
-            // Remove existing listener to prevent duplicates if re-attaching
-            btn.removeEventListener('click', handleEnhanceButtonClick);
-            // Add the listener
-            btn.addEventListener('click', handleEnhanceButtonClick);
-        });
-    }
-
-    // Define the handler function separately for event listeners
-    function handleEnhanceButtonClick(e) {
-        e.preventDefault();
-        openProjectEnhanceModalWrapper(this); // 'this' refers to the button clicked
-    }
-
-     // Helper function to initialize quality checkers within a scope
-     function initializeQualityCheckers(scopeElement = document) {
-        scopeElement.querySelectorAll('.bullet-points textarea').forEach(textarea => {
-             checkBulletQuality(textarea); // Run initial check
-             // Optional: Add keyup listener if not using inline onkeyup
-             // textarea.removeEventListener('keyup', handleQualityCheckKeyup);
-             // textarea.addEventListener('keyup', handleQualityCheckKeyup);
-         });
-     }
-
-     // Optional: Define keyup handler separately if not using inline onkeyup
-     // function handleQualityCheckKeyup(e) {
-     //    checkBulletQuality(this);
-     // }
 
 
-    // --- Core Formset and Bullet Point Logic ---
-
-    function addForm(button, prefix) {
-        console.log(`Adding form with prefix: ${prefix}`);
-        const formContainer = document.getElementById('projects_container');
-        const totalFormsInput = document.getElementById(`id_${prefix}-TOTAL_FORMS`);
-        const template = document.getElementById(`${prefix}-form-template`);
-
-        if (!formContainer || !totalFormsInput || !template) {
-            console.error("Missing elements for addForm:", { formContainer, totalFormsInput, template });
-            return;
-        }
-
-        const formNum = parseInt(totalFormsInput.value);
-        let newFormHtml = template.innerHTML.replace(/__prefix__/g, formNum);
-
-        // Replace IDs and names in the cloned template content
-        // Ensure these replacements match your template structure exactly
-        newFormHtml = newFormHtml.replace(new RegExp(`id_${prefix}-__prefix__`, 'g'), `id_${prefix}-${formNum}`);
-        newFormHtml = newFormHtml.replace(new RegExp(`name="${prefix}-__prefix__`, 'g'), `name="${prefix}-${formNum}`);
-        newFormHtml = newFormHtml.replace(/id="bullet_points_container___prefix__"/g, `id="bullet_points_container_${formNum}"`);
-        // Update addBulletPoint call in template if needed - ensure it matches the function signature (no projectTitle)
-        newFormHtml = newFormHtml.replace(/addBulletPoint\('__prefix__'\)/g, `addBulletPoint('${formNum}')`);
-        newFormHtml = newFormHtml.replace(/addBulletPoint\('__prefix__', '', ''\)/g, `addBulletPoint('${formNum}')`); // Update if template has different args
-        // Note: openProjectEnhanceModal is now called via event listener/wrapper, direct onclick replacement might be less critical
-
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = newFormHtml.trim();
-        const newFormElement = tempDiv.firstElementChild;
-
-        if (!newFormElement) {
-            console.error("Could not create new form element from template.");
-            return;
-        }
-
-        const emptyState = document.getElementById('projects-empty-state');
-        if (emptyState) {
-            emptyState.classList.add('hidden');
-        }
-
-        formContainer.appendChild(newFormElement);
-        totalFormsInput.value = formNum + 1;
-
-        // Ensure 'Add Another' button is visible
-        const addAnotherButton = document.querySelector('.add-another-btn');
-        if (addAnotherButton) {
-            addAnotherButton.style.display = 'inline-flex';
-        }
-
-        // Scroll to the new form
-        newFormElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-        // Attach listeners/initializers to the newly added form elements
-        attachEnhancementButtonListeners(newFormElement);
-        initializeQualityCheckers(newFormElement);
-    }
-
-
-    function deleteForm(button, prefix) {
-        console.log(`Deleting form related to button:`, button);
-        const formRow = button.closest('.form-row');
-        if (!formRow) {
-            console.error("Could not find parent .form-row for delete button.");
-            return;
-        }
-
-        const deleteInput = formRow.querySelector('input[name$="-DELETE"]');
-        if (deleteInput) {
-            deleteInput.checked = true;
-            formRow.style.display = 'none'; // Hide the form visually
-            console.log(`Marked form for deletion: ${formRow.id}`);
-        } else {
-            console.log(`Removing form row directly (likely an 'extra' form): ${formRow.id}`);
-            formRow.remove(); // Remove if no DELETE field (likely extra form)
-        }
-
-        // Check if remaining forms are all hidden to show empty state
-        const container = document.getElementById('projects_container');
-        const emptyState = document.getElementById('projects-empty-state');
-        const addAnotherButton = document.querySelector('.add-another-btn');
-
-        if (container && emptyState) {
-            const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');
-             let actuallyVisibleCount = 0;
-             visibleForms.forEach(form => {
-                const delInput = form.querySelector('input[name$="-DELETE"]');
-                if (!delInput || !delInput.checked) {
-                     actuallyVisibleCount++;
-                }
-             });
-
-            console.log(`Visible forms count after delete: ${actuallyVisibleCount}`);
-
-            if (actuallyVisibleCount === 0) {
-                emptyState.classList.remove('hidden');
-                if (addAnotherButton) addAnotherButton.style.display = 'none';
-            } else {
-                 emptyState.classList.add('hidden');
-                 if (addAnotherButton) addAnotherButton.style.display = 'inline-flex';
-            }
-        }
-    }
-
-    function addBulletPoint(parentIndex, projectName = '', projectSummary = '') { // Removed projectTitle parameter
-        console.log(`Adding bullet point for parent index: ${parentIndex}`);
-        const container = document.getElementById(`bullet_points_container_${parentIndex}`);
-        if (!container) {
-             console.error(`Bullet points container not found for index: ${parentIndex}`);
-             return;
-        }
-
-        // Try to get project name/summary from the form if not provided explicitly
-        if (!projectName) {
-            const projectNameInput = document.getElementById(`id_${formsetPrefix}-${parentIndex}-project_name`);
-            if (projectNameInput) projectName = projectNameInput.value;
-        }
-        if (!projectSummary) {
-            const projectSummaryInput = document.getElementById(`id_${formsetPrefix}-${parentIndex}-summary`);
-             if (projectSummaryInput) projectSummary = projectSummaryInput.value;
-        }
-
-        const bulletCount = container.querySelectorAll('.bullet-point-row').length;
-        const newBulletRow = document.createElement('div');
-        newBulletRow.className = 'bullet-point-row flex items-start gap-3 group hover:bg-gray-50/80 dark:hover:bg-gray-800/20 p-2 rounded-md transition-colors';
-
-        // Sanitize potentially problematic characters for attributes
-        const safeProjectName = (projectName || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
-        const safeProjectSummary = (projectSummary || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
-
-        // HTML for the new bullet point row (data-project-title removed)
-        newBulletRow.innerHTML = `
-            <div class="mt-3 text-primary">•</div>
-            <div class="flex-1">
-                <div class="relative">
-                    <textarea class="w-full min-h-24 p-2 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                        id="bullet_${parentIndex}_${bulletCount}"
-                        name="bullet_${parentIndex}_${bulletCount}"
-                        placeholder="Describe your project achievement..."
-                        onkeyup="checkBulletQuality(this)"
-                        data-parent="${parentIndex}"
-                        data-index="${bulletCount}"></textarea>
-                </div>
-                <div class="flex justify-between mt-1">
-                    <div class="bullet-quality text-xs"></div>
-                    <div class="text-xs text-gray-500">
-                        <span class="current">0</span>/<span class="max">100-150 optimal</span>
-                    </div>
-                </div>
-            </div>
-            <div class="flex flex-col gap-2">
-                <button type="button" class="mt-3 h-8 w-8 rounded-full text-red-600 bg-red-100 opacity-70 hover:opacity-100 hover:bg-red-200 flex items-center justify-center"
-                        onclick="removeBulletPoint(this, '${parentIndex}')">
-                    <i class="fa-solid fa-times"></i>
-                </button>
-                <button type="button"
-                        class="h-8 w-8 rounded-full text-blue-600 bg-blue-100 opacity-70 hover:opacity-100 hover:bg-blue-200 flex items-center justify-center project-enhance-btn"
-                        data-parent="${parentIndex}"
-                        data-index="${bulletCount}"
-                        data-project-name="${safeProjectName}"
-                        data-project-summary="${safeProjectSummary}"
-                        {# Removed data-project-title here #}>
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                </button>
-                <span id="enhance_indicator_${parentIndex}_${bulletCount}" class="htmx-indicator hidden">
-                    <span class="inline-block animate-spin text-blue-500">⟳</span>
+    {# Navigation Buttons #}
+    <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
+        <div>
+            {% if prev_step_url %}
+                <a href="{{ prev_step_url }}" class="btn-neutral w-full sm:w-auto">
+                    <i class="fas fa-arrow-left mr-2"></i> Previous Step
+                </a>
+            {% else %}
+                <span class="btn-disabled w-full sm:w-auto text-center">
+                    <i class="fas fa-arrow-left mr-2"></i> Previous Step
                 </span>
-            </div>
-        `;
+            {% endif %}
+        </div>
+        <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+            <button type="submit" name="action" value="save_and_exit" class="btn-secondary w-full sm:w-auto">
+                <i class="fas fa-save mr-1.5"></i> Save & Exit Wizard
+            </button>
+            <button type="submit" name="action" value="save_and_continue" class="btn-primary w-full sm:w-auto">
+                Save & Continue <i class="fas fa-arrow-right ml-1.5"></i>
+            </button>
+        </div>
+    </div>
+</form>
 
-        container.appendChild(newBulletRow);
+{# Modal for AI project bullet point generation/enhancement #}
+{% include 'resumes/partials/project_ai/project_enhancement_modal.html' %}
+{# If you have a separate modal for generating multiple bullets for a project, include it too #}
 
-        // Re-attach listener specifically to the new button
-        const newEnhanceBtn = newBulletRow.querySelector('.project-enhance-btn');
-         if (newEnhanceBtn) {
-            // Ensure previous listeners removed if any overlap, though should be new element
-            newEnhanceBtn.removeEventListener('click', handleEnhanceButtonClick);
-            newEnhanceBtn.addEventListener('click', handleEnhanceButtonClick);
-         }
+{% endblock wizard_content %}
 
-        // Focus the new textarea and check quality
-        const newTextarea = newBulletRow.querySelector('textarea');
-        if(newTextarea) {
-            newTextarea.focus();
-            checkBulletQuality(newTextarea);
-        }
-    }
-
-    function removeBulletPoint(button, parentIndex) {
-        const bulletRow = button.closest('.bullet-point-row');
-        if (bulletRow) {
-            bulletRow.style.opacity = '0';
-            bulletRow.style.transform = 'translateX(10px)';
-            bulletRow.style.transition = 'opacity 0.3s, transform 0.3s';
-            setTimeout(() => {
-                bulletRow.remove();
-                reindexBulletPoints(parentIndex);
-            }, 300);
-        }
-    }
-
-    function reindexBulletPoints(parentIndex) {
-        const container = document.getElementById(`bullet_points_container_${parentIndex}`);
-        if (!container) return;
-
-        const bulletRows = container.querySelectorAll('.bullet-point-row');
-        bulletRows.forEach((row, index) => {
-            const textarea = row.querySelector('textarea');
-            if (textarea) {
-                textarea.id = `bullet_${parentIndex}_${index}`;
-                textarea.name = `bullet_${parentIndex}_${index}`;
-                textarea.setAttribute('data-index', index);
-            }
-            const enhanceBtn = row.querySelector('.project-enhance-btn');
-            if (enhanceBtn) {
-                enhanceBtn.setAttribute('data-index', index);
-                // Remove attribute if it exists from old code
-                enhanceBtn.removeAttribute('data-project-title');
-            }
-            const indicator = row.querySelector('.htmx-indicator');
-            if (indicator) {
-                indicator.id = `enhance_indicator_${parentIndex}_${index}`;
-            }
-             // Re-attach listener to ensure it points to correct wrapper/data after re-index
-             if (enhanceBtn) {
-                 enhanceBtn.removeEventListener('click', handleEnhanceButtonClick);
-                 enhanceBtn.addEventListener('click', handleEnhanceButtonClick);
-             }
-        });
-    }
-
-    // Function to check bullet point quality
-    function checkBulletQuality(textarea) {
-        if (!textarea) return;
-        const text = textarea.value.trim();
-        const charCount = text.length;
-        const qualityContainer = textarea.closest('.flex-1');
-        if (!qualityContainer) return;
-
-        const charCounter = qualityContainer.querySelector('.current');
-        if (charCounter) charCounter.textContent = charCount;
-
-        const qualityDiv = qualityContainer.querySelector('.bullet-quality');
-        if (!qualityDiv) return;
-
-        qualityDiv.className = 'bullet-quality text-xs'; // Reset
-        if (charCount === 0) {
-            qualityDiv.textContent = '';
-            return;
-        }
-
-        const startsWithActionVerb = /^(Developed|Created|Implemented|Built|Designed|Launched|Led|Managed|Increased|Reduced|Improved|Achieved|Delivered|Generated|Optimized|Streamlined|Collaborated|Contributed|Researched|Analyzed)/i.test(text);
-        const hasMetrics = /\d+%|\d+(\.\d+)?\s*(?:million|thousand|users|customers|dollars|sales|increase|decrease|improvement|seconds|minutes|hours|times)/i.test(text);
-
-        if (charCount < 50) {
-            qualityDiv.textContent = 'Consider adding more detail';
-            qualityDiv.classList.add('text-yellow-600');
-        } else if (charCount > 200) {
-            qualityDiv.textContent = 'Consider shortening for conciseness';
-            qualityDiv.classList.add('text-yellow-600');
-        } else if (startsWithActionVerb && hasMetrics && charCount >= 70 && charCount <= 160) {
-            qualityDiv.textContent = 'Excellent! Strong action verb & metrics';
-            qualityDiv.classList.add('text-green-600');
-        } else if (startsWithActionVerb && hasMetrics) {
-             qualityDiv.textContent = 'Good! Has action verb & metrics';
-             qualityDiv.classList.add('text-blue-600');
-        } else if (startsWithActionVerb) {
-            qualityDiv.textContent = 'Good start with action verb - add metrics/results?';
-            qualityDiv.classList.add('text-blue-600');
-        } else if (hasMetrics) {
-            qualityDiv.textContent = 'Good use of metrics - start with an action verb?';
-            qualityDiv.classList.add('text-blue-600');
-        } else {
-            qualityDiv.textContent = 'Consider starting with an action verb & adding quantifiable results';
-            qualityDiv.classList.add('text-yellow-600');
-        }
-    }
-
-    // --- Tab and Project Idea Logic ---
-
-    function switchTab(clickedTab, tabIdToShow) {
-        const tabContainer = clickedTab.closest('.border-b');
-        if(!tabContainer) return;
-
-        tabContainer.querySelectorAll('.tab').forEach(tab => {
-            tab.classList.remove('border-blue-500', 'text-blue-600', 'dark:border-blue-400', 'dark:text-blue-400');
-            tab.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'dark:text-gray-400', 'dark:hover:text-gray-200', 'dark:hover:border-gray-500');
-            tab.removeAttribute('aria-current');
-        });
-
-        clickedTab.classList.add('border-blue-500', 'text-blue-600', 'dark:border-blue-400', 'dark:text-blue-400');
-        clickedTab.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'dark:text-gray-400', 'dark:hover:text-gray-200', 'dark:hover:border-gray-500');
-        clickedTab.setAttribute('aria-current', 'page');
-
-        const contentOuterContainer = clickedTab.closest('.bg-white, .dark\\:bg-gray-800');
-        if(!contentOuterContainer) return;
-        const contentContainer = contentOuterContainer.querySelector('.p-5, .sm\\:p-6');
-        if(contentContainer){
-            contentContainer.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
-            const contentToShow = contentContainer.querySelector(`#${tabIdToShow}-tab`);
-            if (contentToShow) contentToShow.classList.remove('hidden');
-        }
-    }
-
-    function useProjectIdea(name, summary, category) {
-        const emptyState = document.getElementById('projects-empty-state');
-        let targetFormRow;
-        let addButtonClicked = false;
-
-        if (emptyState && !emptyState.classList.contains('hidden')) {
-             const addButton = emptyState.querySelector('.add-another-btn');
-             if (addButton) {
-                 addButton.click();
-                 addButtonClicked = true;
-             } else { console.error("Could not find add button in empty state"); return; }
-        } else {
-             const addAnotherButton = document.querySelector('.add-another-btn');
-             if (addAnotherButton) {
-                addAnotherButton.click();
-                addButtonClicked = true;
-            } else {
-                 const forms = document.querySelectorAll('#projects_container .form-row:not([style*="display: none"])');
-                 if (forms.length > 0) {
-                     targetFormRow = forms[forms.length - 1];
-                     console.warn("No 'Add Another' button found, attempting to populate last existing form.");
-                 } else { console.error("No 'Add Another' button and no existing forms found."); return; }
-            }
-        }
-
-        if (addButtonClicked) {
-            setTimeout(() => {
-                const forms = document.querySelectorAll('#projects_container .form-row');
-                if (forms.length > 0) {
-                    targetFormRow = forms[forms.length - 1];
-                    populateProjectIdea(targetFormRow, name, summary);
-                } else { console.error("Add button clicked, but no form appeared."); }
-            }, 150);
-        } else if (targetFormRow) {
-            populateProjectIdea(targetFormRow, name, summary);
-        }
-    }
-
-    function populateProjectIdea(formRow, name, summary) {
-         if (!formRow) { console.error("Target form row not found for populating idea."); return; }
-         const nameInput = formRow.querySelector(`input[id^="id_${formsetPrefix}-"][id$="-project_name"]`);
-         const summaryTextarea = formRow.querySelector(`textarea[id^="id_${formsetPrefix}-"][id$="-summary"]`);
-
-         if (nameInput) nameInput.value = name;
-         if (summaryTextarea) summaryTextarea.value = summary;
-
-         formRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-         formRow.classList.add('ring-2', 'ring-blue-500', 'dark:ring-blue-400', 'ring-offset-2' , 'dark:ring-offset-gray-800', 'transition-shadow', 'duration-1000');
-         setTimeout(() => {
-             formRow.classList.remove('ring-2', 'ring-blue-500', 'dark:ring-blue-400', 'ring-offset-2', 'dark:ring-offset-gray-800');
-         }, 1500);
-         if (nameInput) nameInput.focus();
-    }
-
-    // --- Enhancement Modal Logic ---
-
-    // Wrapper function to read data attributes safely before calling the main modal function
-    function openProjectEnhanceModalWrapper(buttonElement) {
-        const parentIndex = buttonElement.getAttribute('data-parent');
-        const bulletIndex = buttonElement.getAttribute('data-index');
-        const projectName = buttonElement.getAttribute('data-project-name');
-        // projectTitle removed
-        const projectSummary = buttonElement.getAttribute('data-project-summary');
-
-        console.log("Enhancement button wrapper called:", parentIndex, bulletIndex, projectName);
-        // Call without projectTitle
-        openProjectEnhanceModal(parentIndex, bulletIndex, projectName, projectSummary);
-    }
-
-    // Main function to open and populate the modal
-    function openProjectEnhanceModal(parentIndex, bulletIndex, projectName, projectSummary = "") { // Removed projectTitle
-        console.log("Opening project enhancement modal for bullet:", parentIndex, bulletIndex);
-
-        const bulletTextarea = document.getElementById(`bullet_${parentIndex}_${bulletIndex}`);
-        if (!bulletTextarea) {
-            console.error("Bullet textarea not found:", `bullet_${parentIndex}_${bulletIndex}`);
-            alert("Error: Could not find the text area for this bullet point.");
-            return;
-        }
-
-        const bulletText = bulletTextarea.value.trim();
-        if (!bulletText) {
-            alert('Please enter some text in the bullet point first.');
-            return;
-        }
-
-        const modal = document.getElementById('project-enhancement-modal');
-        if (!modal) {
-            console.error("Enhancement modal element not found!");
-            alert("Error: Project enhancement modal UI element not found. Please contact support if this persists.");
-            return;
-        }
-
-        // Set form values inside the modal
-        const parentIndexModal = modal.querySelector('#parent_index_modal');
-        const bulletIndexModal = modal.querySelector('#bullet_index_modal');
-        const originalBulletModal = modal.querySelector('#original_bullet_modal');
-        const projectNameModal = modal.querySelector('#project_name_modal');
-        const projectSummaryModal = modal.querySelector('#project_summary_modal');
-
-        if (parentIndexModal) parentIndexModal.value = parentIndex;
-        if (bulletIndexModal) bulletIndexModal.value = bulletIndex;
-        if (originalBulletModal) originalBulletModal.value = bulletText;
-        if (projectNameModal) projectNameModal.value = projectName || "";
-        // project_title_modal removed
-        if (projectSummaryModal) projectSummaryModal.value = projectSummary || "";
-
-
-        // Get fallback context using formsetPrefix
-        const currentProjectNameInput = document.getElementById(`id_${formsetPrefix}-${parentIndex}-project_name`);
-        const currentProjectSummaryInput = document.getElementById(`id_${formsetPrefix}-${parentIndex}-summary`);
-        const finalProjectName = projectName || (currentProjectNameInput ? currentProjectNameInput.value : '');
-        const finalProjectSummary = projectSummary || (currentProjectSummaryInput ? currentProjectSummaryInput.value : '');
-
-        // Update display text for context - with null checks
-        const projectNameDisplay = modal.querySelector('#project_name_display');
-        if (projectNameDisplay) {
-            projectNameDisplay.textContent = finalProjectName || "(Not specified)";
-        } else { console.warn("project_name_display element not found in modal"); }
-
-        // project_title_display removed
-
-        const projectSummaryDisplay = modal.querySelector('#project_summary_display');
-        if (projectSummaryDisplay) {
-            projectSummaryDisplay.textContent = finalProjectSummary || "(No summary provided)";
-        } else { console.warn("project_summary_display element not found in modal"); }
-
-
-        // Reset enhancement options and results
-        const enhanceTypeGeneral = modal.querySelector('input[name="enhancement_type"][value="general"]');
-        if (enhanceTypeGeneral) enhanceTypeGeneral.checked = true;
-        const aiEngineDefault = modal.querySelector('input[name="ai_engine"][value="chatgpt"]'); // Or your default
-        if (aiEngineDefault) aiEngineDefault.checked = true;
-
-        const enhancementInProgress = modal.querySelector('#enhancement_in_progress');
-        if (enhancementInProgress) enhancementInProgress.classList.add('hidden');
-
-        const resultArea = modal.querySelector('#enhanced_bullet_result');
-         if (resultArea) {
-            resultArea.innerHTML = '<p class="text-gray-400 dark:text-gray-500 italic">Enhanced bullet point will appear here</p>';
-         }
-
-        // Disable the apply button until enhancement is complete
-        const applyBtn = modal.querySelector('#apply_enhancement_btn');
-        if (applyBtn) {
-            applyBtn.disabled = true;
-            applyBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            applyBtn.classList.remove('opacity-100');
-        }
-
-        // Show the modal using 'hidden' class
-        modal.classList.remove('hidden');
-    }
-
-    function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            // Hide the modal using 'hidden' class
-            modal.classList.add('hidden');
-        }
-    }
-
-    function applyProjectEnhancement() {
-        console.log("Applying project enhancement");
-        // Get modal and indices - consider getting from the modal context directly if possible
-        const modal = document.getElementById('project-enhancement-modal');
-        if (!modal) { console.error("Cannot apply: Modal not found."); return; }
-        const parentIndex = modal.querySelector('#parent_index_modal')?.value;
-        const bulletIndex = modal.querySelector('#bullet_index_modal')?.value;
-        const enhancedBulletContainer = modal.querySelector('#enhanced_bullet_result');
-
-        if (parentIndex === undefined || bulletIndex === undefined) {
-             console.error("Cannot apply: Missing parent or bullet index from modal.");
-             alert("Error: Could not identify which bullet point to update.");
-             return;
-        }
-        if (!enhancedBulletContainer) {
-            console.error("Enhanced bullet result container not found.");
-            alert("Error: Could not find the enhancement result area.");
-            return;
-        }
-
-        const enhancedBulletText = enhancedBulletContainer.textContent ? enhancedBulletContainer.textContent.trim() : enhancedBulletContainer.innerText.trim();
-        const bulletTextarea = document.getElementById(`bullet_${parentIndex}_${bulletIndex}`);
-
-        if (!bulletTextarea) {
-             console.error("Bullet textarea not found for applying enhancement:", `bullet_${parentIndex}_${bulletIndex}`);
-             alert("Error: Could not find the original bullet point field to update.");
-             return;
-        }
-
-        if (enhancedBulletText && enhancedBulletText !== "Enhanced bullet point will appear here") {
-            bulletTextarea.value = enhancedBulletText;
-            checkBulletQuality(bulletTextarea); // Update quality display
-
-            // Highlight effect
-            bulletTextarea.classList.add('bg-green-50', 'dark:bg-green-900/30', 'border-green-300', 'dark:border-green-700', 'transition-colors', 'duration-1500');
-            setTimeout(() => {
-                bulletTextarea.classList.remove('bg-green-50', 'dark:bg-green-900/30', 'border-green-300', 'dark:border-green-700');
-            }, 1500);
-
-            closeModal('project-enhancement-modal');
-            console.log("Bullet point enhanced successfully!");
-            // Optional: alert("Bullet point enhanced successfully!");
-        } else {
-            console.error("Could not apply enhancement: Enhanced text is missing or is placeholder text.");
-            alert("Error applying enhancement: No enhanced text was generated or selected.");
-        }
-    }
-
-    // --- Initialization ---
-
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log("Document loaded, initializing project components");
-
-        // --- Detect formset prefix ---
-        const mgmtForm = document.querySelector('#resume-form input[name$="-TOTAL_FORMS"]');
-        if (mgmtForm) {
-            formsetPrefix = mgmtForm.name.split('-')[0];
-            console.log("Detected formset prefix:", formsetPrefix);
-        } else {
-            console.warn("Could not detect formset prefix from management form, defaulting to 'form'. Ensure management form is rendered before this script.");
-        }
-
-        // --- Initial UI setup ---
-        const container = document.getElementById('projects_container');
-        const emptyState = document.getElementById('projects-empty-state');
-        const addAnotherButton = document.querySelector('.add-another-btn');
-
-        if (container && emptyState) {
-            const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');
-            if (visibleForms.length > 0) {
-                emptyState.classList.add('hidden');
-                 if(addAnotherButton) addAnotherButton.style.display = 'inline-flex';
-            } else {
-                emptyState.classList.remove('hidden');
-                 if(addAnotherButton) addAnotherButton.style.display = 'none';
-            }
-        } else if (!emptyState && addAnotherButton) {
-              addAnotherButton.style.display = 'inline-flex';
-        }
-
-        // --- Initialize HTMX event listeners ---
-        if (typeof htmx !== 'undefined') {
-            console.log("HTMX detected, setting up event listeners");
-             document.body.addEventListener('htmx:afterSwap', function(evt) {
-                if (evt.detail.target.id === 'enhanced_bullet_result') {
-                     console.log("htmx:afterSwap detected for enhanced_bullet_result");
-                    const modal = evt.target.closest('#project-enhancement-modal'); // Find modal context
-                    if (!modal) return;
-                    const applyBtn = modal.querySelector('#apply_enhancement_btn');
-                    if (applyBtn) {
-                        applyBtn.disabled = false;
-                        applyBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                        applyBtn.classList.add('opacity-100');
-                         console.log("Apply button enabled.");
-                    } else { console.error("Apply button not found after HTMX swap."); }
-                }
-             });
-             document.body.addEventListener('htmx:responseError', function(evt) {
-                 console.error("HTMX request error:", evt.detail.error || evt.detail.xhr.statusText);
-                 const resultArea = document.getElementById('enhanced_bullet_result'); // Might need context if multiple modals possible
-                 if (resultArea) {
-                    resultArea.innerHTML = `<p class="text-red-500 italic">Error enhancing bullet: ${evt.detail.xhr.statusText || 'Request failed'}</p>`;
-                 }
-                 const modal = document.getElementById('project-enhancement-modal'); // Find modal context
-                 if (!modal) return;
-                 const applyBtn = modal.querySelector('#apply_enhancement_btn');
-                 if (applyBtn) {
-                     applyBtn.disabled = true;
-                     applyBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                     applyBtn.classList.remove('opacity-100');
-                 }
-             });
-        } else {
-            console.warn("HTMX not detected - AJAX enhancement won't work");
-        }
-
-        // --- Initialize existing elements ---
-        initializeQualityCheckers(document);
-        attachEnhancementButtonListeners(document); // Attach listeners to initially loaded buttons
-
-    });
-</script>
-{% endblock %}
-
+{# templates/resumes/wizard_steps/projects.html #}
+{#{% extends 'resumes/wizard_base.html' %}#}
+{#{% load static %}#}
+{##}
+{# Removed widget_tweaks load as we add classes manually now #}
+{##}
+{#{% block step_title %}Projects{% endblock %}#}
+{##}
+{#{% block step_icon %}<i class="fa-solid fa-diagram-project mr-3 text-blue-600 opacity-80"></i>{% endblock %}#}
+{#{% load widget_tweaks %}#}
+{#{% block step_content %}#}
+{##}
+{#<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}">#}
+{#    {% csrf_token %}#}
+{##}
+    {# Management form is crucial for formsets #}
+{#    {{ formset.management_form }}#}
+{##}
+    {# Informational Box #}
+{#    <div class="bg-blue-50 border border-blue-200 rounded-lg p-5 mb-8 dark:bg-gray-800 dark:border-gray-700">#}
+{#         <div class="flex items-start">#}
+{#            <div class="text-blue-500 text-xl mr-4 mt-1 shrink-0">#}
+{#                <i class="fa-solid fa-lightbulb"></i>#}
+{#            </div>#}
+{#            <div>#}
+{#                <p class="text-base text-gray-700 dark:text-gray-200">#}
+{#                    Add your notable projects below. Include personal projects, academic work, or significant#}
+{#                    contributions that showcase your skills and accomplishments.#}
+{#                </p>#}
+{#                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">#}
+{#                    <strong>Pro tip:</strong> For technical roles, include projects that demonstrate your technical abilities. Link to GitHub repositories or live demos whenever possible.#}
+{#                </p>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div id="projects_container" class="space-y-8">#}
+{#        {% for form in formset.forms %}#}
+{#        <div class="form-row bg-white border border-gray-200 rounded-xl shadow-sm p-6 transition-all duration-300 hover:shadow-md project-entry dark:bg-gray-800 dark:border-gray-700" id="{{ form.prefix }}-row" data-index="{{ forloop.counter0 }}">#}
+             {# Hidden DELETE field for formset #}
+{#             {% if formset.can_delete %}#}
+{#                 <div class="hidden">{{ form.DELETE }}</div>#}
+{#             {% endif %}#}
+{##}
+             {# Form Row Header #}
+{#             <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-200 dark:border-gray-600">#}
+{#                  <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center">#}
+{#                       <span class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3 dark:bg-blue-900/50">#}
+{#                           <i class="fa-solid fa-folder-open text-blue-600 dark:text-blue-400 text-sm"></i>#}
+{#                       </span>#}
+{#                       Project #{{ forloop.counter }}#}
+{#                  </h3>#}
+{#                  {% if formset.can_delete %}#}
+{#                  <button type="button" class="formset-delete-btn inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"#}
+{#                          onclick="deleteForm(this, '{{ formset.prefix }}')">#}
+{#                       <i class="fa-solid fa-trash-can mr-1 -ml-1 h-4 w-4"></i> Remove#}
+{#                  </button>#}
+{#                  {% endif %}#}
+{#             </div>#}
+{##}
+             {# Project Name #}
+{#             <div class="mb-4">#}
+{#                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.project_name.id_for_label }}">#}
+{#                       Project Name <span class="text-red-500">*</span>#}
+{#                  </label>#}
+{#                  <div class="relative rounded-md shadow-sm">#}
+{#                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                          <i class="fa-solid fa-project-diagram text-gray-400 h-5 w-5"></i>#}
+{#                      </div>#}
+{#                      {{ form.project_name|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"placeholder:e.g., E-commerce Website"|attr:"required" }}#}
+{#                  </div>#}
+{#                  {% if form.project_name.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.project_name.errors|first }}</p>{% endif %}#}
+{#             </div>#}
+{##}
+             {# Project Summary #}
+{#             <div class="mb-4">#}
+{#                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.summary.id_for_label }}">#}
+{#                       Project Summary <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span>#}
+{#                  </label>#}
+{#                   <div class="relative rounded-md shadow-sm">#}
+{#                       <div class="absolute top-3 left-0 pl-3 flex items-start pointer-events-none">#}
+{#                            <i class="fa-solid fa-align-left text-gray-400 h-5 w-5"></i>#}
+{#                       </div>#}
+{#                       {{ form.summary|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"rows:2"|attr:"placeholder:Brief overview..." }}#}
+{#                   </div>#}
+{#                   {% if form.summary.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.summary.errors|first }}</p>{% endif %}#}
+{#             </div>#}
+{##}
+             {# Dates #}
+{#             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">#}
+{#                  <div>#}
+{#                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.start_date.id_for_label }}">#}
+{#                          Start Date <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span>#}
+{#                      </label>#}
+{#                      <div class="relative rounded-md shadow-sm">#}
+{#                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                                <i class="fa-solid fa-calendar-alt text-gray-400 h-5 w-5"></i>#}
+{#                           </div>#}
+{#                           {{ form.start_date|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"type:date" }}#}
+{#                      </div>#}
+{#                      {% if form.start_date.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.start_date.errors|first }}</p>{% endif %}#}
+{#                  </div>#}
+{#                  <div class="completion-date-container">#}
+{#                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.completion_date.id_for_label }}">#}
+{#                           Completion Date <span class="text-xs text-gray-500 dark:text-gray-400">(Leave blank if ongoing)</span>#}
+{#                       </label>#}
+{#                       <div class="relative rounded-md shadow-sm">#}
+{#                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                                <i class="fa-solid fa-calendar-check text-gray-400 h-5 w-5"></i>#}
+{#                           </div>#}
+{#                            {{ form.completion_date|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"type:date" }}#}
+{#                       </div>#}
+{#                       {% if form.completion_date.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.completion_date.errors|first }}</p>{% endif %}#}
+{#                  </div>#}
+{#             </div>#}
+{##}
+              {# Links #}
+{#             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">#}
+{#                 <div>#}
+{#                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.project_link.id_for_label }}">#}
+{#                          Project Link <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span>#}
+{#                      </label>#}
+{#                      <div class="relative rounded-md shadow-sm">#}
+{#                          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                              <i class="fa-solid fa-globe text-gray-400 h-5 w-5"></i>#}
+{#                          </div>#}
+{#                           {{ form.project_link|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"type:url"|attr:"placeholder:https://example.com" }}#}
+{#                      </div>#}
+{#                      {% if form.project_link.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.project_link.errors|first }}</p>{% endif %}#}
+{#                 </div>#}
+{#                 <div>#}
+{#                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="{{ form.github_link.id_for_label }}">#}
+{#                          GitHub Link <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span>#}
+{#                      </label>#}
+{#                      <div class="relative rounded-md shadow-sm">#}
+{#                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">#}
+{#                               <i class="fa-brands fa-github text-gray-400 h-5 w-5"></i>#}
+{#                           </div>#}
+{#                           {{ form.github_link|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"type:url"|attr:"placeholder:https://github.com/..." }}#}
+{#                      </div>#}
+{#                       {% if form.github_link.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ form.github_link.errors|first }}</p>{% endif %}#}
+{#                 </div>#}
+{#             </div>#}
+{##}
+             {# Bullet Points - Enhanced with AI Functionality #}
+{#             <div class="mt-6 bullet-points-container">#}
+{#                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">#}
+{#                      Project Details / Achievements <span class="text-xs text-gray-500 dark:text-gray-400">(Optional but recommended)</span>#}
+{#                  </label>#}
+{#                  <div class="bullet-points space-y-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600" id="bullet_points_container_{{ forloop.counter0 }}">#}
+                      {# Render existing bullet points from initial data #}
+{#                      {% for bullet_item in form.initial.bullet_points %}#}
+{#                          {% include 'resumes/partials/project_bullet_point_form_row.html' with parent_index=forloop.parentloop.counter0 index=forloop.counter0 bullet_text=bullet_item.description project_name=form.project_name.value project_title="" project_summary=form.summary.value %}#}
+{#                      {% empty %}#}
+                          {# Render the first empty bullet point row if none exist initially #}
+{#                           {% include 'resumes/partials/project_bullet_point_form_row.html' with parent_index=forloop.counter0 index=0 bullet_text="" project_name=form.project_name.value project_title="" project_summary=form.summary.value %}#}
+{#                      {% endfor %}#}
+{#                  </div>#}
+{#                  <div class="flex justify-end mt-2">#}
+{#                      <button type="button" class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-600 dark:text-gray-200 dark:border-gray-500 dark:hover:bg-gray-500" onclick="addBulletPoint('{{ forloop.counter0 }}', '{{ form.project_name.value|default:'' }}', '', '{{ form.summary.value|default:'' }}')">#}
+{#                          <i class="fa-solid fa-plus mr-1 -ml-1 h-4 w-4"></i> Add Detail#}
+{#                      </button>#}
+{#                  </div>#}
+{#             </div>#}
+{#        </div> {# End form-row #}
+{#        {% empty %}#}
+         {# Empty State #}
+{#         <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-8 text-center dark:bg-gray-800 dark:border-gray-700" id="projects-empty-state">#}
+{#              <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4 dark:bg-blue-900/50">#}
+{#                  <i class="fa-solid fa-diagram-project text-blue-600 dark:text-blue-400 text-2xl"></i>#}
+{#              </div>#}
+{#              <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">No Projects Added Yet</h3>#}
+{#              <p class="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">#}
+{#                  This section is optional, but adding projects can significantly strengthen your resume, especially for technical roles.#}
+{#              </p>#}
+{#              <button type="button" class="add-another-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800" onclick="addForm(this, '{{ formset.prefix }}')">#}
+{#                  <i class="fa-solid fa-plus mr-2 -ml-1 h-5 w-5"></i> Add a Project#}
+{#              </button>#}
+{#         </div>#}
+{#        {% endfor %}#}
+{#    </div> {# End projects_container #}
+{##}
+     {# Template for adding new forms via JavaScript #}
+{#    <template id="{{ formset.prefix }}-form-template">#}
+{#         <div class="form-row bg-white border border-gray-200 rounded-xl shadow-sm p-6 project-entry dark:bg-gray-800 dark:border-gray-700" id="{{ formset.prefix }}-__prefix__-row" data-index="__prefix__">#}
+{#              {% with form=formset.empty_form %} {# Use empty_form for template structure #}
+              {# Hidden DELETE field for formset #}
+{#              <div class="hidden">{{ form.DELETE }}</div>#}
+{##}
+              {# Form Row Header for new forms #}
+{#              <div class="flex justify-between items-center mb-5 pb-3 border-b border-gray-200 dark:border-gray-600">#}
+{#                  <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center">#}
+{#                       <span class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3 dark:bg-blue-900/50">#}
+{#                           <i class="fa-solid fa-folder-open text-blue-600 dark:text-blue-400 text-sm"></i>#}
+{#                       </span>#}
+{#                       New Project#}
+{#                  </h3>#}
+{#                  <button type="button" class="formset-delete-btn inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"#}
+{#                          onclick="deleteForm(this, '{{ formset.prefix }}')">#}
+{#                       <i class="fa-solid fa-trash-can mr-1 -ml-1 h-4 w-4"></i> Remove#}
+{#                  </button>#}
+{#              </div>#}
+{##}
+               {# Project Name #}
+{#               <div class="mb-4">#}
+{#                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="id_{{ form.prefix }}-project_name">Project Name <span class="text-red-500">*</span></label>#}
+{#                   <div class="relative rounded-md shadow-sm">#}
+{#                       <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-project-diagram text-gray-400 h-5 w-5"></i></div>#}
+{#                       {{ form.project_name|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"required" }}#}
+{#                   </div>#}
+{#               </div>#}
+               {# Project Summary #}
+{#               <div class="mb-4">#}
+{#                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="id_{{ form.prefix }}-summary">Summary <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span></label>#}
+{#                   <div class="relative rounded-md shadow-sm">#}
+{#                        <div class="absolute top-3 left-0 pl-3 flex items-start pointer-events-none"><i class="fa-solid fa-align-left text-gray-400 h-5 w-5"></i></div>#}
+{#                       {{ form.summary|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"rows:2" }}#}
+{#                   </div>#}
+{#               </div>#}
+                {# Dates #}
+{#                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">#}
+{#                     <div>#}
+{#                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="id_{{ form.prefix }}-start_date">Start Date <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span></label>#}
+{#                         <div class="relative rounded-md shadow-sm">#}
+{#                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-calendar-alt text-gray-400 h-5 w-5"></i></div>#}
+{#                             {{ form.start_date|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"type:date" }}#}
+{#                         </div>#}
+{#                     </div>#}
+{#                     <div class="completion-date-container">#}
+{#                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="id_{{ form.prefix }}-completion_date">Completion Date <span class="text-xs text-gray-500 dark:text-gray-400">(Leave blank if ongoing)</span></label>#}
+{#                         <div class="relative rounded-md shadow-sm">#}
+{#                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-calendar-check text-gray-400 h-5 w-5"></i></div>#}
+{#                             {{ form.completion_date|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"type:date" }}#}
+{#                         </div>#}
+{#                     </div>#}
+{#                </div>#}
+                {# Links #}
+{#                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">#}
+{#                      <div>#}
+{#                          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="id_{{ form.prefix }}-project_link">Project Link <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span></label>#}
+{#                          <div class="relative rounded-md shadow-sm">#}
+{#                               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-globe text-gray-400 h-5 w-5"></i></div>#}
+{#                              {{ form.project_link|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"type:url" }}#}
+{#                          </div>#}
+{#                      </div>#}
+{#                      <div>#}
+{#                          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="id_{{ form.prefix }}-github_link">GitHub Link <span class="text-xs text-gray-500 dark:text-gray-400">(Optional)</span></label>#}
+{#                          <div class="relative rounded-md shadow-sm">#}
+{#                              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-brands fa-github text-gray-400 h-5 w-5"></i></div>#}
+{#                              {{ form.github_link|add_class:"block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"|attr:"type:url" }}#}
+{#                          </div>#}
+{#                      </div>#}
+{#                </div>#}
+               {# Bullet Points #}
+{#               <div class="mt-6 bullet-points-container">#}
+{#                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Details/Achievements</label>#}
+{#                    <div class="bullet-points space-y-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600" id="bullet_points_container___prefix__">#}
+                          {# Include the template for a single empty bullet point row #}
+{#                          {% include 'resumes/partials/project_bullet_point_form_row.html' with parent_index='__prefix__' index=0 bullet_text="" project_name="" project_title="" project_summary="" %}#}
+{#                    </div>#}
+{#                     <div class="flex justify-end mt-2">#}
+{#                        <button type="button" class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-600 dark:text-gray-200 dark:border-gray-500 dark:hover:bg-gray-500" onclick="addBulletPoint('__prefix__')">#}
+{#                            <i class="fa-solid fa-plus mr-1 -ml-1 h-4 w-4"></i> Add Detail#}
+{#                        </button>#}
+{#                    </div>#}
+{#               </div>#}
+{#              {% endwith %} {# End with form=formset.empty_form #}
+{#         </div>#}
+{#    </template>#}
+{##}
+    {# 'Add Another Project' button #}
+    {# Always present, but might be hidden by JS if emptyState is shown #}
+{#    <div class="flex justify-center mt-8">#}
+{#        <button type="button" class="add-another-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800" onclick="addForm(this, '{{ formset.prefix }}')">#}
+{#             <i class="fa-solid fa-plus mr-2 -ml-1 h-5 w-5"></i> Add Another Project#}
+{#        </button>#}
+{#    </div>#}
+{##}
+    {# Project Ideas Section - Enhanced Styling #}
+{#     <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">#}
+{#        <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-5 flex items-center">#}
+{#            <i class="fa-solid fa-lightbulb text-yellow-500 mr-3"></i>#}
+{#            Project Ideas by Field#}
+{#            <span class="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">(Optional inspiration)</span>#}
+{#        </h3>#}
+{##}
+{#        <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden dark:bg-gray-800 dark:border-gray-700">#}
+            {# Tabs - Refined Styling #}
+{#            <div class="border-b border-gray-200 dark:border-gray-700">#}
+{#                <nav class="-mb-px flex space-x-4 sm:space-x-6 overflow-x-auto px-4 sm:px-6" aria-label="Tabs">#}
+                    {# Added icons to tabs for visual interest #}
+{#                    <a href="#" class="tab group inline-flex items-center shrink-0 border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-400 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm" onclick="switchTab(this, 'software'); return false;" aria-current="page">#}
+{#                        <i class="fa-solid fa-laptop-code mr-2 h-4 w-4"></i> Software Dev#}
+{#                    </a>#}
+{#                    <a href="#" class="tab group inline-flex items-center shrink-0 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm" onclick="switchTab(this, 'data'); return false;">#}
+{#                         <i class="fa-solid fa-magnifying-glass-chart mr-2 h-4 w-4"></i> Data Science#}
+{#                    </a>#}
+{#                    <a href="#" class="tab group inline-flex items-center shrink-0 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm" onclick="switchTab(this, 'design'); return false;">#}
+{#                         <i class="fa-solid fa-palette mr-2 h-4 w-4"></i> UX/UI Design#}
+{#                    </a>#}
+{#                    <a href="#" class="tab group inline-flex items-center shrink-0 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm" onclick="switchTab(this, 'marketing'); return false;">#}
+{#                        <i class="fa-solid fa-bullhorn mr-2 h-4 w-4"></i> Marketing#}
+{#                    </a>#}
+{#                    <a href="#" class="tab group inline-flex items-center shrink-0 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm" onclick="switchTab(this, 'business'); return false;">#}
+{#                         <i class="fa-solid fa-briefcase mr-2 h-4 w-4"></i> Business#}
+{#                    </a>#}
+{#                </nav>#}
+{#            </div>#}
+{##}
+{#            <div class="p-5 sm:p-6">#}
+                {# Software Development Ideas - Assume JS handles visibility #}
+{#                <div id="software-tab" class="tab-content">#}
+{#                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">#}
+                        {# Example Idea Card - Enhanced Styling #}
+{#                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Personal Portfolio Website', 'A personal website showcasing your projects, skills, and experience.', 'software')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Personal Website/Portfolio</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Create a personal website to showcase your projects and skills.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200">#}
+{#                                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>#}
+{#                            </span>#}
+{#                        </div>#}
+{#                         <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('E-commerce Platform', 'An online store with product listings, shopping cart, and checkout functionality.', 'software')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">E-commerce Platform</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Build an online store with product listings, cart, and checkout.</p>#}
+{#                             <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200">#}
+{#                                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>#}
+{#                            </span>#}
+{#                        </div>#}
+{#                         <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Task Management App', 'A productivity app for organizing and tracking tasks with categories and reminders.', 'software')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Task Management App</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Develop a to-do list app with features like categories and reminders.</p>#}
+{#                             <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200">#}
+{#                                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>#}
+{#                            </span>#}
+{#                        </div>#}
+{#                         <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Real-time Chat Application', 'A messaging platform that enables instant communication between users.', 'software')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Chat Application</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Create a real-time messaging app using WebSockets.</p>#}
+{#                             <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200">#}
+{#                                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>#}
+{#                            </span>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+                {# Data Science Ideas (Hidden initially) - Apply similar styling #}
+{#                <div id="data-tab" class="tab-content hidden">#}
+{#                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">#}
+{#                         <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Housing Price Prediction Model', 'A machine learning model that predicts housing prices based on various features.', 'data')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Predictive Model</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Build a model to predict outcomes like housing prices or customer behavior.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>#}
+{#                        </div>#}
+{#                         <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Interactive Data Visualization Dashboard', 'A web-based dashboard featuring interactive charts and graphs to explore a dataset.', 'data')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Data Visualization Dashboard</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Create interactive visualizations of a dataset.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>#}
+{#                        </div>#}
+{#                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Social Media Sentiment Analysis', 'An algorithm that analyzes sentiment in text data from social media platforms.', 'data')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Sentiment Analysis</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Analyze sentiment in text data like social media or reviews.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>#}
+{#                        </div>#}
+{#                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Content Recommendation System', 'A system that recommends products or content based on user preferences and behavior.', 'data')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Recommendation System</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Build a system that recommends products or content based on user preferences.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+                 {# UX/UI Design Ideas (Hidden initially) #}
+{#                 <div id="design-tab" class="tab-content hidden">#}
+{#                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">#}
+{#                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Mobile App Redesign', 'A comprehensive redesign of an existing mobile app to improve usability and aesthetics.', 'design')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Mobile App Redesign</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Redesign the UI of an existing mobile app to improve usability.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>#}
+{#                        </div>#}
+{#                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Design System Creation', 'A comprehensive design system with components, guidelines, and documentation.', 'design')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Design System</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Create a comprehensive design system with components and guidelines.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>#}
+{#                        </div>#}
+{#                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Interactive Website Prototype', 'A high-fidelity website prototype with interactive elements and responsive design.', 'design')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Website Prototype</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Design and prototype a website with interactive elements.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>#}
+{#                        </div>#}
+{#                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('User Research Study', 'A comprehensive user research study with interviews, usability testing, and insights.', 'design')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">User Research Study</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Conduct and document a user research study to improve a product.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>#}
+{#                        </div>#}
+{#                     </div>#}
+{#                 </div>#}
+{##}
+                 {# Marketing Ideas (Hidden initially) #}
+{#                 <div id="marketing-tab" class="tab-content hidden">#}
+{#                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">#}
+{#                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Digital Marketing Campaign', 'A multi-channel marketing campaign for a product or service with measurable results.', 'marketing')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Marketing Campaign</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Design and execute a marketing campaign for a product or service.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>#}
+{#                        </div>#}
+{#                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Social Media Strategy', 'A comprehensive social media strategy for a brand with content calendar and analytics.', 'marketing')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Social Media Strategy</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Develop a comprehensive social media strategy for a brand.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>#}
+{#                        </div>#}
+{#                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Content Marketing Plan', 'A strategic content marketing plan with editorial calendar and distribution strategy.', 'marketing')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Content Marketing Plan</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Create a content calendar and strategy to drive engagement.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>#}
+{#                        </div>#}
+{#                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Marketing Analytics Dashboard', 'A dashboard to track and analyze marketing metrics across multiple channels.', 'marketing')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Analytics Dashboard</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Build a dashboard to track and analyze marketing metrics.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                 </div>#}
+{##}
+                 {# Business Ideas (Hidden initially) #}
+{#                 <div id="business-tab" class="tab-content hidden">#}
+{#                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">#}
+{#                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Business Plan Development', 'A comprehensive business plan for a startup or new product with market analysis and financials.', 'business')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Business Plan</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Develop a comprehensive business plan for a startup or new product.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>#}
+{#                        </div>#}
+{#                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Market Research Analysis', 'A detailed market analysis for an industry or product with competitive landscape and opportunities.', 'business')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Market Analysis</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Conduct and document a market analysis for an industry or product.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>#}
+{#                        </div>#}
+{#                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Financial Model Creation', 'A detailed financial projection model for a business with revenue forecasts and cash flow analysis.', 'business')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Financial Model</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Create a financial projection model for a business.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>#}
+{#                        </div>#}
+{#                        <div class="group relative bg-gray-50 dark:bg-gray-700/40 p-4 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-200" onclick="useProjectIdea('Process Improvement Initiative', 'A project documenting how you improved a business process to increase efficiency or reduce costs.', 'business')">#}
+{#                            <h4 class="font-semibold text-blue-700 dark:text-blue-400 text-sm group-hover:text-blue-800 dark:group-hover:text-blue-300">Process Improvement</h4>#}
+{#                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Document a project where you improved a business process.</p>#}
+{#                            <span class="absolute top-3 right-3 text-gray-300 dark:text-gray-600 group-hover:text-blue-400 transition-colors duration-200"><i class="fa-solid fa-arrow-up-right-from-square text-xs"></i></span>#}
+{#                        </div>#}
+{#                     </div>#}
+{#                 </div>#}
+{#            </div> {# End p-5 sm:p-6 #}
+{#        </div> {# End card div #}
+{#    </div>#}
+    {# End Project Ideas Section #}
+{#</form>#}
+{#    {% include 'resumes/partials/project_ai/project_enhancement_modal.html' %}#}
+{#    <script src="https://unpkg.com/htmx.org@1.9.0"></script>#}
+{#     <script>#}
+{#    // Basic JS - Enhanced for project bullet point functionality#}
+{##}
+{#    // --- Global variable to store detected formset prefix ---#}
+{#    let formsetPrefix = 'form'; // Default fallback#}
+{##}
+{#    // --- Helper Functions ---#}
+{##}
+{#    // Helper function to attach listeners to enhancement buttons within a scope#}
+{#    function attachEnhancementButtonListeners(scopeElement = document) {#}
+{#        scopeElement.querySelectorAll('.project-enhance-btn').forEach(btn => {#}
+{#            // Remove existing listener to prevent duplicates if re-attaching#}
+{#            btn.removeEventListener('click', handleEnhanceButtonClick);#}
+{#            // Add the listener#}
+{#            btn.addEventListener('click', handleEnhanceButtonClick);#}
+{#        });#}
+{#    }#}
+{##}
+{#    // Define the handler function separately for event listeners#}
+{#    function handleEnhanceButtonClick(e) {#}
+{#        e.preventDefault();#}
+{#        openProjectEnhanceModalWrapper(this); // 'this' refers to the button clicked#}
+{#    }#}
+{##}
+{#     // Helper function to initialize quality checkers within a scope#}
+{#     function initializeQualityCheckers(scopeElement = document) {#}
+{#        scopeElement.querySelectorAll('.bullet-points textarea').forEach(textarea => {#}
+{#             checkBulletQuality(textarea); // Run initial check#}
+{#             // Optional: Add keyup listener if not using inline onkeyup#}
+{#             // textarea.removeEventListener('keyup', handleQualityCheckKeyup);#}
+{#             // textarea.addEventListener('keyup', handleQualityCheckKeyup);#}
+{#         });#}
+{#     }#}
+{##}
+{#     // Optional: Define keyup handler separately if not using inline onkeyup#}
+{#     // function handleQualityCheckKeyup(e) {#}
+{#     //    checkBulletQuality(this);#}
+{#     // }#}
+{##}
+{##}
+{#    // --- Core Formset and Bullet Point Logic ---#}
+{##}
+{#    function addForm(button, prefix) {#}
+{#        console.log(`Adding form with prefix: ${prefix}`);#}
+{#        const formContainer = document.getElementById('projects_container');#}
+{#        const totalFormsInput = document.getElementById(`id_${prefix}-TOTAL_FORMS`);#}
+{#        const template = document.getElementById(`${prefix}-form-template`);#}
+{##}
+{#        if (!formContainer || !totalFormsInput || !template) {#}
+{#            console.error("Missing elements for addForm:", { formContainer, totalFormsInput, template });#}
+{#            return;#}
+{#        }#}
+{##}
+{#        const formNum = parseInt(totalFormsInput.value);#}
+{#        let newFormHtml = template.innerHTML.replace(/__prefix__/g, formNum);#}
+{##}
+{#        // Replace IDs and names in the cloned template content#}
+{#        // Ensure these replacements match your template structure exactly#}
+{#        newFormHtml = newFormHtml.replace(new RegExp(`id_${prefix}-__prefix__`, 'g'), `id_${prefix}-${formNum}`);#}
+{#        newFormHtml = newFormHtml.replace(new RegExp(`name="${prefix}-__prefix__`, 'g'), `name="${prefix}-${formNum}`);#}
+{#        newFormHtml = newFormHtml.replace(/id="bullet_points_container___prefix__"/g, `id="bullet_points_container_${formNum}"`);#}
+{#        // Update addBulletPoint call in template if needed - ensure it matches the function signature (no projectTitle)#}
+{#        newFormHtml = newFormHtml.replace(/addBulletPoint\('__prefix__'\)/g, `addBulletPoint('${formNum}')`);#}
+{#        newFormHtml = newFormHtml.replace(/addBulletPoint\('__prefix__', '', ''\)/g, `addBulletPoint('${formNum}')`); // Update if template has different args#}
+{#        // Note: openProjectEnhanceModal is now called via event listener/wrapper, direct onclick replacement might be less critical#}
+{##}
+{#        const tempDiv = document.createElement('div');#}
+{#        tempDiv.innerHTML = newFormHtml.trim();#}
+{#        const newFormElement = tempDiv.firstElementChild;#}
+{##}
+{#        if (!newFormElement) {#}
+{#            console.error("Could not create new form element from template.");#}
+{#            return;#}
+{#        }#}
+{##}
+{#        const emptyState = document.getElementById('projects-empty-state');#}
+{#        if (emptyState) {#}
+{#            emptyState.classList.add('hidden');#}
+{#        }#}
+{##}
+{#        formContainer.appendChild(newFormElement);#}
+{#        totalFormsInput.value = formNum + 1;#}
+{##}
+{#        // Ensure 'Add Another' button is visible#}
+{#        const addAnotherButton = document.querySelector('.add-another-btn');#}
+{#        if (addAnotherButton) {#}
+{#            addAnotherButton.style.display = 'inline-flex';#}
+{#        }#}
+{##}
+{#        // Scroll to the new form#}
+{#        newFormElement.scrollIntoView({ behavior: 'smooth', block: 'start' });#}
+{##}
+{#        // Attach listeners/initializers to the newly added form elements#}
+{#        attachEnhancementButtonListeners(newFormElement);#}
+{#        initializeQualityCheckers(newFormElement);#}
+{#    }#}
+{##}
+{##}
+{#    function deleteForm(button, prefix) {#}
+{#        console.log(`Deleting form related to button:`, button);#}
+{#        const formRow = button.closest('.form-row');#}
+{#        if (!formRow) {#}
+{#            console.error("Could not find parent .form-row for delete button.");#}
+{#            return;#}
+{#        }#}
+{##}
+{#        const deleteInput = formRow.querySelector('input[name$="-DELETE"]');#}
+{#        if (deleteInput) {#}
+{#            deleteInput.checked = true;#}
+{#            formRow.style.display = 'none'; // Hide the form visually#}
+{#            console.log(`Marked form for deletion: ${formRow.id}`);#}
+{#        } else {#}
+{#            console.log(`Removing form row directly (likely an 'extra' form): ${formRow.id}`);#}
+{#            formRow.remove(); // Remove if no DELETE field (likely extra form)#}
+{#        }#}
+{##}
+{#        // Check if remaining forms are all hidden to show empty state#}
+{#        const container = document.getElementById('projects_container');#}
+{#        const emptyState = document.getElementById('projects-empty-state');#}
+{#        const addAnotherButton = document.querySelector('.add-another-btn');#}
+{##}
+{#        if (container && emptyState) {#}
+{#            const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');#}
+{#             let actuallyVisibleCount = 0;#}
+{#             visibleForms.forEach(form => {#}
+{#                const delInput = form.querySelector('input[name$="-DELETE"]');#}
+{#                if (!delInput || !delInput.checked) {#}
+{#                     actuallyVisibleCount++;#}
+{#                }#}
+{#             });#}
+{##}
+{#            console.log(`Visible forms count after delete: ${actuallyVisibleCount}`);#}
+{##}
+{#            if (actuallyVisibleCount === 0) {#}
+{#                emptyState.classList.remove('hidden');#}
+{#                if (addAnotherButton) addAnotherButton.style.display = 'none';#}
+{#            } else {#}
+{#                 emptyState.classList.add('hidden');#}
+{#                 if (addAnotherButton) addAnotherButton.style.display = 'inline-flex';#}
+{#            }#}
+{#        }#}
+{#    }#}
+{##}
+{#    function addBulletPoint(parentIndex, projectName = '', projectSummary = '') { // Removed projectTitle parameter#}
+{#        console.log(`Adding bullet point for parent index: ${parentIndex}`);#}
+{#        const container = document.getElementById(`bullet_points_container_${parentIndex}`);#}
+{#        if (!container) {#}
+{#             console.error(`Bullet points container not found for index: ${parentIndex}`);#}
+{#             return;#}
+{#        }#}
+{##}
+{#        // Try to get project name/summary from the form if not provided explicitly#}
+{#        if (!projectName) {#}
+{#            const projectNameInput = document.getElementById(`id_${formsetPrefix}-${parentIndex}-project_name`);#}
+{#            if (projectNameInput) projectName = projectNameInput.value;#}
+{#        }#}
+{#        if (!projectSummary) {#}
+{#            const projectSummaryInput = document.getElementById(`id_${formsetPrefix}-${parentIndex}-summary`);#}
+{#             if (projectSummaryInput) projectSummary = projectSummaryInput.value;#}
+{#        }#}
+{##}
+{#        const bulletCount = container.querySelectorAll('.bullet-point-row').length;#}
+{#        const newBulletRow = document.createElement('div');#}
+{#        newBulletRow.className = 'bullet-point-row flex items-start gap-3 group hover:bg-gray-50/80 dark:hover:bg-gray-800/20 p-2 rounded-md transition-colors';#}
+{##}
+{#        // Sanitize potentially problematic characters for attributes#}
+{#        const safeProjectName = (projectName || '').replace(/'/g, "\\'").replace(/"/g, '\\"');#}
+{#        const safeProjectSummary = (projectSummary || '').replace(/'/g, "\\'").replace(/"/g, '\\"');#}
+{##}
+{#        // HTML for the new bullet point row (data-project-title removed)#}
+{#        newBulletRow.innerHTML = `#}
+{#            <div class="mt-3 text-primary">•</div>#}
+{#            <div class="flex-1">#}
+{#                <div class="relative">#}
+{#                    <textarea class="w-full min-h-24 p-2 border border-gray-300 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"#}
+{#                        id="bullet_${parentIndex}_${bulletCount}"#}
+{#                        name="bullet_${parentIndex}_${bulletCount}"#}
+{#                        placeholder="Describe your project achievement..."#}
+{#                        onkeyup="checkBulletQuality(this)"#}
+{#                        data-parent="${parentIndex}"#}
+{#                        data-index="${bulletCount}"></textarea>#}
+{#                </div>#}
+{#                <div class="flex justify-between mt-1">#}
+{#                    <div class="bullet-quality text-xs"></div>#}
+{#                    <div class="text-xs text-gray-500">#}
+{#                        <span class="current">0</span>/<span class="max">100-150 optimal</span>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#            <div class="flex flex-col gap-2">#}
+{#                <button type="button" class="mt-3 h-8 w-8 rounded-full text-red-600 bg-red-100 opacity-70 hover:opacity-100 hover:bg-red-200 flex items-center justify-center"#}
+{#                        onclick="removeBulletPoint(this, '${parentIndex}')">#}
+{#                    <i class="fa-solid fa-times"></i>#}
+{#                </button>#}
+{#                <button type="button"#}
+{#                        class="h-8 w-8 rounded-full text-blue-600 bg-blue-100 opacity-70 hover:opacity-100 hover:bg-blue-200 flex items-center justify-center project-enhance-btn"#}
+{#                        data-parent="${parentIndex}"#}
+{#                        data-index="${bulletCount}"#}
+{#                        data-project-name="${safeProjectName}"#}
+{#                        data-project-summary="${safeProjectSummary}"#}
+                        {# Removed data-project-title here #}>
+{#                    <i class="fa-solid fa-wand-magic-sparkles"></i>#}
+{#                </button>#}
+{#                <span id="enhance_indicator_${parentIndex}_${bulletCount}" class="htmx-indicator hidden">#}
+{#                    <span class="inline-block animate-spin text-blue-500">⟳</span>#}
+{#                </span>#}
+{#            </div>#}
+{#        `;#}
+{##}
+{#        container.appendChild(newBulletRow);#}
+{##}
+{#        // Re-attach listener specifically to the new button#}
+{#        const newEnhanceBtn = newBulletRow.querySelector('.project-enhance-btn');#}
+{#         if (newEnhanceBtn) {#}
+{#            // Ensure previous listeners removed if any overlap, though should be new element#}
+{#            newEnhanceBtn.removeEventListener('click', handleEnhanceButtonClick);#}
+{#            newEnhanceBtn.addEventListener('click', handleEnhanceButtonClick);#}
+{#         }#}
+{##}
+{#        // Focus the new textarea and check quality#}
+{#        const newTextarea = newBulletRow.querySelector('textarea');#}
+{#        if(newTextarea) {#}
+{#            newTextarea.focus();#}
+{#            checkBulletQuality(newTextarea);#}
+{#        }#}
+{#    }#}
+{##}
+{#    function removeBulletPoint(button, parentIndex) {#}
+{#        const bulletRow = button.closest('.bullet-point-row');#}
+{#        if (bulletRow) {#}
+{#            bulletRow.style.opacity = '0';#}
+{#            bulletRow.style.transform = 'translateX(10px)';#}
+{#            bulletRow.style.transition = 'opacity 0.3s, transform 0.3s';#}
+{#            setTimeout(() => {#}
+{#                bulletRow.remove();#}
+{#                reindexBulletPoints(parentIndex);#}
+{#            }, 300);#}
+{#        }#}
+{#    }#}
+{##}
+{#    function reindexBulletPoints(parentIndex) {#}
+{#        const container = document.getElementById(`bullet_points_container_${parentIndex}`);#}
+{#        if (!container) return;#}
+{##}
+{#        const bulletRows = container.querySelectorAll('.bullet-point-row');#}
+{#        bulletRows.forEach((row, index) => {#}
+{#            const textarea = row.querySelector('textarea');#}
+{#            if (textarea) {#}
+{#                textarea.id = `bullet_${parentIndex}_${index}`;#}
+{#                textarea.name = `bullet_${parentIndex}_${index}`;#}
+{#                textarea.setAttribute('data-index', index);#}
+{#            }#}
+{#            const enhanceBtn = row.querySelector('.project-enhance-btn');#}
+{#            if (enhanceBtn) {#}
+{#                enhanceBtn.setAttribute('data-index', index);#}
+{#                // Remove attribute if it exists from old code#}
+{#                enhanceBtn.removeAttribute('data-project-title');#}
+{#            }#}
+{#            const indicator = row.querySelector('.htmx-indicator');#}
+{#            if (indicator) {#}
+{#                indicator.id = `enhance_indicator_${parentIndex}_${index}`;#}
+{#            }#}
+{#             // Re-attach listener to ensure it points to correct wrapper/data after re-index#}
+{#             if (enhanceBtn) {#}
+{#                 enhanceBtn.removeEventListener('click', handleEnhanceButtonClick);#}
+{#                 enhanceBtn.addEventListener('click', handleEnhanceButtonClick);#}
+{#             }#}
+{#        });#}
+{#    }#}
+{##}
+{#    // Function to check bullet point quality#}
+{#    function checkBulletQuality(textarea) {#}
+{#        if (!textarea) return;#}
+{#        const text = textarea.value.trim();#}
+{#        const charCount = text.length;#}
+{#        const qualityContainer = textarea.closest('.flex-1');#}
+{#        if (!qualityContainer) return;#}
+{##}
+{#        const charCounter = qualityContainer.querySelector('.current');#}
+{#        if (charCounter) charCounter.textContent = charCount;#}
+{##}
+{#        const qualityDiv = qualityContainer.querySelector('.bullet-quality');#}
+{#        if (!qualityDiv) return;#}
+{##}
+{#        qualityDiv.className = 'bullet-quality text-xs'; // Reset#}
+{#        if (charCount === 0) {#}
+{#            qualityDiv.textContent = '';#}
+{#            return;#}
+{#        }#}
+{##}
+{#        const startsWithActionVerb = /^(Developed|Created|Implemented|Built|Designed|Launched|Led|Managed|Increased|Reduced|Improved|Achieved|Delivered|Generated|Optimized|Streamlined|Collaborated|Contributed|Researched|Analyzed)/i.test(text);#}
+{#        const hasMetrics = /\d+%|\d+(\.\d+)?\s*(?:million|thousand|users|customers|dollars|sales|increase|decrease|improvement|seconds|minutes|hours|times)/i.test(text);#}
+{##}
+{#        if (charCount < 50) {#}
+{#            qualityDiv.textContent = 'Consider adding more detail';#}
+{#            qualityDiv.classList.add('text-yellow-600');#}
+{#        } else if (charCount > 200) {#}
+{#            qualityDiv.textContent = 'Consider shortening for conciseness';#}
+{#            qualityDiv.classList.add('text-yellow-600');#}
+{#        } else if (startsWithActionVerb && hasMetrics && charCount >= 70 && charCount <= 160) {#}
+{#            qualityDiv.textContent = 'Excellent! Strong action verb & metrics';#}
+{#            qualityDiv.classList.add('text-green-600');#}
+{#        } else if (startsWithActionVerb && hasMetrics) {#}
+{#             qualityDiv.textContent = 'Good! Has action verb & metrics';#}
+{#             qualityDiv.classList.add('text-blue-600');#}
+{#        } else if (startsWithActionVerb) {#}
+{#            qualityDiv.textContent = 'Good start with action verb - add metrics/results?';#}
+{#            qualityDiv.classList.add('text-blue-600');#}
+{#        } else if (hasMetrics) {#}
+{#            qualityDiv.textContent = 'Good use of metrics - start with an action verb?';#}
+{#            qualityDiv.classList.add('text-blue-600');#}
+{#        } else {#}
+{#            qualityDiv.textContent = 'Consider starting with an action verb & adding quantifiable results';#}
+{#            qualityDiv.classList.add('text-yellow-600');#}
+{#        }#}
+{#    }#}
+{##}
+{#    // --- Tab and Project Idea Logic ---#}
+{##}
+{#    function switchTab(clickedTab, tabIdToShow) {#}
+{#        const tabContainer = clickedTab.closest('.border-b');#}
+{#        if(!tabContainer) return;#}
+{##}
+{#        tabContainer.querySelectorAll('.tab').forEach(tab => {#}
+{#            tab.classList.remove('border-blue-500', 'text-blue-600', 'dark:border-blue-400', 'dark:text-blue-400');#}
+{#            tab.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'dark:text-gray-400', 'dark:hover:text-gray-200', 'dark:hover:border-gray-500');#}
+{#            tab.removeAttribute('aria-current');#}
+{#        });#}
+{##}
+{#        clickedTab.classList.add('border-blue-500', 'text-blue-600', 'dark:border-blue-400', 'dark:text-blue-400');#}
+{#        clickedTab.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300', 'dark:text-gray-400', 'dark:hover:text-gray-200', 'dark:hover:border-gray-500');#}
+{#        clickedTab.setAttribute('aria-current', 'page');#}
+{##}
+{#        const contentOuterContainer = clickedTab.closest('.bg-white, .dark\\:bg-gray-800');#}
+{#        if(!contentOuterContainer) return;#}
+{#        const contentContainer = contentOuterContainer.querySelector('.p-5, .sm\\:p-6');#}
+{#        if(contentContainer){#}
+{#            contentContainer.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));#}
+{#            const contentToShow = contentContainer.querySelector(`#${tabIdToShow}-tab`);#}
+{#            if (contentToShow) contentToShow.classList.remove('hidden');#}
+{#        }#}
+{#    }#}
+{##}
+{#    function useProjectIdea(name, summary, category) {#}
+{#        const emptyState = document.getElementById('projects-empty-state');#}
+{#        let targetFormRow;#}
+{#        let addButtonClicked = false;#}
+{##}
+{#        if (emptyState && !emptyState.classList.contains('hidden')) {#}
+{#             const addButton = emptyState.querySelector('.add-another-btn');#}
+{#             if (addButton) {#}
+{#                 addButton.click();#}
+{#                 addButtonClicked = true;#}
+{#             } else { console.error("Could not find add button in empty state"); return; }#}
+{#        } else {#}
+{#             const addAnotherButton = document.querySelector('.add-another-btn');#}
+{#             if (addAnotherButton) {#}
+{#                addAnotherButton.click();#}
+{#                addButtonClicked = true;#}
+{#            } else {#}
+{#                 const forms = document.querySelectorAll('#projects_container .form-row:not([style*="display: none"])');#}
+{#                 if (forms.length > 0) {#}
+{#                     targetFormRow = forms[forms.length - 1];#}
+{#                     console.warn("No 'Add Another' button found, attempting to populate last existing form.");#}
+{#                 } else { console.error("No 'Add Another' button and no existing forms found."); return; }#}
+{#            }#}
+{#        }#}
+{##}
+{#        if (addButtonClicked) {#}
+{#            setTimeout(() => {#}
+{#                const forms = document.querySelectorAll('#projects_container .form-row');#}
+{#                if (forms.length > 0) {#}
+{#                    targetFormRow = forms[forms.length - 1];#}
+{#                    populateProjectIdea(targetFormRow, name, summary);#}
+{#                } else { console.error("Add button clicked, but no form appeared."); }#}
+{#            }, 150);#}
+{#        } else if (targetFormRow) {#}
+{#            populateProjectIdea(targetFormRow, name, summary);#}
+{#        }#}
+{#    }#}
+{##}
+{#    function populateProjectIdea(formRow, name, summary) {#}
+{#         if (!formRow) { console.error("Target form row not found for populating idea."); return; }#}
+{#         const nameInput = formRow.querySelector(`input[id^="id_${formsetPrefix}-"][id$="-project_name"]`);#}
+{#         const summaryTextarea = formRow.querySelector(`textarea[id^="id_${formsetPrefix}-"][id$="-summary"]`);#}
+{##}
+{#         if (nameInput) nameInput.value = name;#}
+{#         if (summaryTextarea) summaryTextarea.value = summary;#}
+{##}
+{#         formRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });#}
+{#         formRow.classList.add('ring-2', 'ring-blue-500', 'dark:ring-blue-400', 'ring-offset-2' , 'dark:ring-offset-gray-800', 'transition-shadow', 'duration-1000');#}
+{#         setTimeout(() => {#}
+{#             formRow.classList.remove('ring-2', 'ring-blue-500', 'dark:ring-blue-400', 'ring-offset-2', 'dark:ring-offset-gray-800');#}
+{#         }, 1500);#}
+{#         if (nameInput) nameInput.focus();#}
+{#    }#}
+{##}
+{#    // --- Enhancement Modal Logic ---#}
+{##}
+{#    // Wrapper function to read data attributes safely before calling the main modal function#}
+{#    function openProjectEnhanceModalWrapper(buttonElement) {#}
+{#        const parentIndex = buttonElement.getAttribute('data-parent');#}
+{#        const bulletIndex = buttonElement.getAttribute('data-index');#}
+{#        const projectName = buttonElement.getAttribute('data-project-name');#}
+{#        // projectTitle removed#}
+{#        const projectSummary = buttonElement.getAttribute('data-project-summary');#}
+{##}
+{#        console.log("Enhancement button wrapper called:", parentIndex, bulletIndex, projectName);#}
+{#        // Call without projectTitle#}
+{#        openProjectEnhanceModal(parentIndex, bulletIndex, projectName, projectSummary);#}
+{#    }#}
+{##}
+{#    // Main function to open and populate the modal#}
+{#    function openProjectEnhanceModal(parentIndex, bulletIndex, projectName, projectSummary = "") { // Removed projectTitle#}
+{#        console.log("Opening project enhancement modal for bullet:", parentIndex, bulletIndex);#}
+{##}
+{#        const bulletTextarea = document.getElementById(`bullet_${parentIndex}_${bulletIndex}`);#}
+{#        if (!bulletTextarea) {#}
+{#            console.error("Bullet textarea not found:", `bullet_${parentIndex}_${bulletIndex}`);#}
+{#            alert("Error: Could not find the text area for this bullet point.");#}
+{#            return;#}
+{#        }#}
+{##}
+{#        const bulletText = bulletTextarea.value.trim();#}
+{#        if (!bulletText) {#}
+{#            alert('Please enter some text in the bullet point first.');#}
+{#            return;#}
+{#        }#}
+{##}
+{#        const modal = document.getElementById('project-enhancement-modal');#}
+{#        if (!modal) {#}
+{#            console.error("Enhancement modal element not found!");#}
+{#            alert("Error: Project enhancement modal UI element not found. Please contact support if this persists.");#}
+{#            return;#}
+{#        }#}
+{##}
+{#        // Set form values inside the modal#}
+{#        const parentIndexModal = modal.querySelector('#parent_index_modal');#}
+{#        const bulletIndexModal = modal.querySelector('#bullet_index_modal');#}
+{#        const originalBulletModal = modal.querySelector('#original_bullet_modal');#}
+{#        const projectNameModal = modal.querySelector('#project_name_modal');#}
+{#        const projectSummaryModal = modal.querySelector('#project_summary_modal');#}
+{##}
+{#        if (parentIndexModal) parentIndexModal.value = parentIndex;#}
+{#        if (bulletIndexModal) bulletIndexModal.value = bulletIndex;#}
+{#        if (originalBulletModal) originalBulletModal.value = bulletText;#}
+{#        if (projectNameModal) projectNameModal.value = projectName || "";#}
+{#        // project_title_modal removed#}
+{#        if (projectSummaryModal) projectSummaryModal.value = projectSummary || "";#}
+{##}
+{##}
+{#        // Get fallback context using formsetPrefix#}
+{#        const currentProjectNameInput = document.getElementById(`id_${formsetPrefix}-${parentIndex}-project_name`);#}
+{#        const currentProjectSummaryInput = document.getElementById(`id_${formsetPrefix}-${parentIndex}-summary`);#}
+{#        const finalProjectName = projectName || (currentProjectNameInput ? currentProjectNameInput.value : '');#}
+{#        const finalProjectSummary = projectSummary || (currentProjectSummaryInput ? currentProjectSummaryInput.value : '');#}
+{##}
+{#        // Update display text for context - with null checks#}
+{#        const projectNameDisplay = modal.querySelector('#project_name_display');#}
+{#        if (projectNameDisplay) {#}
+{#            projectNameDisplay.textContent = finalProjectName || "(Not specified)";#}
+{#        } else { console.warn("project_name_display element not found in modal"); }#}
+{##}
+{#        // project_title_display removed#}
+{##}
+{#        const projectSummaryDisplay = modal.querySelector('#project_summary_display');#}
+{#        if (projectSummaryDisplay) {#}
+{#            projectSummaryDisplay.textContent = finalProjectSummary || "(No summary provided)";#}
+{#        } else { console.warn("project_summary_display element not found in modal"); }#}
+{##}
+{##}
+{#        // Reset enhancement options and results#}
+{#        const enhanceTypeGeneral = modal.querySelector('input[name="enhancement_type"][value="general"]');#}
+{#        if (enhanceTypeGeneral) enhanceTypeGeneral.checked = true;#}
+{#        const aiEngineDefault = modal.querySelector('input[name="ai_engine"][value="chatgpt"]'); // Or your default#}
+{#        if (aiEngineDefault) aiEngineDefault.checked = true;#}
+{##}
+{#        const enhancementInProgress = modal.querySelector('#enhancement_in_progress');#}
+{#        if (enhancementInProgress) enhancementInProgress.classList.add('hidden');#}
+{##}
+{#        const resultArea = modal.querySelector('#enhanced_bullet_result');#}
+{#         if (resultArea) {#}
+{#            resultArea.innerHTML = '<p class="text-gray-400 dark:text-gray-500 italic">Enhanced bullet point will appear here</p>';#}
+{#         }#}
+{##}
+{#        // Disable the apply button until enhancement is complete#}
+{#        const applyBtn = modal.querySelector('#apply_enhancement_btn');#}
+{#        if (applyBtn) {#}
+{#            applyBtn.disabled = true;#}
+{#            applyBtn.classList.add('opacity-50', 'cursor-not-allowed');#}
+{#            applyBtn.classList.remove('opacity-100');#}
+{#        }#}
+{##}
+{#        // Show the modal using 'hidden' class#}
+{#        modal.classList.remove('hidden');#}
+{#    }#}
+{##}
+{#    function closeModal(modalId) {#}
+{#        const modal = document.getElementById(modalId);#}
+{#        if (modal) {#}
+{#            // Hide the modal using 'hidden' class#}
+{#            modal.classList.add('hidden');#}
+{#        }#}
+{#    }#}
+{##}
+{#    function applyProjectEnhancement() {#}
+{#        console.log("Applying project enhancement");#}
+{#        // Get modal and indices - consider getting from the modal context directly if possible#}
+{#        const modal = document.getElementById('project-enhancement-modal');#}
+{#        if (!modal) { console.error("Cannot apply: Modal not found."); return; }#}
+{#        const parentIndex = modal.querySelector('#parent_index_modal')?.value;#}
+{#        const bulletIndex = modal.querySelector('#bullet_index_modal')?.value;#}
+{#        const enhancedBulletContainer = modal.querySelector('#enhanced_bullet_result');#}
+{##}
+{#        if (parentIndex === undefined || bulletIndex === undefined) {#}
+{#             console.error("Cannot apply: Missing parent or bullet index from modal.");#}
+{#             alert("Error: Could not identify which bullet point to update.");#}
+{#             return;#}
+{#        }#}
+{#        if (!enhancedBulletContainer) {#}
+{#            console.error("Enhanced bullet result container not found.");#}
+{#            alert("Error: Could not find the enhancement result area.");#}
+{#            return;#}
+{#        }#}
+{##}
+{#        const enhancedBulletText = enhancedBulletContainer.textContent ? enhancedBulletContainer.textContent.trim() : enhancedBulletContainer.innerText.trim();#}
+{#        const bulletTextarea = document.getElementById(`bullet_${parentIndex}_${bulletIndex}`);#}
+{##}
+{#        if (!bulletTextarea) {#}
+{#             console.error("Bullet textarea not found for applying enhancement:", `bullet_${parentIndex}_${bulletIndex}`);#}
+{#             alert("Error: Could not find the original bullet point field to update.");#}
+{#             return;#}
+{#        }#}
+{##}
+{#        if (enhancedBulletText && enhancedBulletText !== "Enhanced bullet point will appear here") {#}
+{#            bulletTextarea.value = enhancedBulletText;#}
+{#            checkBulletQuality(bulletTextarea); // Update quality display#}
+{##}
+{#            // Highlight effect#}
+{#            bulletTextarea.classList.add('bg-green-50', 'dark:bg-green-900/30', 'border-green-300', 'dark:border-green-700', 'transition-colors', 'duration-1500');#}
+{#            setTimeout(() => {#}
+{#                bulletTextarea.classList.remove('bg-green-50', 'dark:bg-green-900/30', 'border-green-300', 'dark:border-green-700');#}
+{#            }, 1500);#}
+{##}
+{#            closeModal('project-enhancement-modal');#}
+{#            console.log("Bullet point enhanced successfully!");#}
+{#            // Optional: alert("Bullet point enhanced successfully!");#}
+{#        } else {#}
+{#            console.error("Could not apply enhancement: Enhanced text is missing or is placeholder text.");#}
+{#            alert("Error applying enhancement: No enhanced text was generated or selected.");#}
+{#        }#}
+{#    }#}
+{##}
+{#    // --- Initialization ---#}
+{##}
+{#    document.addEventListener('DOMContentLoaded', function() {#}
+{#        console.log("Document loaded, initializing project components");#}
+{##}
+{#        // --- Detect formset prefix ---#}
+{#        const mgmtForm = document.querySelector('#resume-form input[name$="-TOTAL_FORMS"]');#}
+{#        if (mgmtForm) {#}
+{#            formsetPrefix = mgmtForm.name.split('-')[0];#}
+{#            console.log("Detected formset prefix:", formsetPrefix);#}
+{#        } else {#}
+{#            console.warn("Could not detect formset prefix from management form, defaulting to 'form'. Ensure management form is rendered before this script.");#}
+{#        }#}
+{##}
+{#        // --- Initial UI setup ---#}
+{#        const container = document.getElementById('projects_container');#}
+{#        const emptyState = document.getElementById('projects-empty-state');#}
+{#        const addAnotherButton = document.querySelector('.add-another-btn');#}
+{##}
+{#        if (container && emptyState) {#}
+{#            const visibleForms = container.querySelectorAll('.form-row:not([style*="display: none"])');#}
+{#            if (visibleForms.length > 0) {#}
+{#                emptyState.classList.add('hidden');#}
+{#                 if(addAnotherButton) addAnotherButton.style.display = 'inline-flex';#}
+{#            } else {#}
+{#                emptyState.classList.remove('hidden');#}
+{#                 if(addAnotherButton) addAnotherButton.style.display = 'none';#}
+{#            }#}
+{#        } else if (!emptyState && addAnotherButton) {#}
+{#              addAnotherButton.style.display = 'inline-flex';#}
+{#        }#}
+{##}
+{#        // --- Initialize HTMX event listeners ---#}
+{#        if (typeof htmx !== 'undefined') {#}
+{#            console.log("HTMX detected, setting up event listeners");#}
+{#             document.body.addEventListener('htmx:afterSwap', function(evt) {#}
+{#                if (evt.detail.target.id === 'enhanced_bullet_result') {#}
+{#                     console.log("htmx:afterSwap detected for enhanced_bullet_result");#}
+{#                    const modal = evt.target.closest('#project-enhancement-modal'); // Find modal context#}
+{#                    if (!modal) return;#}
+{#                    const applyBtn = modal.querySelector('#apply_enhancement_btn');#}
+{#                    if (applyBtn) {#}
+{#                        applyBtn.disabled = false;#}
+{#                        applyBtn.classList.remove('opacity-50', 'cursor-not-allowed');#}
+{#                        applyBtn.classList.add('opacity-100');#}
+{#                         console.log("Apply button enabled.");#}
+{#                    } else { console.error("Apply button not found after HTMX swap."); }#}
+{#                }#}
+{#             });#}
+{#             document.body.addEventListener('htmx:responseError', function(evt) {#}
+{#                 console.error("HTMX request error:", evt.detail.error || evt.detail.xhr.statusText);#}
+{#                 const resultArea = document.getElementById('enhanced_bullet_result'); // Might need context if multiple modals possible#}
+{#                 if (resultArea) {#}
+{#                    resultArea.innerHTML = `<p class="text-red-500 italic">Error enhancing bullet: ${evt.detail.xhr.statusText || 'Request failed'}</p>`;#}
+{#                 }#}
+{#                 const modal = document.getElementById('project-enhancement-modal'); // Find modal context#}
+{#                 if (!modal) return;#}
+{#                 const applyBtn = modal.querySelector('#apply_enhancement_btn');#}
+{#                 if (applyBtn) {#}
+{#                     applyBtn.disabled = true;#}
+{#                     applyBtn.classList.add('opacity-50', 'cursor-not-allowed');#}
+{#                     applyBtn.classList.remove('opacity-100');#}
+{#                 }#}
+{#             });#}
+{#        } else {#}
+{#            console.warn("HTMX not detected - AJAX enhancement won't work");#}
+{#        }#}
+{##}
+{#        // --- Initialize existing elements ---#}
+{#        initializeQualityCheckers(document);#}
+{#        attachEnhancementButtonListeners(document); // Attach listeners to initially loaded buttons#}
+{##}
+{#    });#}
+{#</script>#}
+{#{% endblock %}#}
+{##}

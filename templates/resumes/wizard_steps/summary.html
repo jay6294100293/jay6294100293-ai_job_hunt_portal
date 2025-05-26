@@ -1,680 +1,771 @@
-{% extends 'resumes/wizard_base.html' %}
-{% load resume_extras %}
-{% load static %}
+{# templates/resumes/wizard_steps/summary.html #}
+{% extends "resumes/wizard_base.html" %}
+{% load widget_tweaks static %}
 
-{% block step_title %}Professional Summary{% endblock %}
-
-{% block step_icon %}<i class="fa-solid fa-file-lines mr-3 text-indigo-600 opacity-80"></i>{% endblock %}
-
-{% block step_content %}
-<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">
+{% block wizard_content %}
+<form method="post" novalidate>
     {% csrf_token %}
 
-    <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-5 mb-8">
-        <div class="flex items-start">
-            <div class="text-indigo-600 text-xl mr-4 mt-1 flex-shrink-0">
-                <i class="fa-solid fa-lightbulb"></i>
-            </div>
-            <div>
-                <p class="text-base text-gray-800">
-                    Your professional summary is a brief overview of your skills, experience, and career goals.
-                    Write a concise paragraph that highlights your strengths and what makes you a great candidate.
-                </p>
-                <p class="text-sm text-gray-600 mt-2">
-                    <strong>Pro tip:</strong> Tailor your summary to match the job descriptions you're targeting. Use relevant keywords to help your resume pass through Applicant Tracking Systems (ATS).
-                </p>
-            </div>
-        </div>
-    </div>
+    <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-1">{{ current_step_display }}</h2>
+    <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
+        Write a compelling professional summary or objective. This is your chance to make a strong first impression.
+        Aim for 2-4 concise sentences highlighting your key skills, experience, and career goals.
+    </p>
 
-    <div class="bg-white border border-gray-200 rounded-xl shadow-md p-6 mb-8">
-        <div class="form-control">
-            <label class="block text-lg font-medium text-gray-800 mb-2" for="{{ form.summary.id_for_label }}">
-                <span class="flex items-center">
-                    <i class="fa-solid fa-quote-left text-indigo-600 mr-2"></i>
-                    Professional Summary
-                    <span class="text-red-500 ml-1">*</span>
-                </span>
-            </label>
-            <div class="relative">
-                {{ form.summary|add_class:"w-full min-h-40 py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" }}
-            </div>
-            {% if form.summary.errors %}
-                <div class="text-red-500 text-sm mt-1 flex items-center">
-                    <i class="fa-solid fa-circle-exclamation mr-1"></i>
-                    {{ form.summary.errors.0 }}
-                </div>
+    {% if form.non_field_errors %}
+        <div class="mb-4 p-3 bg-red-100 dark:bg-red-800/30 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 rounded-md text-sm">
+            {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="space-y-2">
+        <div>
+            <label for="{{ form.summary.id_for_label }}" class="form-label">Professional Summary <span class="text-red-500">*</span></label>
+            {% render_field form.summary class+="form-input min-h-[120px]" placeholder="e.g., Highly motivated Software Engineer with 5+ years of experience in developing scalable web applications..." rows="6" %}
+            {% if form.summary.help_text %}
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ form.summary.help_text }}</p>
             {% endif %}
-            <div class="flex justify-between items-center mt-2">
-                <span class="text-sm text-gray-500">Minimum 100 characters required</span>
-                <span class="text-sm font-medium" id="char-count-display">
-                    <span id="char-count" class="{% if form.summary.value|length < 100 %}text-red-500{% else %}text-green-600{% endif %}">{{ form.summary.value|default:""|length }}</span>/100 characters
+            {% for error in form.summary.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+
+        {# Optional: Placeholder for AI enhancement button for summary #}
+        {#
+        <div class="flex justify-end">
+            <button type="button" class="btn-secondary-outline text-sm" @click="openSummaryAIMenu = true">
+                <i class="fas fa-magic mr-1.5"></i> AI Enhance Summary
+            </button>
+        </div>
+        #}
+    </div>
+
+    {# Navigation Buttons #}
+    <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
+        <div>
+            {% if prev_step_url %}
+                <a href="{{ prev_step_url }}" class="btn-neutral w-full sm:w-auto">
+                    <i class="fas fa-arrow-left mr-2"></i> Previous Step
+                </a>
+            {% else %}
+                <span class="btn-disabled w-full sm:w-auto text-center">
+                    <i class="fas fa-arrow-left mr-2"></i> Previous Step
                 </span>
-            </div>
+            {% endif %}
+        </div>
+        <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+            <button type="submit" name="action" value="save_and_exit" class="btn-secondary w-full sm:w-auto">
+                <i class="fas fa-save mr-1.5"></i> Save & Exit Wizard
+            </button>
+            <button type="submit" name="action" value="save_and_continue" class="btn-primary w-full sm:w-auto">
+                Save & Continue <i class="fas fa-arrow-right ml-1.5"></i>
+            </button>
         </div>
     </div>
-
-    <div class="consistent-layout-container">
-        <div class="consistent-layout-column">
-            <div class="bg-white border border-gray-200 rounded-xl shadow-md p-6 h-full">
-                <h3 class="text-lg font-medium flex items-center mb-4">
-                    <i class="fa-solid fa-star text-amber-500 mr-2"></i>
-                    Tips for a Great Summary
-                </h3>
-                <ul class="space-y-3">
-                     <li class="flex items-start gap-3">
-                        <div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span class="text-indigo-600 font-medium text-xs">1</span>
-                        </div>
-                        <div>
-                            <p class="font-medium text-gray-800">Keep it concise but impactful</p>
-                            <p class="text-sm text-gray-600">Aim for 3-5 sentences that capture your professional essence.</p>
-                        </div>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span class="text-indigo-600 font-medium text-xs">2</span>
-                        </div>
-                        <div>
-                            <p class="font-medium text-gray-800">Include your experience level</p>
-                            <p class="text-sm text-gray-600">Mention your years of experience and key areas of expertise.</p>
-                        </div>
-                    </li>
-                    <li class="flex items-start gap-3">
-                         <div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span class="text-indigo-600 font-medium text-xs">3</span>
-                        </div>
-                        <div>
-                            <p class="font-medium text-gray-800">Highlight achievements</p>
-                            <p class="text-sm text-gray-600">Mention 1-2 key accomplishments with measurable results if possible.</p>
-                        </div>
-                    </li>
-                     <li class="flex items-start gap-3">
-                        <div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span class="text-indigo-600 font-medium text-xs">4</span>
-                        </div>
-                        <div>
-                            <p class="font-medium text-gray-800">Use relevant keywords</p>
-                            <p class="text-sm text-gray-600">Include terms from target job descriptions (ATS friendly).</p>
-                        </div>
-                    </li>
-                     <li class="flex items-start gap-3">
-                        <div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span class="text-indigo-600 font-medium text-xs">5</span>
-                        </div>
-                        <div>
-                            <p class="font-medium text-gray-800">Tailor to the job</p>
-                            <p class="text-sm text-gray-600">Customize your summary for each application for best results.</p>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="consistent-layout-column">
-            <div class="bg-white border border-gray-200 rounded-xl shadow-md p-6 h-full flex flex-col">
-                <h3 class="text-lg font-medium flex items-center mb-4">
-                    <i class="fa-solid fa-file-alt text-indigo-600 mr-2"></i>
-                    Example Summaries by Field
-                </h3>
-
-                <div class="mb-4">
-                    <div class="grid grid-cols-3 gap-x-2 gap-y-1 border-b border-gray-200 pb-2" aria-label="Tabs">
-                        <button
-                            type="button"
-                            class="tab-btn w-full justify-center inline-flex items-center whitespace-nowrap py-2 px-1 text-xs sm:text-sm font-medium border-b-2 border-indigo-500 text-indigo-600 active-tab"
-                            id="tech-tab"
-                            data-target="tech-example">
-                            <i class="fa-solid fa-laptop-code mr-1 sm:mr-1.5"></i>Technology
-                        </button>
-                        <button
-                            type="button"
-                            class="tab-btn w-full justify-center inline-flex items-center whitespace-nowrap py-2 px-1 text-xs sm:text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                            id="business-tab"
-                            data-target="business-example">
-                            <i class="fa-solid fa-briefcase mr-1 sm:mr-1.5"></i>Business
-                        </button>
-                        <button
-                            type="button"
-                            class="tab-btn w-full justify-center inline-flex items-center whitespace-nowrap py-2 px-1 text-xs sm:text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                            id="creative-tab"
-                            data-target="creative-example">
-                            <i class="fa-solid fa-palette mr-1 sm:mr-1.5"></i>Creative
-                        </button>
-
-                        <button
-                            type="button"
-                            class="tab-btn w-full justify-center inline-flex items-center whitespace-nowrap py-2 px-1 text-xs sm:text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                            id="healthcare-tab"
-                            data-target="healthcare-example">
-                            <i class="fa-solid fa-stethoscope mr-1 sm:mr-1.5"></i>Healthcare
-                        </button>
-                        <button
-                            type="button"
-                            class="tab-btn w-full justify-center inline-flex items-center whitespace-nowrap py-2 px-1 text-xs sm:text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                            id="education-tab"
-                            data-target="education-example">
-                            <i class="fa-solid fa-graduation-cap mr-1 sm:mr-1.5"></i>Education
-                        </button>
-                        </div>
-                </div>
-                <div class="example-tabs-container flex-grow">
-                    <div id="tech-example" class="example-tab bg-gradient-to-br from-blue-50 to-indigo-50 p-4 sm:p-5 rounded-lg border border-indigo-100 h-full">
-                        <div class="flex items-start mb-3">
-                            <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center mr-3 flex-shrink-0">
-                                <i class="fa-solid fa-laptop-code text-indigo-600"></i>
-                            </div>
-                            <h4 class="font-medium text-indigo-800 text-sm sm:text-base">Software Developer Summary</h4>
-                        </div>
-                        <p class="text-xs sm:text-sm text-gray-700 leading-relaxed italic">
-                            "Detail-oriented software developer with 4+ years of experience building responsive web applications. Proficient in Python, Django, JavaScript, and React. Successfully reduced page load times by 40% and implemented CI/CD pipelines that increased deployment frequency by 30%. Passionate about clean code and user-centered design with a track record of delivering projects ahead of schedule."
-                        </p>
-                        <div class="mt-3 flex flex-wrap gap-1 sm:gap-2">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">Python</span>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">React</span>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">Web Dev</span>
-                        </div>
-                    </div>
-
-                    <div id="business-example" class="example-tab hidden bg-gradient-to-br from-amber-50 to-yellow-50 p-4 sm:p-5 rounded-lg border border-amber-100 h-full">
-                        <div class="flex items-start mb-3">
-                            <div class="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center mr-3 flex-shrink-0">
-                                <i class="fa-solid fa-chart-line text-amber-600"></i>
-                            </div>
-                            <h4 class="font-medium text-amber-800 text-sm sm:text-base">Marketing Manager Summary</h4>
-                        </div>
-                        <p class="text-xs sm:text-sm text-gray-700 leading-relaxed italic">
-                            "Strategic marketing professional with 7+ years in digital marketing and brand management. Experienced in developing comprehensive marketing campaigns that increased customer engagement by 45%. Skilled in SEO, content marketing, and social media strategy. Successfully managed marketing budgets exceeding $500K while consistently achieving ROI targets. Recognized for developing innovative solutions."
-                        </p>
-                        <div class="mt-3 flex flex-wrap gap-1 sm:gap-2">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Digital Marketing</span>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Brand Strategy</span>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">SEO</span>
-                        </div>
-                    </div>
-
-                    <div id="creative-example" class="example-tab hidden bg-gradient-to-br from-rose-50 to-pink-50 p-4 sm:p-5 rounded-lg border border-rose-100 h-full">
-                         <div class="flex items-start mb-3">
-                            <div class="h-8 w-8 rounded-full bg-rose-100 flex items-center justify-center mr-3 flex-shrink-0">
-                                <i class="fa-solid fa-paintbrush text-rose-600"></i>
-                            </div>
-                            <h4 class="font-medium text-rose-800 text-sm sm:text-base">Graphic Designer Summary</h4>
-                        </div>
-                        <p class="text-xs sm:text-sm text-gray-700 leading-relaxed italic">
-                            "Versatile graphic designer with 5+ years creating compelling visual content for print and digital media. Expert in Adobe Creative Suite (Photoshop, Illustrator, InDesign) with a strong portfolio in brand identity, packaging, and UI/UX. Awarded for designing a rebrand that increased client's social media engagement by 65%. Passionate about combining aesthetics with strategic business objectives."
-                        </p>
-                        <div class="mt-3 flex flex-wrap gap-1 sm:gap-2">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">Adobe Suite</span>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">UI/UX</span>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">Branding</span>
-                        </div>
-                    </div>
-
-                    <div id="healthcare-example" class="example-tab hidden bg-gradient-to-br from-emerald-50 to-green-50 p-4 sm:p-5 rounded-lg border border-emerald-100 h-full">
-                        <div class="flex items-start mb-3">
-                            <div class="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center mr-3 flex-shrink-0">
-                                <i class="fa-solid fa-user-nurse text-emerald-600"></i>
-                            </div>
-                            <h4 class="font-medium text-emerald-800 text-sm sm:text-base">Registered Nurse Summary</h4>
-                        </div>
-                        <p class="text-xs sm:text-sm text-gray-700 leading-relaxed italic">
-                            "Compassionate Registered Nurse with 8+ years of acute care experience specializing in emergency medicine. Skilled in patient assessment, care planning, and crisis management with a proven record of improving patient satisfaction rates by 22%. Certified in ACLS and PALS. Recognized for implementing a patient education program that reduced readmission rates by 18%. Dedicated to high-quality, patient-centered care."
-                        </p>
-                        <div class="mt-3 flex flex-wrap gap-1 sm:gap-2">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">Emergency Med</span>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">Patient Care</span>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">ACLS Certified</span>
-                        </div>
-                    </div>
-
-                    <div id="education-example" class="example-tab hidden bg-gradient-to-br from-purple-50 to-violet-50 p-4 sm:p-5 rounded-lg border border-purple-100 h-full">
-                        <div class="flex items-start mb-3">
-                            <div class="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center mr-3 flex-shrink-0">
-                                <i class="fa-solid fa-chalkboard-user text-purple-600"></i>
-                            </div>
-                            <h4 class="font-medium text-purple-800 text-sm sm:text-base">Teacher Summary</h4>
-                        </div>
-                        <p class="text-xs sm:text-sm text-gray-700 leading-relaxed italic">
-                            "Dedicated and enthusiastic educator with 6+ years of experience fostering student growth in diverse classroom settings. Proven ability in curriculum development, differentiated instruction, and classroom management. Increased standardized test scores by 15% through innovative teaching methods. Passionate about creating engaging learning environments and building strong student relationships. Master's degree in Education."
-                        </p>
-                        <div class="mt-3 flex flex-wrap gap-1 sm:gap-2">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Curriculum Dev</span>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Classroom Mgmt</span>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Instruction</span>
-                        </div>
-                    </div>
-                    </div>
-
-                <div class="mt-auto pt-4 flex justify-end"> <button type="button" id="copy-example-btn" class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-                        <i class="fa-solid fa-copy mr-1.5"></i>
-                        Copy to Summary
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="mt-8">
-        <div class="bg-white border border-gray-200 rounded-xl shadow-md overflow-hidden">
-            <div class="px-4 py-3 bg-gray-50 cursor-pointer flex justify-between items-center" id="ai-assistant-header">
-                <h3 class="text-lg font-medium flex items-center">
-                    <i class="fa-solid fa-robot text-indigo-600 mr-2"></i>
-                    AI Summary Assistant
-                    <span class="ml-2 text-xs font-semibold text-indigo-500 bg-indigo-100 px-2 py-0.5 rounded-full">Optional</span>
-                </h3>
-                <i class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300" id="ai-assistant-icon"></i>
-            </div>
-            <div class="p-6 border-t border-gray-200 hidden" id="ai-assistant-content">
-                 <p class="text-sm text-gray-600 mb-5">
-                    Need help getting started? Fill in some basic info below, and our AI will generate a draft summary for you to edit.
-                </p>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div class="form-control">
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="ai-job-title">
-                            Most Recent Job Title <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" id="ai-job-title" class="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Software Engineer" required>
-                    </div>
-
-                    <div class="form-control">
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="ai-years">
-                            Years of Experience <span class="text-red-500">*</span>
-                        </label>
-                        <input type="number" id="ai-years" class="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., 5" min="0" max="50" required>
-                    </div>
-
-                    <div class="form-control md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="ai-skills">
-                            Key Skills (comma separated) <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" id="ai-skills" class="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Python, Project Management, Team Leadership" required>
-                    </div>
-
-                    <div class="form-control md:col-span-2">
-                         <label class="block text-sm font-medium text-gray-700 mb-1" for="ai-achievement">
-                            A Key Achievement (Optional)
-                        </label>
-                        <input type="text" id="ai-achievement" class="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Increased sales by 15% in one year">
-                    </div>
-                </div>
-
-                <div class="flex justify-end border-t border-gray-100 pt-4">
-                    <button type="button" id="generate-summary-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-                        <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Generate Summary
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {# <div class="mt-8 pt-5 border-t border-gray-200 flex justify-between"> ... </div> #}
-
 </form>
 
-<style>
-    /* Consistent layout container */
-    .consistent-layout-container {
-        display: flex;
-        flex-direction: column;
-        gap: 24px; /* equiv to gap-6 */
-    }
+{# Optional: Placeholder for AI Enhancement Modal if you implement it #}
+{#
+<div x-data="{ openSummaryAIMenu: false }" x-cloak>
+    <div x-show="openSummaryAIMenu" @keydown.escape.window="openSummaryAIMenu = false"
+         class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 transition-opacity" aria-hidden="true"></div>
+    <div x-show="openSummaryAIMenu"
+         class="fixed inset-0 flex items-center justify-center p-4 z-50"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95">
+        <div @click.outside="openSummaryAIMenu = false" class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl max-w-lg w-full">
+            <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4">AI Enhance Summary</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">This feature is coming soon! It will help you write or improve your professional summary using AI.</p>
+            <div class="flex justify-end">
+                <button @click="openSummaryAIMenu = false" class="btn-neutral">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+#}
+{% endblock wizard_content %}
 
-    /* Media query for desktop layout */
-    @media (min-width: 768px) { /* md breakpoint */
-        .consistent-layout-container {
-            flex-direction: row;
-            flex-wrap: nowrap;
-            align-items: stretch; /* Ensure columns stretch to same height */
-        }
-        .consistent-layout-column {
-            width: 50%;
-            flex: 1 1 0%; /* Allow flex grow/shrink */
-        }
-    }
-
-    /* Ensure consistent card heights within columns */
-    .consistent-layout-column > div {
-        height: 100%; /* Make card fill the column height */
-        display: flex; /* Enable flex for internal alignment */
-        flex-direction: column; /* Stack content vertically */
-    }
-
-    /* Style for example tabs */
-    .example-tab {
-        min-height: 200px; /* Adjust as needed */
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-     .example-tab p {
-         flex-grow: 1; /* Allow paragraph to take up space */
-     }
-
-    /* Ensure hidden tabs take no space */
-    .example-tab.hidden {
-        display: none;
-    }
-
-    /* Active Tab Style */
-     .tab-btn.active-tab {
-        /* Active state uses border-indigo-500 and text-indigo-600 defined inline */
-        border-bottom-width: 2px; /* Ensure border is visible */
-    }
-    .tab-btn:not(.active-tab) {
-         /* Non-active tabs use border-transparent defined inline */
-         color: #6b7280; /* Tailwind gray-500 */
-    }
-     .tab-btn:not(.active-tab):hover {
-         border-color: #d1d5db; /* Tailwind gray-300 */
-         color: #374151; /* Tailwind gray-700 */
-     }
-
-
-    /* AI Assistant Toggle Icon Rotation */
-    #ai-assistant-icon.rotate-180 {
-        transform: rotate(180deg);
-    }
-
-    /* Remove scrollbar styling as overflow-x-auto is removed */
-
-</style>
-
-<script>
-    // JavaScript remains the same as the previous version.
-    // It correctly handles tab switching based on data-target attributes
-    // and the copy functionality based on the :not(.hidden) selector.
-    // No changes needed here for the grid layout.
-
-    document.addEventListener('DOMContentLoaded', function() {
-        initializePage();
-    });
-
-    // Initialize the page with all necessary setup
-    function initializePage() {
-        // --- Element References ---
-        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');
-        const charCount = document.getElementById('char-count');
-        const generateBtn = document.getElementById('generate-summary-btn');
-        const aiAssistantHeader = document.getElementById('ai-assistant-header');
-        const copyExampleBtn = document.getElementById('copy-example-btn');
-        const tabButtons = document.querySelectorAll('.tab-btn');
-
-        // --- Event Listeners ---
-        if (summaryField && charCount) {
-            updateCharCount();
-            summaryField.addEventListener('input', debounce(updateCharCount, 150));
-            restoreSavedContent();
-            window.addEventListener('beforeunload', saveFormState);
-        } else {
-            console.warn("Summary field or char count element not found.");
-        }
-
-        tabButtons.forEach(tab => {
-            tab.addEventListener('click', handleTabClick);
-        });
-
-        if (copyExampleBtn) {
-            copyExampleBtn.addEventListener('click', handleCopyExample);
-        } else {
-             console.warn("Copy example button not found.");
-        }
-
-        if (aiAssistantHeader) {
-            aiAssistantHeader.addEventListener('click', () => toggleCollapse('ai-assistant'));
-        } else {
-             console.warn("AI assistant header not found.");
-        }
-
-        if (generateBtn) {
-            generateBtn.addEventListener('click', generateAISummary);
-        } else {
-            console.warn("Generate summary button not found.");
-        }
-
-        // --- Initial Setup ---
-        ensureConsistentLayout();
-        window.addEventListener('resize', debounce(ensureConsistentLayout, 200));
-
-        // Activate the first tab and its content correctly on load
-        const activeTab = document.querySelector('.tab-btn.active-tab');
-        if (!activeTab && tabButtons.length > 0) {
-            // Make first tab active visually
-            tabButtons[0].classList.add('active-tab', 'border-indigo-500', 'text-indigo-600');
-            tabButtons[0].classList.remove('border-transparent', 'text-gray-500');
-            // Show its content
-             const firstTargetId = tabButtons[0].getAttribute('data-target');
-             const firstTargetElement = document.getElementById(firstTargetId);
-             document.querySelectorAll('.example-tab').forEach(tabContent => {
-                 if(tabContent.id === firstTargetId) {
-                     tabContent.classList.remove('hidden');
-                 } else {
-                     tabContent.classList.add('hidden');
-                 }
-             });
-        } else if (activeTab) {
-             // Ensure only the pre-selected active tab's content is visible
-             const activeTargetId = activeTab.getAttribute('data-target');
-             document.querySelectorAll('.example-tab').forEach(tabContent => {
-                 if (tabContent.id === activeTargetId) {
-                     tabContent.classList.remove('hidden');
-                 } else {
-                     tabContent.classList.add('hidden');
-                 }
-             });
-        }
-    }
-
-    // --- Event Handler Functions ---
-    function handleTabClick() {
-        const tabButtons = document.querySelectorAll('.tab-btn');
-        const exampleTabs = document.querySelectorAll('.example-tab');
-        const targetId = this.getAttribute('data-target');
-        const targetElement = document.getElementById(targetId);
-
-        // Update Tab Button Styles
-        tabButtons.forEach(t => {
-            t.classList.remove('active-tab', 'border-indigo-500', 'text-indigo-600');
-            t.classList.add('border-transparent', 'text-gray-500');
-        });
-        this.classList.add('active-tab', 'border-indigo-500', 'text-indigo-600');
-        this.classList.remove('border-transparent', 'text-gray-500');
-
-        // Hide All Example Tabs
-        exampleTabs.forEach(content => {
-            content.classList.add('hidden');
-        });
-
-        // Show Selected Example Tab
-        if (targetElement) {
-            targetElement.classList.remove('hidden');
-        } else {
-             console.error(`Target element with ID '${targetId}' not found for tab.`);
-        }
-    }
-
-    function handleCopyExample() {
-        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');
-        if (!summaryField) {
-             console.error("Summary field not found for copying.");
-             return;
-        }
-        const visibleExample = document.querySelector('.example-tab:not(.hidden)');
-        if (visibleExample) {
-            const paragraphElement = visibleExample.querySelector('p');
-            if (paragraphElement) {
-                const exampleText = paragraphElement.innerText.trim().replace(/^"|"$/g, '');
-                summaryField.value = exampleText;
-                updateCharCount();
-                summaryField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                summaryField.focus();
-                summaryField.classList.add('ring-2', 'ring-indigo-300', 'transition', 'duration-150');
-                setTimeout(() => {
-                    summaryField.classList.remove('ring-2', 'ring-indigo-300');
-                }, 1500);
-                saveFormState();
-            } else {
-                console.error("Paragraph element not found in the visible example tab.");
-            }
-        } else {
-            console.warn("No visible example tab found to copy from.");
-        }
-    }
-
-    // --- Core Logic Functions ---
-    function toggleCollapse(idPrefix) {
-        const content = document.getElementById(idPrefix + '-content');
-        const icon = document.getElementById(idPrefix + '-icon');
-        if (content && icon) {
-            const isHidden = content.classList.contains('hidden');
-            content.classList.toggle('hidden');
-            icon.classList.toggle('rotate-180', !isHidden);
-        } else {
-             console.warn("Could not find content or icon for toggleCollapse:", idPrefix);
-        }
-    }
-
-    function updateCharCount() {
-        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');
-        const charCountElement = document.getElementById('char-count');
-        const charCountDisplay = document.getElementById('char-count-display');
-        if (!summaryField || !charCountElement || !charCountDisplay) return;
-        const count = summaryField.value.length;
-        charCountElement.textContent = count;
-        const meetsRequirement = count >= 100;
-        charCountElement.classList.toggle('text-red-500', !meetsRequirement);
-        charCountElement.classList.toggle('text-green-600', meetsRequirement);
-    }
-
-    function generateAISummary() {
-        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');
-        const jobTitleInput = document.getElementById('ai-job-title');
-        const yearsInput = document.getElementById('ai-years');
-        const skillsInput = document.getElementById('ai-skills');
-        const achievementInput = document.getElementById('ai-achievement');
-        const generateBtn = document.getElementById('generate-summary-btn');
-
-        if (!summaryField || !jobTitleInput || !yearsInput || !skillsInput || !generateBtn) {
-            alert('Error: Cannot find all required AI input fields or button.');
-            return;
-        }
-
-        // Clear previous validation errors
-         [jobTitleInput, yearsInput, skillsInput].forEach(input => input.classList.remove('border-red-400', 'ring', 'ring-red-200'));
-
-        const jobTitle = jobTitleInput.value.trim();
-        const years = yearsInput.value.trim();
-        const skills = skillsInput.value.trim();
-        const achievement = achievementInput ? achievementInput.value.trim() : '';
-
-        // Validation
-        let missingFields = [];
-        if (!jobTitle) missingFields.push("Job Title");
-        if (!years) missingFields.push("Years of Experience");
-        if (!skills) missingFields.push("Key Skills");
-
-        if (missingFields.length > 0) {
-            [jobTitleInput, yearsInput, skillsInput].forEach(input => {
-                if (!input.value.trim()) {
-                    input.classList.add('border-red-400', 'ring', 'ring-red-200');
-                }
-            });
-            alert(`Please fill in the required fields: ${missingFields.join(', ')}`);
-            return;
-        }
-
-        // Loading State
-        const originalBtnHTML = generateBtn.innerHTML;
-        generateBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...';
-        generateBtn.disabled = true;
-        generateBtn.classList.add('opacity-75', 'cursor-not-allowed');
-
-        // Simulate API Call
-        setTimeout(() => {
-            try {
-                const skillsArray = skills.split(',').map(s => s.trim()).filter(Boolean);
-                const mainSkills = skillsArray.length > 0 ? skillsArray.slice(0, 3).join(', ') : '[Key Skills Area]';
-                const additionalSkills = skillsArray.length > 3 ? skillsArray.slice(3).join(', ') : '';
-                let generatedSummary = `Results-oriented ${jobTitle} with ${years}+ years of experience specializing in ${mainSkills}. `;
-                 if (additionalSkills) { generatedSummary += `Proficient across a wider range including ${additionalSkills}. `; }
-                if (achievement) { generatedSummary += `Key accomplishment includes ${achievement.charAt(0).toLowerCase() + achievement.slice(1)}. `; }
-                else { generatedSummary += `Demonstrated success in driving results and contributing to team objectives. `; }
-                generatedSummary += `Eager to apply skills and experience to a challenging new opportunity.`;
-
-                // Update UI
-                summaryField.value = generatedSummary;
-                updateCharCount();
-                summaryField.classList.add('ring-2', 'ring-offset-2', 'ring-indigo-400', 'transition-shadow', 'duration-300');
-                setTimeout(() => { summaryField.classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-400'); }, 1500);
-                summaryField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                setTimeout(() => summaryField.focus(), 100);
-                saveFormState();
-
-            } catch (error) {
-                console.error('Error during AI summary generation logic:', error);
-                alert('An error occurred while generating the summary.');
-            } finally {
-                // Restore Button State
-                generateBtn.innerHTML = originalBtnHTML;
-                generateBtn.disabled = false;
-                generateBtn.classList.remove('opacity-75', 'cursor-not-allowed');
-            }
-        }, 1000);
-    }
-
-    // --- Utility Functions ---
-    function saveFormState() {
-        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');
-        if (summaryField && typeof sessionStorage !== 'undefined') {
-             try { sessionStorage.setItem('professional_summary_content', summaryField.value); }
-             catch (e) { console.warn("Session storage unavailable or quota exceeded.", e); }
-        }
-    }
-
-    function restoreSavedContent() {
-        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');
-        if (summaryField && typeof sessionStorage !== 'undefined') {
-            try {
-                const savedContent = sessionStorage.getItem('professional_summary_content');
-                if (savedContent && (!summaryField.value || summaryField.value.trim() === '')) {
-                    summaryField.value = savedContent;
-                    updateCharCount();
-                }
-            } catch (e) { console.warn("Could not restore summary from session storage.", e); }
-        }
-    }
-
-    function ensureConsistentLayout() {
-        if (window.innerWidth < 768) {
-            const cardsToReset = document.querySelectorAll('.consistent-layout-column > div');
-            cardsToReset.forEach(card => card.style.height = 'auto');
-            return;
-        }
-        const container = document.querySelector('.consistent-layout-container');
-        if (!container) return;
-        const cards = container.querySelectorAll('.consistent-layout-column > div');
-         if (cards.length !== 2) return;
-        cards.forEach(card => card.style.height = 'auto');
-        requestAnimationFrame(() => {
-            let maxHeight = 0;
-            cards.forEach(card => { maxHeight = Math.max(maxHeight, card.offsetHeight); });
-            if (maxHeight > 0) { cards.forEach(card => card.style.height = `${maxHeight}px`); }
-        });
-    }
-
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => { clearTimeout(timeout); func.apply(this, args); };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
-
-</script>
-{% endblock %}
-
-
+{#{% extends 'resumes/wizard_base.html' %}#}
+{#{% load resume_extras %}#}
+{#{% load static %}#}
+{##}
+{#{% block step_title %}Professional Summary{% endblock %}#}
+{##}
+{#{% block step_icon %}<i class="fa-solid fa-file-lines mr-3 text-indigo-600 opacity-80"></i>{% endblock %}#}
+{##}
+{#{% block step_content %}#}
+{#<form id="resume-form" method="post" action="{% url 'job_portal:resume_wizard' step=step %}" hx-boost="true">#}
+{#    {% csrf_token %}#}
+{##}
+{#    <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-5 mb-8">#}
+{#        <div class="flex items-start">#}
+{#            <div class="text-indigo-600 text-xl mr-4 mt-1 flex-shrink-0">#}
+{#                <i class="fa-solid fa-lightbulb"></i>#}
+{#            </div>#}
+{#            <div>#}
+{#                <p class="text-base text-gray-800">#}
+{#                    Your professional summary is a brief overview of your skills, experience, and career goals.#}
+{#                    Write a concise paragraph that highlights your strengths and what makes you a great candidate.#}
+{#                </p>#}
+{#                <p class="text-sm text-gray-600 mt-2">#}
+{#                    <strong>Pro tip:</strong> Tailor your summary to match the job descriptions you're targeting. Use relevant keywords to help your resume pass through Applicant Tracking Systems (ATS).#}
+{#                </p>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div class="bg-white border border-gray-200 rounded-xl shadow-md p-6 mb-8">#}
+{#        <div class="form-control">#}
+{#            <label class="block text-lg font-medium text-gray-800 mb-2" for="{{ form.summary.id_for_label }}">#}
+{#                <span class="flex items-center">#}
+{#                    <i class="fa-solid fa-quote-left text-indigo-600 mr-2"></i>#}
+{#                    Professional Summary#}
+{#                    <span class="text-red-500 ml-1">*</span>#}
+{#                </span>#}
+{#            </label>#}
+{#            <div class="relative">#}
+{#                {{ form.summary|add_class:"w-full min-h-40 py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" }}#}
+{#            </div>#}
+{#            {% if form.summary.errors %}#}
+{#                <div class="text-red-500 text-sm mt-1 flex items-center">#}
+{#                    <i class="fa-solid fa-circle-exclamation mr-1"></i>#}
+{#                    {{ form.summary.errors.0 }}#}
+{#                </div>#}
+{#            {% endif %}#}
+{#            <div class="flex justify-between items-center mt-2">#}
+{#                <span class="text-sm text-gray-500">Minimum 100 characters required</span>#}
+{#                <span class="text-sm font-medium" id="char-count-display">#}
+{#                    <span id="char-count" class="{% if form.summary.value|length < 100 %}text-red-500{% else %}text-green-600{% endif %}">{{ form.summary.value|default:""|length }}</span>/100 characters#}
+{#                </span>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div class="consistent-layout-container">#}
+{#        <div class="consistent-layout-column">#}
+{#            <div class="bg-white border border-gray-200 rounded-xl shadow-md p-6 h-full">#}
+{#                <h3 class="text-lg font-medium flex items-center mb-4">#}
+{#                    <i class="fa-solid fa-star text-amber-500 mr-2"></i>#}
+{#                    Tips for a Great Summary#}
+{#                </h3>#}
+{#                <ul class="space-y-3">#}
+{#                     <li class="flex items-start gap-3">#}
+{#                        <div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">#}
+{#                            <span class="text-indigo-600 font-medium text-xs">1</span>#}
+{#                        </div>#}
+{#                        <div>#}
+{#                            <p class="font-medium text-gray-800">Keep it concise but impactful</p>#}
+{#                            <p class="text-sm text-gray-600">Aim for 3-5 sentences that capture your professional essence.</p>#}
+{#                        </div>#}
+{#                    </li>#}
+{#                    <li class="flex items-start gap-3">#}
+{#                        <div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">#}
+{#                            <span class="text-indigo-600 font-medium text-xs">2</span>#}
+{#                        </div>#}
+{#                        <div>#}
+{#                            <p class="font-medium text-gray-800">Include your experience level</p>#}
+{#                            <p class="text-sm text-gray-600">Mention your years of experience and key areas of expertise.</p>#}
+{#                        </div>#}
+{#                    </li>#}
+{#                    <li class="flex items-start gap-3">#}
+{#                         <div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">#}
+{#                            <span class="text-indigo-600 font-medium text-xs">3</span>#}
+{#                        </div>#}
+{#                        <div>#}
+{#                            <p class="font-medium text-gray-800">Highlight achievements</p>#}
+{#                            <p class="text-sm text-gray-600">Mention 1-2 key accomplishments with measurable results if possible.</p>#}
+{#                        </div>#}
+{#                    </li>#}
+{#                     <li class="flex items-start gap-3">#}
+{#                        <div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">#}
+{#                            <span class="text-indigo-600 font-medium text-xs">4</span>#}
+{#                        </div>#}
+{#                        <div>#}
+{#                            <p class="font-medium text-gray-800">Use relevant keywords</p>#}
+{#                            <p class="text-sm text-gray-600">Include terms from target job descriptions (ATS friendly).</p>#}
+{#                        </div>#}
+{#                    </li>#}
+{#                     <li class="flex items-start gap-3">#}
+{#                        <div class="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">#}
+{#                            <span class="text-indigo-600 font-medium text-xs">5</span>#}
+{#                        </div>#}
+{#                        <div>#}
+{#                            <p class="font-medium text-gray-800">Tailor to the job</p>#}
+{#                            <p class="text-sm text-gray-600">Customize your summary for each application for best results.</p>#}
+{#                        </div>#}
+{#                    </li>#}
+{#                </ul>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#        <div class="consistent-layout-column">#}
+{#            <div class="bg-white border border-gray-200 rounded-xl shadow-md p-6 h-full flex flex-col">#}
+{#                <h3 class="text-lg font-medium flex items-center mb-4">#}
+{#                    <i class="fa-solid fa-file-alt text-indigo-600 mr-2"></i>#}
+{#                    Example Summaries by Field#}
+{#                </h3>#}
+{##}
+{#                <div class="mb-4">#}
+{#                    <div class="grid grid-cols-3 gap-x-2 gap-y-1 border-b border-gray-200 pb-2" aria-label="Tabs">#}
+{#                        <button#}
+{#                            type="button"#}
+{#                            class="tab-btn w-full justify-center inline-flex items-center whitespace-nowrap py-2 px-1 text-xs sm:text-sm font-medium border-b-2 border-indigo-500 text-indigo-600 active-tab"#}
+{#                            id="tech-tab"#}
+{#                            data-target="tech-example">#}
+{#                            <i class="fa-solid fa-laptop-code mr-1 sm:mr-1.5"></i>Technology#}
+{#                        </button>#}
+{#                        <button#}
+{#                            type="button"#}
+{#                            class="tab-btn w-full justify-center inline-flex items-center whitespace-nowrap py-2 px-1 text-xs sm:text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"#}
+{#                            id="business-tab"#}
+{#                            data-target="business-example">#}
+{#                            <i class="fa-solid fa-briefcase mr-1 sm:mr-1.5"></i>Business#}
+{#                        </button>#}
+{#                        <button#}
+{#                            type="button"#}
+{#                            class="tab-btn w-full justify-center inline-flex items-center whitespace-nowrap py-2 px-1 text-xs sm:text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"#}
+{#                            id="creative-tab"#}
+{#                            data-target="creative-example">#}
+{#                            <i class="fa-solid fa-palette mr-1 sm:mr-1.5"></i>Creative#}
+{#                        </button>#}
+{##}
+{#                        <button#}
+{#                            type="button"#}
+{#                            class="tab-btn w-full justify-center inline-flex items-center whitespace-nowrap py-2 px-1 text-xs sm:text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"#}
+{#                            id="healthcare-tab"#}
+{#                            data-target="healthcare-example">#}
+{#                            <i class="fa-solid fa-stethoscope mr-1 sm:mr-1.5"></i>Healthcare#}
+{#                        </button>#}
+{#                        <button#}
+{#                            type="button"#}
+{#                            class="tab-btn w-full justify-center inline-flex items-center whitespace-nowrap py-2 px-1 text-xs sm:text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"#}
+{#                            id="education-tab"#}
+{#                            data-target="education-example">#}
+{#                            <i class="fa-solid fa-graduation-cap mr-1 sm:mr-1.5"></i>Education#}
+{#                        </button>#}
+{#                        </div>#}
+{#                </div>#}
+{#                <div class="example-tabs-container flex-grow">#}
+{#                    <div id="tech-example" class="example-tab bg-gradient-to-br from-blue-50 to-indigo-50 p-4 sm:p-5 rounded-lg border border-indigo-100 h-full">#}
+{#                        <div class="flex items-start mb-3">#}
+{#                            <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center mr-3 flex-shrink-0">#}
+{#                                <i class="fa-solid fa-laptop-code text-indigo-600"></i>#}
+{#                            </div>#}
+{#                            <h4 class="font-medium text-indigo-800 text-sm sm:text-base">Software Developer Summary</h4>#}
+{#                        </div>#}
+{#                        <p class="text-xs sm:text-sm text-gray-700 leading-relaxed italic">#}
+{#                            "Detail-oriented software developer with 4+ years of experience building responsive web applications. Proficient in Python, Django, JavaScript, and React. Successfully reduced page load times by 40% and implemented CI/CD pipelines that increased deployment frequency by 30%. Passionate about clean code and user-centered design with a track record of delivering projects ahead of schedule."#}
+{#                        </p>#}
+{#                        <div class="mt-3 flex flex-wrap gap-1 sm:gap-2">#}
+{#                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">Python</span>#}
+{#                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">React</span>#}
+{#                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">Web Dev</span>#}
+{#                        </div>#}
+{#                    </div>#}
+{##}
+{#                    <div id="business-example" class="example-tab hidden bg-gradient-to-br from-amber-50 to-yellow-50 p-4 sm:p-5 rounded-lg border border-amber-100 h-full">#}
+{#                        <div class="flex items-start mb-3">#}
+{#                            <div class="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center mr-3 flex-shrink-0">#}
+{#                                <i class="fa-solid fa-chart-line text-amber-600"></i>#}
+{#                            </div>#}
+{#                            <h4 class="font-medium text-amber-800 text-sm sm:text-base">Marketing Manager Summary</h4>#}
+{#                        </div>#}
+{#                        <p class="text-xs sm:text-sm text-gray-700 leading-relaxed italic">#}
+{#                            "Strategic marketing professional with 7+ years in digital marketing and brand management. Experienced in developing comprehensive marketing campaigns that increased customer engagement by 45%. Skilled in SEO, content marketing, and social media strategy. Successfully managed marketing budgets exceeding $500K while consistently achieving ROI targets. Recognized for developing innovative solutions."#}
+{#                        </p>#}
+{#                        <div class="mt-3 flex flex-wrap gap-1 sm:gap-2">#}
+{#                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Digital Marketing</span>#}
+{#                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Brand Strategy</span>#}
+{#                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">SEO</span>#}
+{#                        </div>#}
+{#                    </div>#}
+{##}
+{#                    <div id="creative-example" class="example-tab hidden bg-gradient-to-br from-rose-50 to-pink-50 p-4 sm:p-5 rounded-lg border border-rose-100 h-full">#}
+{#                         <div class="flex items-start mb-3">#}
+{#                            <div class="h-8 w-8 rounded-full bg-rose-100 flex items-center justify-center mr-3 flex-shrink-0">#}
+{#                                <i class="fa-solid fa-paintbrush text-rose-600"></i>#}
+{#                            </div>#}
+{#                            <h4 class="font-medium text-rose-800 text-sm sm:text-base">Graphic Designer Summary</h4>#}
+{#                        </div>#}
+{#                        <p class="text-xs sm:text-sm text-gray-700 leading-relaxed italic">#}
+{#                            "Versatile graphic designer with 5+ years creating compelling visual content for print and digital media. Expert in Adobe Creative Suite (Photoshop, Illustrator, InDesign) with a strong portfolio in brand identity, packaging, and UI/UX. Awarded for designing a rebrand that increased client's social media engagement by 65%. Passionate about combining aesthetics with strategic business objectives."#}
+{#                        </p>#}
+{#                        <div class="mt-3 flex flex-wrap gap-1 sm:gap-2">#}
+{#                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">Adobe Suite</span>#}
+{#                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">UI/UX</span>#}
+{#                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">Branding</span>#}
+{#                        </div>#}
+{#                    </div>#}
+{##}
+{#                    <div id="healthcare-example" class="example-tab hidden bg-gradient-to-br from-emerald-50 to-green-50 p-4 sm:p-5 rounded-lg border border-emerald-100 h-full">#}
+{#                        <div class="flex items-start mb-3">#}
+{#                            <div class="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center mr-3 flex-shrink-0">#}
+{#                                <i class="fa-solid fa-user-nurse text-emerald-600"></i>#}
+{#                            </div>#}
+{#                            <h4 class="font-medium text-emerald-800 text-sm sm:text-base">Registered Nurse Summary</h4>#}
+{#                        </div>#}
+{#                        <p class="text-xs sm:text-sm text-gray-700 leading-relaxed italic">#}
+{#                            "Compassionate Registered Nurse with 8+ years of acute care experience specializing in emergency medicine. Skilled in patient assessment, care planning, and crisis management with a proven record of improving patient satisfaction rates by 22%. Certified in ACLS and PALS. Recognized for implementing a patient education program that reduced readmission rates by 18%. Dedicated to high-quality, patient-centered care."#}
+{#                        </p>#}
+{#                        <div class="mt-3 flex flex-wrap gap-1 sm:gap-2">#}
+{#                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">Emergency Med</span>#}
+{#                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">Patient Care</span>#}
+{#                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">ACLS Certified</span>#}
+{#                        </div>#}
+{#                    </div>#}
+{##}
+{#                    <div id="education-example" class="example-tab hidden bg-gradient-to-br from-purple-50 to-violet-50 p-4 sm:p-5 rounded-lg border border-purple-100 h-full">#}
+{#                        <div class="flex items-start mb-3">#}
+{#                            <div class="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center mr-3 flex-shrink-0">#}
+{#                                <i class="fa-solid fa-chalkboard-user text-purple-600"></i>#}
+{#                            </div>#}
+{#                            <h4 class="font-medium text-purple-800 text-sm sm:text-base">Teacher Summary</h4>#}
+{#                        </div>#}
+{#                        <p class="text-xs sm:text-sm text-gray-700 leading-relaxed italic">#}
+{#                            "Dedicated and enthusiastic educator with 6+ years of experience fostering student growth in diverse classroom settings. Proven ability in curriculum development, differentiated instruction, and classroom management. Increased standardized test scores by 15% through innovative teaching methods. Passionate about creating engaging learning environments and building strong student relationships. Master's degree in Education."#}
+{#                        </p>#}
+{#                        <div class="mt-3 flex flex-wrap gap-1 sm:gap-2">#}
+{#                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Curriculum Dev</span>#}
+{#                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Classroom Mgmt</span>#}
+{#                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Instruction</span>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                    </div>#}
+{##}
+{#                <div class="mt-auto pt-4 flex justify-end"> <button type="button" id="copy-example-btn" class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">#}
+{#                        <i class="fa-solid fa-copy mr-1.5"></i>#}
+{#                        Copy to Summary#}
+{#                    </button>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div class="mt-8">#}
+{#        <div class="bg-white border border-gray-200 rounded-xl shadow-md overflow-hidden">#}
+{#            <div class="px-4 py-3 bg-gray-50 cursor-pointer flex justify-between items-center" id="ai-assistant-header">#}
+{#                <h3 class="text-lg font-medium flex items-center">#}
+{#                    <i class="fa-solid fa-robot text-indigo-600 mr-2"></i>#}
+{#                    AI Summary Assistant#}
+{#                    <span class="ml-2 text-xs font-semibold text-indigo-500 bg-indigo-100 px-2 py-0.5 rounded-full">Optional</span>#}
+{#                </h3>#}
+{#                <i class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300" id="ai-assistant-icon"></i>#}
+{#            </div>#}
+{#            <div class="p-6 border-t border-gray-200 hidden" id="ai-assistant-content">#}
+{#                 <p class="text-sm text-gray-600 mb-5">#}
+{#                    Need help getting started? Fill in some basic info below, and our AI will generate a draft summary for you to edit.#}
+{#                </p>#}
+{##}
+{#                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">#}
+{#                    <div class="form-control">#}
+{#                        <label class="block text-sm font-medium text-gray-700 mb-1" for="ai-job-title">#}
+{#                            Most Recent Job Title <span class="text-red-500">*</span>#}
+{#                        </label>#}
+{#                        <input type="text" id="ai-job-title" class="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Software Engineer" required>#}
+{#                    </div>#}
+{##}
+{#                    <div class="form-control">#}
+{#                        <label class="block text-sm font-medium text-gray-700 mb-1" for="ai-years">#}
+{#                            Years of Experience <span class="text-red-500">*</span>#}
+{#                        </label>#}
+{#                        <input type="number" id="ai-years" class="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., 5" min="0" max="50" required>#}
+{#                    </div>#}
+{##}
+{#                    <div class="form-control md:col-span-2">#}
+{#                        <label class="block text-sm font-medium text-gray-700 mb-1" for="ai-skills">#}
+{#                            Key Skills (comma separated) <span class="text-red-500">*</span>#}
+{#                        </label>#}
+{#                        <input type="text" id="ai-skills" class="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Python, Project Management, Team Leadership" required>#}
+{#                    </div>#}
+{##}
+{#                    <div class="form-control md:col-span-2">#}
+{#                         <label class="block text-sm font-medium text-gray-700 mb-1" for="ai-achievement">#}
+{#                            A Key Achievement (Optional)#}
+{#                        </label>#}
+{#                        <input type="text" id="ai-achievement" class="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="e.g., Increased sales by 15% in one year">#}
+{#                    </div>#}
+{#                </div>#}
+{##}
+{#                <div class="flex justify-end border-t border-gray-100 pt-4">#}
+{#                    <button type="button" id="generate-summary-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">#}
+{#                        <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Generate Summary#}
+{#                    </button>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+    {# <div class="mt-8 pt-5 border-t border-gray-200 flex justify-between"> ... </div> #}
+{##}
+{#</form>#}
+{##}
+{#<style>#}
+{#    /* Consistent layout container */#}
+{#    .consistent-layout-container {#}
+{#        display: flex;#}
+{#        flex-direction: column;#}
+{#        gap: 24px; /* equiv to gap-6 */#}
+{#    }#}
+{##}
+{#    /* Media query for desktop layout */#}
+{#    @media (min-width: 768px) { /* md breakpoint */#}
+{#        .consistent-layout-container {#}
+{#            flex-direction: row;#}
+{#            flex-wrap: nowrap;#}
+{#            align-items: stretch; /* Ensure columns stretch to same height */#}
+{#        }#}
+{#        .consistent-layout-column {#}
+{#            width: 50%;#}
+{#            flex: 1 1 0%; /* Allow flex grow/shrink */#}
+{#        }#}
+{#    }#}
+{##}
+{#    /* Ensure consistent card heights within columns */#}
+{#    .consistent-layout-column > div {#}
+{#        height: 100%; /* Make card fill the column height */#}
+{#        display: flex; /* Enable flex for internal alignment */#}
+{#        flex-direction: column; /* Stack content vertically */#}
+{#    }#}
+{##}
+{#    /* Style for example tabs */#}
+{#    .example-tab {#}
+{#        min-height: 200px; /* Adjust as needed */#}
+{#        height: 100%;#}
+{#        display: flex;#}
+{#        flex-direction: column;#}
+{#    }#}
+{#     .example-tab p {#}
+{#         flex-grow: 1; /* Allow paragraph to take up space */#}
+{#     }#}
+{##}
+{#    /* Ensure hidden tabs take no space */#}
+{#    .example-tab.hidden {#}
+{#        display: none;#}
+{#    }#}
+{##}
+{#    /* Active Tab Style */#}
+{#     .tab-btn.active-tab {#}
+{#        /* Active state uses border-indigo-500 and text-indigo-600 defined inline */#}
+{#        border-bottom-width: 2px; /* Ensure border is visible */#}
+{#    }#}
+{#    .tab-btn:not(.active-tab) {#}
+{#         /* Non-active tabs use border-transparent defined inline */#}
+{#         color: #6b7280; /* Tailwind gray-500 */#}
+{#    }#}
+{#     .tab-btn:not(.active-tab):hover {#}
+{#         border-color: #d1d5db; /* Tailwind gray-300 */#}
+{#         color: #374151; /* Tailwind gray-700 */#}
+{#     }#}
+{##}
+{##}
+{#    /* AI Assistant Toggle Icon Rotation */#}
+{#    #ai-assistant-icon.rotate-180 {#}
+{#        transform: rotate(180deg);#}
+{#    }#}
+{##}
+{#    /* Remove scrollbar styling as overflow-x-auto is removed */#}
+{##}
+{#</style>#}
+{##}
+{#<script>#}
+{#    // JavaScript remains the same as the previous version.#}
+{#    // It correctly handles tab switching based on data-target attributes#}
+{#    // and the copy functionality based on the :not(.hidden) selector.#}
+{#    // No changes needed here for the grid layout.#}
+{##}
+{#    document.addEventListener('DOMContentLoaded', function() {#}
+{#        initializePage();#}
+{#    });#}
+{##}
+{#    // Initialize the page with all necessary setup#}
+{#    function initializePage() {#}
+{#        // --- Element References ---#}
+{#        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');#}
+{#        const charCount = document.getElementById('char-count');#}
+{#        const generateBtn = document.getElementById('generate-summary-btn');#}
+{#        const aiAssistantHeader = document.getElementById('ai-assistant-header');#}
+{#        const copyExampleBtn = document.getElementById('copy-example-btn');#}
+{#        const tabButtons = document.querySelectorAll('.tab-btn');#}
+{##}
+{#        // --- Event Listeners ---#}
+{#        if (summaryField && charCount) {#}
+{#            updateCharCount();#}
+{#            summaryField.addEventListener('input', debounce(updateCharCount, 150));#}
+{#            restoreSavedContent();#}
+{#            window.addEventListener('beforeunload', saveFormState);#}
+{#        } else {#}
+{#            console.warn("Summary field or char count element not found.");#}
+{#        }#}
+{##}
+{#        tabButtons.forEach(tab => {#}
+{#            tab.addEventListener('click', handleTabClick);#}
+{#        });#}
+{##}
+{#        if (copyExampleBtn) {#}
+{#            copyExampleBtn.addEventListener('click', handleCopyExample);#}
+{#        } else {#}
+{#             console.warn("Copy example button not found.");#}
+{#        }#}
+{##}
+{#        if (aiAssistantHeader) {#}
+{#            aiAssistantHeader.addEventListener('click', () => toggleCollapse('ai-assistant'));#}
+{#        } else {#}
+{#             console.warn("AI assistant header not found.");#}
+{#        }#}
+{##}
+{#        if (generateBtn) {#}
+{#            generateBtn.addEventListener('click', generateAISummary);#}
+{#        } else {#}
+{#            console.warn("Generate summary button not found.");#}
+{#        }#}
+{##}
+{#        // --- Initial Setup ---#}
+{#        ensureConsistentLayout();#}
+{#        window.addEventListener('resize', debounce(ensureConsistentLayout, 200));#}
+{##}
+{#        // Activate the first tab and its content correctly on load#}
+{#        const activeTab = document.querySelector('.tab-btn.active-tab');#}
+{#        if (!activeTab && tabButtons.length > 0) {#}
+{#            // Make first tab active visually#}
+{#            tabButtons[0].classList.add('active-tab', 'border-indigo-500', 'text-indigo-600');#}
+{#            tabButtons[0].classList.remove('border-transparent', 'text-gray-500');#}
+{#            // Show its content#}
+{#             const firstTargetId = tabButtons[0].getAttribute('data-target');#}
+{#             const firstTargetElement = document.getElementById(firstTargetId);#}
+{#             document.querySelectorAll('.example-tab').forEach(tabContent => {#}
+{#                 if(tabContent.id === firstTargetId) {#}
+{#                     tabContent.classList.remove('hidden');#}
+{#                 } else {#}
+{#                     tabContent.classList.add('hidden');#}
+{#                 }#}
+{#             });#}
+{#        } else if (activeTab) {#}
+{#             // Ensure only the pre-selected active tab's content is visible#}
+{#             const activeTargetId = activeTab.getAttribute('data-target');#}
+{#             document.querySelectorAll('.example-tab').forEach(tabContent => {#}
+{#                 if (tabContent.id === activeTargetId) {#}
+{#                     tabContent.classList.remove('hidden');#}
+{#                 } else {#}
+{#                     tabContent.classList.add('hidden');#}
+{#                 }#}
+{#             });#}
+{#        }#}
+{#    }#}
+{##}
+{#    // --- Event Handler Functions ---#}
+{#    function handleTabClick() {#}
+{#        const tabButtons = document.querySelectorAll('.tab-btn');#}
+{#        const exampleTabs = document.querySelectorAll('.example-tab');#}
+{#        const targetId = this.getAttribute('data-target');#}
+{#        const targetElement = document.getElementById(targetId);#}
+{##}
+{#        // Update Tab Button Styles#}
+{#        tabButtons.forEach(t => {#}
+{#            t.classList.remove('active-tab', 'border-indigo-500', 'text-indigo-600');#}
+{#            t.classList.add('border-transparent', 'text-gray-500');#}
+{#        });#}
+{#        this.classList.add('active-tab', 'border-indigo-500', 'text-indigo-600');#}
+{#        this.classList.remove('border-transparent', 'text-gray-500');#}
+{##}
+{#        // Hide All Example Tabs#}
+{#        exampleTabs.forEach(content => {#}
+{#            content.classList.add('hidden');#}
+{#        });#}
+{##}
+{#        // Show Selected Example Tab#}
+{#        if (targetElement) {#}
+{#            targetElement.classList.remove('hidden');#}
+{#        } else {#}
+{#             console.error(`Target element with ID '${targetId}' not found for tab.`);#}
+{#        }#}
+{#    }#}
+{##}
+{#    function handleCopyExample() {#}
+{#        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');#}
+{#        if (!summaryField) {#}
+{#             console.error("Summary field not found for copying.");#}
+{#             return;#}
+{#        }#}
+{#        const visibleExample = document.querySelector('.example-tab:not(.hidden)');#}
+{#        if (visibleExample) {#}
+{#            const paragraphElement = visibleExample.querySelector('p');#}
+{#            if (paragraphElement) {#}
+{#                const exampleText = paragraphElement.innerText.trim().replace(/^"|"$/g, '');#}
+{#                summaryField.value = exampleText;#}
+{#                updateCharCount();#}
+{#                summaryField.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#                summaryField.focus();#}
+{#                summaryField.classList.add('ring-2', 'ring-indigo-300', 'transition', 'duration-150');#}
+{#                setTimeout(() => {#}
+{#                    summaryField.classList.remove('ring-2', 'ring-indigo-300');#}
+{#                }, 1500);#}
+{#                saveFormState();#}
+{#            } else {#}
+{#                console.error("Paragraph element not found in the visible example tab.");#}
+{#            }#}
+{#        } else {#}
+{#            console.warn("No visible example tab found to copy from.");#}
+{#        }#}
+{#    }#}
+{##}
+{#    // --- Core Logic Functions ---#}
+{#    function toggleCollapse(idPrefix) {#}
+{#        const content = document.getElementById(idPrefix + '-content');#}
+{#        const icon = document.getElementById(idPrefix + '-icon');#}
+{#        if (content && icon) {#}
+{#            const isHidden = content.classList.contains('hidden');#}
+{#            content.classList.toggle('hidden');#}
+{#            icon.classList.toggle('rotate-180', !isHidden);#}
+{#        } else {#}
+{#             console.warn("Could not find content or icon for toggleCollapse:", idPrefix);#}
+{#        }#}
+{#    }#}
+{##}
+{#    function updateCharCount() {#}
+{#        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');#}
+{#        const charCountElement = document.getElementById('char-count');#}
+{#        const charCountDisplay = document.getElementById('char-count-display');#}
+{#        if (!summaryField || !charCountElement || !charCountDisplay) return;#}
+{#        const count = summaryField.value.length;#}
+{#        charCountElement.textContent = count;#}
+{#        const meetsRequirement = count >= 100;#}
+{#        charCountElement.classList.toggle('text-red-500', !meetsRequirement);#}
+{#        charCountElement.classList.toggle('text-green-600', meetsRequirement);#}
+{#    }#}
+{##}
+{#    function generateAISummary() {#}
+{#        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');#}
+{#        const jobTitleInput = document.getElementById('ai-job-title');#}
+{#        const yearsInput = document.getElementById('ai-years');#}
+{#        const skillsInput = document.getElementById('ai-skills');#}
+{#        const achievementInput = document.getElementById('ai-achievement');#}
+{#        const generateBtn = document.getElementById('generate-summary-btn');#}
+{##}
+{#        if (!summaryField || !jobTitleInput || !yearsInput || !skillsInput || !generateBtn) {#}
+{#            alert('Error: Cannot find all required AI input fields or button.');#}
+{#            return;#}
+{#        }#}
+{##}
+{#        // Clear previous validation errors#}
+{#         [jobTitleInput, yearsInput, skillsInput].forEach(input => input.classList.remove('border-red-400', 'ring', 'ring-red-200'));#}
+{##}
+{#        const jobTitle = jobTitleInput.value.trim();#}
+{#        const years = yearsInput.value.trim();#}
+{#        const skills = skillsInput.value.trim();#}
+{#        const achievement = achievementInput ? achievementInput.value.trim() : '';#}
+{##}
+{#        // Validation#}
+{#        let missingFields = [];#}
+{#        if (!jobTitle) missingFields.push("Job Title");#}
+{#        if (!years) missingFields.push("Years of Experience");#}
+{#        if (!skills) missingFields.push("Key Skills");#}
+{##}
+{#        if (missingFields.length > 0) {#}
+{#            [jobTitleInput, yearsInput, skillsInput].forEach(input => {#}
+{#                if (!input.value.trim()) {#}
+{#                    input.classList.add('border-red-400', 'ring', 'ring-red-200');#}
+{#                }#}
+{#            });#}
+{#            alert(`Please fill in the required fields: ${missingFields.join(', ')}`);#}
+{#            return;#}
+{#        }#}
+{##}
+{#        // Loading State#}
+{#        const originalBtnHTML = generateBtn.innerHTML;#}
+{#        generateBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...';#}
+{#        generateBtn.disabled = true;#}
+{#        generateBtn.classList.add('opacity-75', 'cursor-not-allowed');#}
+{##}
+{#        // Simulate API Call#}
+{#        setTimeout(() => {#}
+{#            try {#}
+{#                const skillsArray = skills.split(',').map(s => s.trim()).filter(Boolean);#}
+{#                const mainSkills = skillsArray.length > 0 ? skillsArray.slice(0, 3).join(', ') : '[Key Skills Area]';#}
+{#                const additionalSkills = skillsArray.length > 3 ? skillsArray.slice(3).join(', ') : '';#}
+{#                let generatedSummary = `Results-oriented ${jobTitle} with ${years}+ years of experience specializing in ${mainSkills}. `;#}
+{#                 if (additionalSkills) { generatedSummary += `Proficient across a wider range including ${additionalSkills}. `; }#}
+{#                if (achievement) { generatedSummary += `Key accomplishment includes ${achievement.charAt(0).toLowerCase() + achievement.slice(1)}. `; }#}
+{#                else { generatedSummary += `Demonstrated success in driving results and contributing to team objectives. `; }#}
+{#                generatedSummary += `Eager to apply skills and experience to a challenging new opportunity.`;#}
+{##}
+{#                // Update UI#}
+{#                summaryField.value = generatedSummary;#}
+{#                updateCharCount();#}
+{#                summaryField.classList.add('ring-2', 'ring-offset-2', 'ring-indigo-400', 'transition-shadow', 'duration-300');#}
+{#                setTimeout(() => { summaryField.classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-400'); }, 1500);#}
+{#                summaryField.scrollIntoView({ behavior: 'smooth', block: 'center' });#}
+{#                setTimeout(() => summaryField.focus(), 100);#}
+{#                saveFormState();#}
+{##}
+{#            } catch (error) {#}
+{#                console.error('Error during AI summary generation logic:', error);#}
+{#                alert('An error occurred while generating the summary.');#}
+{#            } finally {#}
+{#                // Restore Button State#}
+{#                generateBtn.innerHTML = originalBtnHTML;#}
+{#                generateBtn.disabled = false;#}
+{#                generateBtn.classList.remove('opacity-75', 'cursor-not-allowed');#}
+{#            }#}
+{#        }, 1000);#}
+{#    }#}
+{##}
+{#    // --- Utility Functions ---#}
+{#    function saveFormState() {#}
+{#        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');#}
+{#        if (summaryField && typeof sessionStorage !== 'undefined') {#}
+{#             try { sessionStorage.setItem('professional_summary_content', summaryField.value); }#}
+{#             catch (e) { console.warn("Session storage unavailable or quota exceeded.", e); }#}
+{#        }#}
+{#    }#}
+{##}
+{#    function restoreSavedContent() {#}
+{#        const summaryField = document.getElementById('{{ form.summary.id_for_label }}');#}
+{#        if (summaryField && typeof sessionStorage !== 'undefined') {#}
+{#            try {#}
+{#                const savedContent = sessionStorage.getItem('professional_summary_content');#}
+{#                if (savedContent && (!summaryField.value || summaryField.value.trim() === '')) {#}
+{#                    summaryField.value = savedContent;#}
+{#                    updateCharCount();#}
+{#                }#}
+{#            } catch (e) { console.warn("Could not restore summary from session storage.", e); }#}
+{#        }#}
+{#    }#}
+{##}
+{#    function ensureConsistentLayout() {#}
+{#        if (window.innerWidth < 768) {#}
+{#            const cardsToReset = document.querySelectorAll('.consistent-layout-column > div');#}
+{#            cardsToReset.forEach(card => card.style.height = 'auto');#}
+{#            return;#}
+{#        }#}
+{#        const container = document.querySelector('.consistent-layout-container');#}
+{#        if (!container) return;#}
+{#        const cards = container.querySelectorAll('.consistent-layout-column > div');#}
+{#         if (cards.length !== 2) return;#}
+{#        cards.forEach(card => card.style.height = 'auto');#}
+{#        requestAnimationFrame(() => {#}
+{#            let maxHeight = 0;#}
+{#            cards.forEach(card => { maxHeight = Math.max(maxHeight, card.offsetHeight); });#}
+{#            if (maxHeight > 0) { cards.forEach(card => card.style.height = `${maxHeight}px`); }#}
+{#        });#}
+{#    }#}
+{##}
+{#    function debounce(func, wait) {#}
+{#        let timeout;#}
+{#        return function executedFunction(...args) {#}
+{#            const later = () => { clearTimeout(timeout); func.apply(this, args); };#}
+{#            clearTimeout(timeout);#}
+{#            timeout = setTimeout(later, wait);#}
+{#        };#}
+{#    }#}
+{##}
+{#</script>#}
+{#{% endblock %}#}
+{##}
+{##}
 {##}
 {#{% extends 'resumes/wizard_base.html' %}#}
 {#{% load resume_extras %}#}

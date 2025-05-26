@@ -1,519 +1,224 @@
 {% extends 'base_authenticated.html' %}
-{% load widget_tweaks %}
+{% load widget_tweaks i18n %}
 
-{% block title %}API Keys Management - AI Job Portal{% endblock %}
+{% block title %}Manage API Keys{% endblock %}
 
 {% block content %}
-<div class="container mx-auto max-w-3xl py-12">
-    <!-- Header -->
-    <div class="mb-8">
-        <div class="flex items-center justify-between">
-            <h2 class="text-2xl font-bold text-gray-900">
-                API Keys Management
-            </h2>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-600">
-                <i class="fa-solid fa-shield-alt mr-1.5 text-sm"></i>
-                Secure Connection
-            </span>
-        </div>
-        <p class="mt-2 text-sm text-gray-600">
-            Manage your API keys for various services. Keep these keys secure and never share them with others.
-        </p>
-    </div>
-
-    <!-- Messages -->
-    {% if messages %}
-        {% for message in messages %}
-            <div class="mb-6 p-4 {% if message.tags == 'success' %}bg-green-50 text-green-700 border-l-4 border-green-500{% elif message.tags == 'error' %}bg-red-50 text-red-700 border-l-4 border-red-500{% else %}bg-blue-50 text-blue-700 border-l-4 border-blue-500{% endif %} rounded-md flex">
-                <div class="flex-shrink-0">
-                    {% if message.tags == 'success' %}
-                        <i class="fa-solid fa-check-circle text-green-400 mt-0.5"></i>
-                    {% elif message.tags == 'error' %}
-                        <i class="fa-solid fa-exclamation-circle text-red-400 mt-0.5"></i>
-                    {% else %}
-                        <i class="fa-solid fa-info-circle text-blue-400 mt-0.5"></i>
-                    {% endif %}
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm">{{ message }}</p>
-                </div>
+<div class="max-w-xl mx-auto py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+    <div class="bg-white dark:bg-slate-800 shadow-2xl rounded-xl p-6 sm:p-10">
+        <div class="flex flex-col sm:flex-row items-center text-center sm:text-left space-y-4 sm:space-y-0 sm:space-x-5 mb-8 pb-6 border-b border-slate-200 dark:border-slate-700">
+            <div class="flex-shrink-0 w-16 h-16 flex items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 dark:from-primary-600 dark:to-secondary-600 text-white shadow-lg">
+                <i class="fas fa-key text-2xl"></i>
             </div>
-        {% endfor %}
-    {% endif %}
-
-    <!-- Main Content -->
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-        <!-- Security Notice -->
-        <div class="p-4 bg-yellow-50 border-l-4 border-yellow-500">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <i class="fa-solid fa-exclamation-triangle text-yellow-400"></i>
-                </div>
-                <div class="ml-3">
-                    <h3 class="text-sm font-medium text-yellow-800">
-                        Security Notice
-                    </h3>
-                    <div class="mt-1 text-sm text-yellow-700">
-                        <p>
-                            Your API keys are sensitive credentials. They are encrypted before storage and never displayed in plain text.
-                        </p>
-                    </div>
-                </div>
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Manage API Keys</h1>
+                <p class="text-sm text-slate-600 dark:text-slate-400 mt-1.5">
+                    Update your API keys for OpenAI (ChatGPT) and Google (Gemini) integrations.
+                    Your keys are stored securely.
+                </p>
             </div>
         </div>
 
-        <!-- Form -->
-        <form method="POST" class="p-6 space-y-6">
+        {% if form.non_field_errors %}
+            <div class="mb-6 p-4 bg-red-50 dark:bg-red-800/40 border-l-4 border-red-500 dark:border-red-600 text-red-700 dark:text-red-300 rounded-md text-sm shadow" role="alert">
+                <h4 class="font-semibold mb-1 text-red-800 dark:text-red-200">Please correct the following errors:</h4>
+                <ul class="list-disc list-inside">
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <form method="post" class="space-y-6">
             {% csrf_token %}
 
-            {% if form.non_field_errors %}
-            <div class="rounded-md bg-red-50 p-4 border-l-4 border-red-500">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <i class="fa-solid fa-circle-exclamation text-red-400"></i>
-                    </div>
-                    <div class="ml-3">
-                        <h3 class="text-sm font-medium text-red-800">
-                            There were errors with your submission
-                        </h3>
-                        <div class="mt-2 text-sm text-red-700">
-                            {{ form.non_field_errors }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-
-            {% for field in form %}
-            <div class="space-y-1">
-                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                    {{ field.label }}
-                    {% if field.field.required %}
-                        <span class="text-red-500">*</span>
-                    {% endif %}
+            {# CORRECTED FIELD NAME: form.chatgpt_api_key #}
+            <div class="space-y-1.5">
+                <label for="{{ form.chatgpt_api_key.id_for_label }}" class="flex items-center text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                    <svg class="w-5 h-5 mr-2.5 text-green-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.531 9.869L12.769.106a.75.75 0 00-1.061 0L1.469 9.869c-.02.02-.038.042-.056.065a4.441 4.441 0 00-.196.623c-.03.086-.057.173-.08.263L.011 14.15c-.01.024-.02.05-.028.075a4.5 4.5 0 008.923 1.326L10 14.469v5.281a.75.75 0 00.75.75h1.06c.958 0 1.82-.553 2.203-1.388l.763-1.65a2.989 2.989 0 012.73.002l.762 1.65c.385.835 1.245 1.386 2.205 1.386h1.06a.75.75 0 00.75-.75v-5.28l1.065 1.086a4.502 4.502 0 008.951-1.4l-1.115-3.332c-.023-.09-.05-.177-.08-.263a4.443 4.443 0 00-.196-.623.72.72 0 00-.056-.065zM14.25 13.5a.75.75 0 01-.75.75h-3a.75.75 0 010-1.5h3a.75.75 0 01.75.75zm-.19-3.22l1.38-2.998 2.998 1.38-1.379 2.998-2.999-1.38zm-4.122 0L8.56 7.28l2.998-1.379L12.937 8.9l-2.999 1.38z"></path></svg>
+                    {{ form.chatgpt_api_key.label_tag }} {# Using label_tag for better accessibility and to use defined label #}
                 </label>
-
-                <div class="mt-1 relative rounded-md shadow-sm">
-                    {{ field|add_class:"block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm" }}
-
-                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                        <button type="button" class="text-gray-400 hover:text-gray-500 focus:outline-none"
-                                onclick="togglePasswordVisibility(this)">
-                            <i class="fa-solid fa-eye"></i>
-                        </button>
-                    </div>
+                <div class="relative group">
+                    {% render_field form.chatgpt_api_key type="password" class+="form-input w-full pr-12 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300 dark:placeholder-slate-500 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-primary-500 dark:focus:border-primary-400 transition-shadow" placeholder="Current key is set or enter new key" %}
+                    <button type="button" onclick="togglePasswordVisibility(document.getElementById('{{ form.chatgpt_api_key.id_for_label }}'), this)"
+                            class="absolute inset-y-0 right-0 px-4 flex items-center text-sm leading-5 text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 focus:outline-none focus:text-slate-700 dark:focus:text-slate-200 transition-colors duration-150 rounded-r-md group-focus-within:text-primary-600 dark:group-focus-within:text-primary-400"
+                            aria-label="Toggle OpenAI API Key visibility">
+                        <i class="far fa-eye text-base"></i>
+                    </button>
                 </div>
-
-                {% if field.help_text %}
-                <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+                {% if form.chatgpt_api_key.errors %}
+                    <p class="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center">
+                        <i class="fas fa-exclamation-circle mr-1.5"></i>{{ form.chatgpt_api_key.errors.0 }}
+                    </p>
                 {% endif %}
-
-                {% if field.errors %}
-                <p class="mt-1 text-xs text-red-600">{{ field.errors|join:", " }}</p>
+                {% if form.chatgpt_api_key.help_text %}
+                    <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{{ form.chatgpt_api_key.help_text|safe }}</p>
                 {% endif %}
             </div>
-            {% endfor %}
 
-            <!-- Actions -->
-            <div class="mt-6 flex items-center justify-end space-x-4">
-                <a href="{% url 'dashboard' %}"
-                   class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition">
-                    Cancel
-                </a>
+            {# Field name form.gemini_api_key is correct as per your form #}
+            <div class="space-y-1.5">
+                <label for="{{ form.gemini_api_key.id_for_label }}" class="flex items-center text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                    <svg class="w-5 h-5 mr-2.5 text-blue-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 11.875c-.068 0-.137.002-.205.007-1.06.06-1.942.77-2.31 1.78L7.795 18.5A2.25 2.25 0 0010 20.25h4a2.25 2.25 0 002.205-1.75l-1.69-4.838c-.368-1.01-.125-1.72-2.31-1.78a2.24 2.24 0 00-.205-.007zm0 1.5c.235 0 .46.07.648.202.28.195.46.508.555.85l1.54 4.4c.095.27.01.568-.212.758a.75.75 0 01-1.043-.25L12 16.033l-1.488 3.277a.75.75 0 01-1.043.25.75.75 0 01-.212-.758l1.54-4.4c.095-.342.274-.655.555-.85.187-.131.413-.202.648-.202zM12 3.75a8.25 8.25 0 100 16.5 8.25 8.25 0 000-16.5zM4.5 12a7.5 7.5 0 1115 0 7.5 7.5 0 01-15 0z"></path></svg>
+                    {{ form.gemini_api_key.label_tag }} {# Using label_tag for better accessibility #}
+                </label>
+                 <div class="relative group">
+                    {% render_field form.gemini_api_key type="password" class+="form-input w-full pr-12 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300 dark:placeholder-slate-500 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-primary-500 dark:focus:border-primary-400 transition-shadow" placeholder="Current key is set or enter new key" %}
+                    <button type="button" onclick="togglePasswordVisibility(document.getElementById('{{ form.gemini_api_key.id_for_label }}'), this)"
+                            class="absolute inset-y-0 right-0 px-4 flex items-center text-sm leading-5 text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 focus:outline-none focus:text-slate-700 dark:focus:text-slate-200 transition-colors duration-150 rounded-r-md group-focus-within:text-primary-600 dark:group-focus-within:text-primary-400"
+                            aria-label="Toggle Gemini API Key visibility">
+                        <i class="far fa-eye text-base"></i>
+                    </button>
+                </div>
+                {% if form.gemini_api_key.errors %}
+                     <p class="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center">
+                        <i class="fas fa-exclamation-circle mr-1.5"></i>{{ form.gemini_api_key.errors.0 }}
+                    </p>
+                {% endif %}
+                {% if form.gemini_api_key.help_text %}
+                    <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{{ form.gemini_api_key.help_text|safe }}</p>
+                {% endif %}
+            </div>
+
+            <div class="pt-6 flex flex-col sm:flex-row items-center justify-end space-y-3 sm:space-y-0 sm:space-x-4 border-t border-slate-200 dark:border-slate-700 mt-8">
+                 <a href="{% url 'profile' %}" class="w-full sm:w-auto px-6 py-2.5 text-center text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600/70 rounded-lg shadow-sm border border-slate-300 dark:border-slate-600 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400">
+                     Cancel
+                 </a>
                 <button type="submit"
-                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition">
-                    <i class="fa-solid fa-save mr-1.5"></i>
-                    Update API Keys
+                        class="w-full sm:w-auto flex items-center justify-center px-6 py-2.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-500 dark:hover:bg-primary-600 dark:focus:ring-primary-800 rounded-lg shadow-md hover:shadow-lg transition-all duration-150">
+                    <i class="fas fa-save mr-2"></i> Save API Keys
                 </button>
             </div>
         </form>
     </div>
 
-    <!-- Additional Information -->
-    <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-primary-500 transition">
-            <div class="flex-shrink-0">
-                <i class="fa-solid fa-question-circle text-gray-400 text-xl"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-                <a href="#" class="focus:outline-none">
-                    <p class="text-sm font-medium text-gray-900">
-                        Need Help?
-                    </p>
-                    <p class="text-sm text-gray-500">
-                        View our API documentation and guides
-                    </p>
-                </a>
-            </div>
-        </div>
-
-        <div class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-primary-500 transition">
-            <div class="flex-shrink-0">
-                <i class="fa-solid fa-chart-line text-gray-400 text-xl"></i>
-            </div>
-            <div class="flex-1 min-w-0">
-                <a href="#" class="focus:outline-none">
-                    <p class="text-sm font-medium text-gray-900">
-                        API Usage Limits
-                    </p>
-                    <p class="text-sm text-gray-500">
-                        Check your current API usage and limits
-                    </p>
-                </a>
-            </div>
-        </div>
+    <div class="mt-10 text-center px-4">
+        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-md mx-auto">
+            <i class="fas fa-lock mr-1 text-slate-400 dark:text-slate-500"></i>
+            Your API keys are used solely for interacting with AI services on your behalf and are stored encrypted.
+            Never share your API keys publicly.
+        </p>
     </div>
 </div>
+{% endblock %}
 
-<!-- JavaScript for password visibility toggle -->
+{% block extra_js %}
 <script>
-function togglePasswordVisibility(button) {
-    const input = button.closest('.relative').querySelector('input');
-    if (input.type === "password") {
-        input.type = "text";
-        button.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+function togglePasswordVisibility(inputField, button) {
+    if (!inputField) {
+        console.error("Input field not found for password toggle. ID used was: " + (inputField ? inputField.id : "null")); // More specific error
+        return;
+    }
+    const icon = button.querySelector('i');
+    if (inputField.type === "password") {
+        inputField.type = "text";
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+        icon.classList.add('text-primary-600', 'dark:text-primary-400');
     } else {
-        input.type = "password";
-        button.innerHTML = '<i class="fa-solid fa-eye"></i>';
+        inputField.type = "password";
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+        icon.classList.remove('text-primary-600', 'dark:text-primary-400');
     }
 }
 </script>
 {% endblock %}
 
-{##}
+{# templates/auth/update_api_keys.html #}
 {#{% extends 'base_authenticated.html' %}#}
-{#{% load custom_filters %}#}
+{#{% load widget_tweaks %}#}
 {##}
-{#{% block title %}API Keys Management - AI Job Hunt{% endblock %}#}
+{#{% block title %}Manage API Keys{% endblock %}#}
 {##}
 {#{% block content %}#}
-{#<div class="container mx-auto max-w-3xl py-12">#}
-{#    <!-- Header -->#}
-{#    <div class="mb-8">#}
-{#        <div class="flex items-center justify-between">#}
-{#            <h2 class="text-2xl font-bold text-gray-900">#}
-{#                API Keys Management#}
-{#            </h2>#}
-{#            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-600">#}
-{#                <i class="fa-solid fa-shield-alt mr-1.5 text-sm"></i>#}
-{#                Secure Connection#}
-{#            </span>#}
-{#        </div>#}
-{#        <p class="mt-2 text-sm text-gray-600">#}
-{#            Manage your API keys for various services. Keep these keys secure and never share them with others.#}
-{#        </p>#}
-{#    </div>#}
-{##}
-{#    <!-- Main Content -->#}
-{#    <div class="bg-white shadow rounded-lg overflow-hidden">#}
-{#        <!-- Security Notice -->#}
-{#        <div class="p-4 bg-yellow-50 border-l-4 border-yellow-500">#}
-{#            <div class="flex">#}
-{#                <div class="flex-shrink-0">#}
-{#                    <i class="fa-solid fa-exclamation-triangle text-yellow-400"></i>#}
-{#                </div>#}
-{#                <div class="ml-3">#}
-{#                    <h3 class="text-sm font-medium text-yellow-800">#}
-{#                        Security Notice#}
-{#                    </h3>#}
-{#                    <div class="mt-1 text-sm text-yellow-700">#}
-{#                        <p>#}
-{#                            Your API keys are sensitive credentials. They are encrypted before storage and never displayed in plain text.#}
-{#                        </p>#}
-{#                    </div>#}
-{#                </div>#}
+{#<div class="max-w-lg mx-auto">#}
+{#    <div class="bg-white dark:bg-slate-800 shadow-xl rounded-lg p-6 sm:p-8">#}
+{#        <div class="flex items-start space-x-3 mb-6">#}
+{#            <div class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-700/30 text-primary-600 dark:text-primary-300">#}
+{#                <i class="fas fa-key text-xl"></i>#}
+{#            </div>#}
+{#            <div>#}
+{#                <h2 class="text-2xl font-semibold text-slate-900 dark:text-slate-100">Manage API Keys</h2>#}
+{#                <p class="text-sm text-slate-600 dark:text-slate-400">#}
+{#                    Update your API keys for AI integrations. Your keys are stored securely.#}
+{#                </p>#}
 {#            </div>#}
 {#        </div>#}
 {##}
-{#        <!-- Form -->#}
-{#        <form method="POST" class="p-6 space-y-6">#}
+{#        {% if form.non_field_errors %}#}
+{#            <div class="mb-4 p-3 bg-red-100 dark:bg-red-800/30 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 rounded-md text-sm">#}
+{#                {% for error in form.non_field_errors %}#}
+{#                    <p>{{ error }}</p>#}
+{#                {% endfor %}#}
+{#            </div>#}
+{#        {% endif %}#}
+{##}
+{#        <form method="post" class="space-y-6">#}
 {#            {% csrf_token %}#}
 {##}
-{#            {% if form.non_field_errors %}#}
-{#            <div class="rounded-md bg-red-50 p-4 border-l-4 border-red-500">#}
-{#                <div class="flex">#}
-{#                    <div class="flex-shrink-0">#}
-{#                        <i class="fa-solid fa-circle-exclamation text-red-400"></i>#}
-{#                    </div>#}
-{#                    <div class="ml-3">#}
-{#                        <h3 class="text-sm font-medium text-red-800">#}
-{#                            There were errors with your submission#}
-{#                        </h3>#}
-{#                        <div class="mt-2 text-sm text-red-700">#}
-{#                            {{ form.non_field_errors }}#}
-{#                        </div>#}
-{#                    </div>#}
-{#                </div>#}
-{#            </div>#}
-{#            {% endif %}#}
-{##}
-{#            {% for field in form %}#}
-{#            <div class="space-y-1">#}
-{#                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">#}
-{#                    {{ field.label }}#}
-{#                    {% if field.field.required %}#}
-{#                        <span class="text-red-500">*</span>#}
-{#                    {% endif %}#}
+{#            <div>#}
+{#                <label for="{{ form.openai_api_key.id_for_label }}" class="form-label flex items-center">#}
+{#                    <i class="fab fa-python mr-2 text-green-500"></i> OpenAI (ChatGPT) API Key#}
 {#                </label>#}
-{##}
-{#                <div class="mt-1 relative rounded-md shadow-sm">#}
-{#                    {{ field|add_class:"block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm" }}#}
-{##}
-{#                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">#}
-{#                        <button type="button" class="text-gray-400 hover:text-gray-500 focus:outline-none"#}
-{#                                onclick="togglePasswordVisibility(this.previousElementSibling)">#}
-{#                            <i class="fa-solid fa-eye"></i>#}
-{#                        </button>#}
-{#                    </div>#}
+{#                <div class="relative">#}
+{#                    {% render_field form.openai_api_key type="password" id="id_openai_api_key" class+="form-input pr-10" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" %}#}
+{#                    <button type="button" onclick="togglePasswordVisibility(document.getElementById('id_openai_api_key'), this)"#}
+{#                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">#}
+{#                        <i class="far fa-eye"></i>#}
+{#                    </button>#}
 {#                </div>#}
-{##}
-{#                {% if field.help_text %}#}
-{#                <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>#}
+{#                {% if form.openai_api_key.errors %}#}
+{#                    <p class="form-error-text">{{ form.openai_api_key.errors.0 }}</p>#}
 {#                {% endif %}#}
-{##}
-{#                {% if field.errors %}#}
-{#                <p class="mt-1 text-xs text-red-600">{{ field.errors|join:", " }}</p>#}
+{#                {% if form.openai_api_key.help_text %}#}
+{#                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ form.openai_api_key.help_text|safe }}</p>#}
 {#                {% endif %}#}
 {#            </div>#}
-{#            {% endfor %}#}
 {##}
-{#            <!-- Actions -->#}
-{#            <div class="mt-6 flex items-center justify-end space-x-4">#}
-{#                <button type="button"#}
-{#                        onclick="history.back()"#}
-{#                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition">#}
-{#                    Cancel#}
-{#                </button>#}
-{#                <button type="submit"#}
-{#                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition">#}
-{#                    <i class="fa-solid fa-save mr-1.5"></i>#}
-{#                    Update API Keys#}
+{#            <div>#}
+{#                <label for="{{ form.gemini_api_key.id_for_label }}" class="form-label flex items-center">#}
+{#                    <i class="fab fa-google mr-2 text-blue-500"></i> Google (Gemini) API Key#}
+{#                </label>#}
+{#                 <div class="relative">#}
+{#                    {% render_field form.gemini_api_key type="password" id="id_gemini_api_key" class+="form-input pr-10" placeholder="AIzaSyxxxxxxxxxxxxxxxxxxxxxxxxxxx" %}#}
+{#                    <button type="button" onclick="togglePasswordVisibility(document.getElementById('id_gemini_api_key'), this)"#}
+{#                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">#}
+{#                        <i class="far fa-eye"></i>#}
+{#                    </button>#}
+{#                </div>#}
+{#                {% if form.gemini_api_key.errors %}#}
+{#                    <p class="form-error-text">{{ form.gemini_api_key.errors.0 }}</p>#}
+{#                {% endif %}#}
+{#                {% if form.gemini_api_key.help_text %}#}
+{#                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ form.gemini_api_key.help_text|safe }}</p>#}
+{#                {% endif %}#}
+{#            </div>#}
+{##}
+{#            <div class="pt-4 flex items-center justify-end space-x-3">#}
+{#                 <a href="{% url 'profile' %}" class="btn-neutral">Cancel</a>#}
+{#                <button type="submit" class="btn-primary">#}
+{#                    <i class="fas fa-save mr-1.5"></i> Save API Keys#}
 {#                </button>#}
 {#            </div>#}
 {#        </form>#}
 {#    </div>#}
-{##}
-{#    <!-- Additional Information -->#}
-{#    <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">#}
-{#        <div class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-primary-500 transition">#}
-{#            <div class="flex-shrink-0">#}
-{#                <i class="fa-solid fa-question-circle text-gray-400 text-xl"></i>#}
-{#            </div>#}
-{#            <div class="flex-1 min-w-0">#}
-{#                <a href="#" class="focus:outline-none">#}
-{#                    <p class="text-sm font-medium text-gray-900">#}
-{#                        Need Help?#}
-{#                    </p>#}
-{#                    <p class="text-sm text-gray-500">#}
-{#                        View our API documentation and guides#}
-{#                    </p>#}
-{#                </a>#}
-{#            </div>#}
-{#        </div>#}
-{##}
-{#        <div class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-primary-500 transition">#}
-{#            <div class="flex-shrink-0">#}
-{#                <i class="fa-solid fa-chart-line text-gray-400 text-xl"></i>#}
-{#            </div>#}
-{#            <div class="flex-1 min-w-0">#}
-{#                <a href="#" class="focus:outline-none">#}
-{#                    <p class="text-sm font-medium text-gray-900">#}
-{#                        API Usage Limits#}
-{#                    </p>#}
-{#                    <p class="text-sm text-gray-500">#}
-{#                        Check your current API usage and limits#}
-{#                    </p>#}
-{#                </a>#}
-{#            </div>#}
-{#        </div>#}
-{#    </div>#}
 {#</div>#}
-{##}
-{#<!-- JavaScript for password visibility toggle -->#}
-{#<script>#}
-{#function togglePasswordVisibility(input) {#}
-{#    if (input.type === "password") {#}
-{#        input.type = "text";#}
-{#    } else {#}
-{#        input.type = "password";#}
-{#    }#}
-{#}#}
-{#</script>#}
 {#{% endblock %}#}
 {##}
-{##}
-{#{% extends 'base.html' %}#}
-{#{% load custom_filters %}#}
-{##}
-{#{% block title %}API Keys Management - AI Job Hunt{% endblock %}#}
-{##}
-{#{% block content %}#}
-{#<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">#}
-{#    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">#}
-{#        <!-- Header -->#}
-{#        <div class="mb-8">#}
-{#            <div class="flex items-center justify-between">#}
-{#                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">#}
-{#                    API Keys Management#}
-{#                </h2>#}
-{#                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200">#}
-{#                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">#}
-{#                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>#}
-{#                    </svg>#}
-{#                    Secure Connection#}
-{#                </span>#}
-{#            </div>#}
-{#            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">#}
-{#                Manage your API keys for various services. Keep these keys secure and never share them with others.#}
-{#            </p>#}
-{#        </div>#}
-{##}
-{#        <!-- Main Content -->#}
-{#        <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">#}
-{#            <!-- Security Notice -->#}
-{#            <div class="p-4 bg-yellow-50 dark:bg-yellow-900/50 border-l-4 border-yellow-400 dark:border-yellow-500">#}
-{#                <div class="flex">#}
-{#                    <div class="flex-shrink-0">#}
-{#                        <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">#}
-{#                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>#}
-{#                        </svg>#}
-{#                    </div>#}
-{#                    <div class="ml-3">#}
-{#                        <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">#}
-{#                            Security Notice#}
-{#                        </h3>#}
-{#                        <div class="mt-2 text-sm text-yellow-700 dark:text-yellow-300">#}
-{#                            <p>#}
-{#                                Your API keys are sensitive credentials. They are encrypted before storage and never displayed in plain text.#}
-{#                            </p>#}
-{#                        </div>#}
-{#                    </div>#}
-{#                </div>#}
-{#            </div>#}
-{##}
-{#            <!-- Form -->#}
-{#            <form method="POST" class="p-6 space-y-6">#}
-{#                {% csrf_token %}#}
-{##}
-{#                {% if form.non_field_errors %}#}
-{#                <div class="rounded-md bg-red-50 dark:bg-red-900/50 p-4">#}
-{#                    <div class="flex">#}
-{#                        <div class="flex-shrink-0">#}
-{#                            <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">#}
-{#                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>#}
-{#                            </svg>#}
-{#                        </div>#}
-{#                        <div class="ml-3">#}
-{#                            <h3 class="text-sm font-medium text-red-800 dark:text-red-200">#}
-{#                                There were errors with your submission#}
-{#                            </h3>#}
-{#                            <div class="mt-2 text-sm text-red-700 dark:text-red-300">#}
-{#                                {{ form.non_field_errors }}#}
-{#                            </div>#}
-{#                        </div>#}
-{#                    </div>#}
-{#                </div>#}
-{#                {% endif %}#}
-{##}
-{#                {% for field in form %}#}
-{#                <div class="space-y-1">#}
-{#                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300">#}
-{#                        {{ field.label }}#}
-{#                        {% if field.field.required %}#}
-{#                            <span class="text-red-500">*</span>#}
-{#                        {% endif %}#}
-{#                    </label>#}
-{##}
-{#                    <div class="mt-1 relative rounded-md shadow-sm">#}
-{#                        {{ field|add_class:"block w-full pr-10 pl-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm" }}#}
-{##}
-{#                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">#}
-{#                            <button type="button" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"#}
-{#                                    onclick="togglePasswordVisibility(this.previousElementSibling)">#}
-{#                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">#}
-{#                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>#}
-{#                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>#}
-{#                                </svg>#}
-{#                            </button>#}
-{#                        </div>#}
-{#                    </div>#}
-{##}
-{#                    {% if field.help_text %}#}
-{#                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ field.help_text }}</p>#}
-{#                    {% endif %}#}
-{##}
-{#                    {% if field.errors %}#}
-{#                    <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ field.errors|join:", " }}</p>#}
-{#                    {% endif %}#}
-{#                </div>#}
-{#                {% endfor %}#}
-{##}
-{#                <!-- Actions -->#}
-{#                <div class="mt-6 flex items-center justify-end space-x-4">#}
-{#                    <button type="button"#}
-{#                            onclick="history.back()"#}
-{#                            class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800">#}
-{#                        Cancel#}
-{#                    </button>#}
-{#                    <button type="submit"#}
-{#                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800">#}
-{#                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">#}
-{#                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>#}
-{#                        </svg>#}
-{#                        Update API Keys#}
-{#                    </button>#}
-{#                </div>#}
-{#            </form>#}
-{#        </div>#}
-{##}
-{#        <!-- Additional Information -->#}
-{#        <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">#}
-{#            <div class="relative rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400">#}
-{#                <div class="flex-shrink-0">#}
-{#                    <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">#}
-{#                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>#}
-{#                    </svg>#}
-{#                </div>#}
-{#                <div class="flex-1 min-w-0">#}
-{#                    <a href="#" class="focus:outline-none">#}
-{#                        <p class="text-sm font-medium text-gray-900 dark:text-white">#}
-{#                            Need Help?#}
-{#                        </p>#}
-{#                        <p class="text-sm text-gray-500 dark:text-gray-400">#}
-{#                            View our API documentation and guides#}
-{#                        </p>#}
-{#                    </a>#}
-{#                </div>#}
-{#            </div>#}
-{##}
-{#            <div class="relative rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400">#}
-{#                <div class="flex-shrink-0">#}
-{#                    <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">#}
-{#                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>#}
-{#                    </svg>#}
-{#                </div>#}
-{#                <div class="flex-1 min-w-0">#}
-{#                    <a href="#" class="focus:outline-none">#}
-{#                        <p class="text-sm font-medium text-gray-900 dark:text-white">#}
-{#                            API Usage Limits#}
-{#                        </p>#}
-{#                        <p class="text-sm text-gray-500 dark:text-gray-400">#}
-{#                            Check your current API usage and limits#}
-{#                        </p>#}
-{#                    </a>#}
-{#                </div>#}
-{#            </div>#}
-{#        </div>#}
-{#    </div>#}
-{#</div>#}
-{##}
-{#<!-- JavaScript for password visibility toggle -->#}
+{#{% block extra_js %}#}
 {#<script>#}
-{#function togglePasswordVisibility(input) {#}
-{#    if (input.type === "password") {#}
-{#        input.type = "text";#}
+{#function togglePasswordVisibility(inputField, button) {#}
+{#    const icon = button.querySelector('i');#}
+{#    if (inputField.type === "password") {#}
+{#        inputField.type = "text";#}
+{#        icon.classList.remove('fa-eye');#}
+{#        icon.classList.add('fa-eye-slash');#}
 {#    } else {#}
-{#        input.type = "password";#}
+{#        inputField.type = "password";#}
+{#        icon.classList.remove('fa-eye-slash');#}
+{#        icon.classList.add('fa-eye');#}
 {#    }#}
 {#}#}
 {#</script>#}

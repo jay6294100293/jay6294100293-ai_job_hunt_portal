@@ -1,258 +1,348 @@
-{% load widget_tweaks %}
-<div class="form-row bg-base-200 p-4 rounded-lg mb-6 shadow-sm hover:shadow-md transition-shadow certification-form relative" data-index="{{ index }}">
-    <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-medium">Certification #{{ index|add:"1" }}</h3>
-        <!-- Status indicator circle -->
-        <div class="tooltip tooltip-left" data-tip="Required fields must be filled">
-            <div class="certification-status w-3 h-3 rounded-full bg-error"></div>
-        </div>
-    </div>
+{# templates/resumes/partials/form_rows/certification_form_row.html #}
+{% load widget_tweaks static i18n %}
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Certification Name -->
-        <div class="form-control">
-            <label class="label" for="name_{{ index }}">
-                <span class="label-text font-medium">Certification Name</span>
-                <span class="label-text-alt text-error">*</span>
-            </label>
-            <input type="text" id="name_{{ index }}" name="name_{{ index }}"
-                class="input input-bordered w-full"
-                value="{{ certification.name|default:'' }}"
-                required
-                hx-trigger="keyup changed delay:500ms"
-                hx-post="{% url 'validate_certification_name' %}"
-                hx-target="#name_{{ index }}_feedback"
-                hx-indicator="#name_{{ index }}_spinner">
-            <div class="flex items-center mt-1">
-                <div id="name_{{ index }}_spinner" class="htmx-indicator">
-                    <span class="loading loading-spinner loading-xs"></span>
+{# Parameters passed: cert_form, formset_prefix, is_empty_form, certification_index #}
+<div class="certification-form bg-slate-50 dark:bg-slate-800/60 p-5 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 relative"
+     data-certification-form-index="{{ certification_index }}">
+
+    {% if not is_empty_form and cert_form.instance.pk %}{{ cert_form.id }}{% endif %}
+
+    <div class="flex justify-between items-start mb-4 pb-3 border-b border-slate-200 dark:border-slate-700">
+        <h3 class="text-lg font-medium text-primary-700 dark:text-primary-400 flex items-center">
+            <i class="fas fa-certificate mr-2"></i>
+            Certification #<span class="certification-form-counter">{% if not is_empty_form %}{{ forloop.counter }}{% else %}{{ certification_index|replace:"__prefix__","New" }}{% endif %}</span>
+        </h3>
+        <div class="flex items-center space-x-2">
+            {% if cert_form.DELETE %}
+                <div class="flex items-center">
+                    {% render_field cert_form.DELETE class+="form-checkbox-sm text-red-600 focus:ring-red-500 delete-certification-checkbox" data_form_index=certification_index %}
+                    <label for="{{ cert_form.DELETE.id_for_label }}" class="ml-1.5 text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 cursor-pointer">
+                        Delete
+                    </label>
                 </div>
-                <div id="name_{{ index }}_feedback" class="text-xs ml-1"></div>
-            </div>
-        </div>
-
-        <!-- Issuing Institute -->
-        <div class="form-control">
-            <label class="label" for="institute_{{ index }}">
-                <span class="label-text font-medium">Issuing Organization</span>
-                <span class="label-text-alt text-opacity-70">(Optional)</span>
-            </label>
-            <input type="text" id="institute_{{ index }}" name="institute_{{ index }}"
-                class="input input-bordered w-full"
-                value="{{ certification.institute|default:'' }}"
-                hx-get="{% url 'suggest_organizations' %}"
-                hx-trigger="keyup changed delay:300ms"
-                hx-target="#institute_suggestions_{{ index }}"
-                list="institute_datalist_{{ index }}">
-            <datalist id="institute_datalist_{{ index }}"></datalist>
-            <div id="institute_suggestions_{{ index }}" class="text-xs mt-1"></div>
+            {% endif %}
+            <button type="button" class="remove-certification-form btn-icon-danger btn-xs" title="Remove this certification">
+                <i class="fas fa-trash-alt"></i>
+            </button>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <!-- Completion Date -->
-        <div class="form-control">
-            <label class="label" for="completion_date_{{ index }}">
-                <span class="label-text font-medium">Completion Date</span>
-                <span class="label-text-alt text-opacity-70">(Optional)</span>
-            </label>
-            <div class="relative">
-                <input type="date" id="completion_date_{{ index }}" name="completion_date_{{ index }}"
-                    class="input input-bordered w-full"
-                    value="{{ certification.completion_date|date:'Y-m-d'|default:'' }}"
-                    max="{{ today|date:'Y-m-d' }}">
-                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <i class="fa-regular fa-calendar text-gray-400"></i>
-                </div>
-            </div>
-            <div class="text-xs text-info mt-1">Must be today or earlier</div>
+    {% for hidden_field in cert_form.hidden_fields %}
+        {% if hidden_field.name != 'id' %}{{ hidden_field }}{% endif %}
+    {% endfor %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
+        <div class="md:col-span-2">
+            <label for="{{ cert_form.name.id_for_label }}" class="form-label">Certification Name <span class="text-red-500">*</span></label>
+            {% render_field cert_form.name class+="form-input" placeholder="e.g., Certified Scrum Master" %}
+            {% for error in cert_form.name.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
         </div>
 
-        <!-- Expiration Date -->
-        <div class="form-control">
-            <label class="label" for="expiration_date_{{ index }}">
-                <span class="label-text font-medium">Expiration Date</span>
-                <span class="label-text-alt text-opacity-70">(Optional)</span>
-            </label>
-            <div class="relative">
-                <input type="date" id="expiration_date_{{ index }}" name="expiration_date_{{ index }}"
-                    class="input input-bordered w-full"
-                    value="{{ certification.expiration_date|date:'Y-m-d'|default:'' }}"
-                    min="{{ today|date:'Y-m-d' }}">
-                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <i class="fa-regular fa-calendar text-gray-400"></i>
-                </div>
+        <div>
+            <label for="{{ cert_form.issuing_organization.id_for_label }}" class="form-label">Issuing Organization (Optional)</label>
+            {% render_field cert_form.issuing_organization class+="form-input" placeholder="e.g., Scrum Alliance" %}
+            {% for error in cert_form.issuing_organization.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+         <div>
+            <label for="{{ cert_form.credential_id.id_for_label }}" class="form-label">Credential ID (Optional)</label>
+            {% render_field cert_form.credential_id class+="form-input" placeholder="e.g., 12345ABC" %}
+            {% for error in cert_form.credential_id.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+
+        <div class="grid grid-cols-2 gap-x-4">
+            <div>
+                <label for="{{ cert_form.issue_date.id_for_label }}" class="form-label">Issue Date (Optional)</label>
+                {% render_field cert_form.issue_date type="month" class+="form-input" %}
+                {% for error in cert_form.issue_date.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
             </div>
-            <div class="flex mt-1 items-center">
-                <input type="checkbox" id="no_expiration_{{ index }}" name="no_expiration_{{ index }}"
-                    class="checkbox checkbox-xs checkbox-primary mr-2"
-                    onchange="toggleExpirationDate({{ index }})">
-                <label for="no_expiration_{{ index }}" class="text-xs cursor-pointer">No expiration date</label>
+            <div>
+                <label for="{{ cert_form.expiration_date.id_for_label }}" class="form-label">Expiration Date (Optional)</label>
+                {% render_field cert_form.expiration_date type="month" class+="form-input" %}
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Leave blank if no expiration.</p>
+                {% for error in cert_form.expiration_date.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
             </div>
+        </div>
+         <div>
+            <label for="{{ cert_form.score.id_for_label }}" class="form-label">Score / Grade (Optional)</label>
+            {% render_field cert_form.score class+="form-input" placeholder="e.g., 95%, Pass" %}
+            {% for error in cert_form.score.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+        <div class="md:col-span-2">
+            <label for="{{ cert_form.link.id_for_label }}" class="form-label">Credential URL (Optional)</label>
+            {% render_field cert_form.link type="url" class+="form-input" placeholder="e.g., https://credential.net/verify/123" %}
+            {% for error in cert_form.link.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+        </div>
+        <div class="md:col-span-2">
+            <label for="{{ cert_form.description.id_for_label }}" class="form-label">Description (Optional)</label>
+            {% render_field cert_form.description class+="form-input" rows="3" placeholder="Briefly describe the certification." %}
+            {% for error in cert_form.description.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <!-- Score/Grade -->
-        <div class="form-control">
-            <label class="label" for="score_{{ index }}">
-                <span class="label-text font-medium">Score/Grade</span>
-                <span class="label-text-alt text-opacity-70">(Optional)</span>
-            </label>
-            <input type="text" id="score_{{ index }}" name="score_{{ index }}"
-                class="input input-bordered w-full"
-                value="{{ certification.score|default:'' }}"
-                placeholder="e.g., 95%, A+, 750/900">
+    {% if cert_form.non_field_errors %}
+        <div class="mt-3 p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700/60 rounded-md text-sm text-red-600 dark:text-red-300">
+            {% for error in cert_form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
         </div>
-
-        <!-- Credential Link -->
-        <div class="form-control">
-            <label class="label" for="link_{{ index }}">
-                <span class="label-text font-medium">Credential URL</span>
-                <span class="label-text-alt text-opacity-70">(Optional)</span>
-            </label>
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <i class="fa-solid fa-link text-gray-400"></i>
-                </div>
-                <input type="url" id="link_{{ index }}" name="link_{{ index }}"
-                    class="input input-bordered w-full pl-10"
-                    value="{{ certification.link|default:'' }}"
-                    placeholder="https://credential.example.com/verify/12345"
-                    pattern="https?://.+">
-            </div>
-            <div class="text-xs text-info mt-1">Must start with http:// or https://</div>
-        </div>
-    </div>
-
-    <!-- Description -->
-    <div class="form-control mt-4">
-        <label class="label" for="description_{{ index }}">
-            <span class="label-text font-medium">Description</span>
-            <span class="label-text-alt text-opacity-70">(Optional)</span>
-        </label>
-        <textarea id="description_{{ index }}" name="description_{{ index }}"
-            class="textarea textarea-bordered w-full"
-            rows="3"
-            maxlength="500">{{ certification.description|default:'' }}</textarea>
-        <div class="flex justify-between mt-1">
-            <div class="text-xs text-info">Briefly describe what you learned and skills gained</div>
-            <div class="text-xs char-counter">
-                <span id="description_{{ index }}_count">0</span>/500
-            </div>
-        </div>
-    </div>
-
-    <!-- AI Suggestion -->
-    <div class="mt-4 p-3 bg-base-300 rounded-md relative overflow-hidden">
-        <div class="flex items-center mb-2">
-            <i class="fa-solid fa-robot mr-2 text-primary"></i>
-            <span class="font-medium text-sm">AI Suggestions</span>
-        </div>
-        <p class="text-sm">Need help writing a description? Let AI suggest content based on this certification.</p>
-        <button type="button" class="btn btn-sm btn-primary mt-2"
-            hx-get="{% url 'generate_certification_description' %}"
-            hx-include="closest div form"
-            hx-target="#description_{{ index }}"
-            hx-indicator="#ai_spinner_{{ index }}">
-            <i class="fa-solid fa-magic mr-1"></i> Generate Description
-        </button>
-        <div id="ai_spinner_{{ index }}" class="htmx-indicator absolute top-0 right-0 bottom-0 left-0 bg-base-100 bg-opacity-50 flex items-center justify-center">
-            <span class="loading loading-spinner loading-md text-primary"></span>
-        </div>
-    </div>
-
-    <!-- Remove Certification Button -->
-    <div class="flex justify-end mt-4">
-        <button type="button" class="btn btn-error btn-outline"
-                onclick="removeCertification(this, {{ index }})">
-            <i class="fa-solid fa-trash-can mr-2"></i> Remove Certification
-        </button>
-    </div>
-
-    <!-- Hidden fields for Django form handling -->
-    <input type="hidden" name="certification_ids" value="{{ certification.id|default:'new' }}">
-    {% csrf_token %}
+    {% endif %}
 </div>
 
-<script>
-    // Initialize character counter
-    document.addEventListener('DOMContentLoaded', function() {
-        const textarea = document.getElementById('description_{{ index }}');
-        const counter = document.getElementById('description_{{ index }}_count');
-
-        function updateCounter() {
-            counter.textContent = textarea.value.length;
-        }
-
-        textarea.addEventListener('input', updateCounter);
-        updateCounter(); // Initial count
-
-        // Update validation status
-        updateCertificationStatus({{ index }});
-    });
-
-    // Toggle expiration date field
-    function toggleExpirationDate(index) {
-        const checkbox = document.getElementById(`no_expiration_${index}`);
-        const dateField = document.getElementById(`expiration_date_${index}`);
-
-        if (checkbox.checked) {
-            dateField.disabled = true;
-            dateField.value = '';
-        } else {
-            dateField.disabled = false;
-        }
-    }
-
-    // Remove certification with animation
-    function removeCertification(button, index) {
-        if (document.querySelectorAll('.certification-form').length <= 1) {
-            showToast('error', 'You must have at least one certification section.');
-            return;
-        }
-
-        const row = button.closest('.certification-form');
-        row.style.transition = 'all 0.3s ease';
-        row.style.opacity = '0';
-        row.style.maxHeight = '0';
-        row.style.overflow = 'hidden';
-
-        setTimeout(() => {
-            row.remove();
-
-            // Update counter in hidden field
-            const countField = document.getElementById('certification_count');
-            countField.value = parseInt(countField.value) - 1;
-
-            // Update form section numbers
-            updateCertificationNumbers();
-
-            // Dispatch event for any listeners
-            document.dispatchEvent(new CustomEvent('certificationRemoved', {
-                detail: { index: index }
-            }));
-        }, 300);
-    }
-
-    // Update certification status indicator
-    function updateCertificationStatus(index) {
-        const form = document.querySelector(`.certification-form[data-index="${index}"]`);
-        const nameField = document.getElementById(`name_${index}`);
-        const statusIndicator = form.querySelector('.certification-status');
-
-        if (nameField.value.trim() === '') {
-            statusIndicator.classList.replace('bg-success', 'bg-error');
-        } else {
-            statusIndicator.classList.replace('bg-error', 'bg-success');
-        }
-    }
-
-    // Update section numbers after removal
-    function updateCertificationNumbers() {
-        document.querySelectorAll('.certification-form').forEach((form, idx) => {
-            const heading = form.querySelector('h3');
-            heading.textContent = `Certification #${idx + 1}`;
-        });
-    }
-</script>
+{#{% load widget_tweaks %}#}
+{#<div class="form-row bg-base-200 p-4 rounded-lg mb-6 shadow-sm hover:shadow-md transition-shadow certification-form relative" data-index="{{ index }}">#}
+{#    <div class="flex justify-between items-center mb-4">#}
+{#        <h3 class="text-lg font-medium">Certification #{{ index|add:"1" }}</h3>#}
+{#        <!-- Status indicator circle -->#}
+{#        <div class="tooltip tooltip-left" data-tip="Required fields must be filled">#}
+{#            <div class="certification-status w-3 h-3 rounded-full bg-error"></div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">#}
+{#        <!-- Certification Name -->#}
+{#        <div class="form-control">#}
+{#            <label class="label" for="name_{{ index }}">#}
+{#                <span class="label-text font-medium">Certification Name</span>#}
+{#                <span class="label-text-alt text-error">*</span>#}
+{#            </label>#}
+{#            <input type="text" id="name_{{ index }}" name="name_{{ index }}"#}
+{#                class="input input-bordered w-full"#}
+{#                value="{{ certification.name|default:'' }}"#}
+{#                required#}
+{#                hx-trigger="keyup changed delay:500ms"#}
+{#                hx-post="{% url 'validate_certification_name' %}"#}
+{#                hx-target="#name_{{ index }}_feedback"#}
+{#                hx-indicator="#name_{{ index }}_spinner">#}
+{#            <div class="flex items-center mt-1">#}
+{#                <div id="name_{{ index }}_spinner" class="htmx-indicator">#}
+{#                    <span class="loading loading-spinner loading-xs"></span>#}
+{#                </div>#}
+{#                <div id="name_{{ index }}_feedback" class="text-xs ml-1"></div>#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#        <!-- Issuing Institute -->#}
+{#        <div class="form-control">#}
+{#            <label class="label" for="institute_{{ index }}">#}
+{#                <span class="label-text font-medium">Issuing Organization</span>#}
+{#                <span class="label-text-alt text-opacity-70">(Optional)</span>#}
+{#            </label>#}
+{#            <input type="text" id="institute_{{ index }}" name="institute_{{ index }}"#}
+{#                class="input input-bordered w-full"#}
+{#                value="{{ certification.institute|default:'' }}"#}
+{#                hx-get="{% url 'suggest_organizations' %}"#}
+{#                hx-trigger="keyup changed delay:300ms"#}
+{#                hx-target="#institute_suggestions_{{ index }}"#}
+{#                list="institute_datalist_{{ index }}">#}
+{#            <datalist id="institute_datalist_{{ index }}"></datalist>#}
+{#            <div id="institute_suggestions_{{ index }}" class="text-xs mt-1"></div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">#}
+{#        <!-- Completion Date -->#}
+{#        <div class="form-control">#}
+{#            <label class="label" for="completion_date_{{ index }}">#}
+{#                <span class="label-text font-medium">Completion Date</span>#}
+{#                <span class="label-text-alt text-opacity-70">(Optional)</span>#}
+{#            </label>#}
+{#            <div class="relative">#}
+{#                <input type="date" id="completion_date_{{ index }}" name="completion_date_{{ index }}"#}
+{#                    class="input input-bordered w-full"#}
+{#                    value="{{ certification.completion_date|date:'Y-m-d'|default:'' }}"#}
+{#                    max="{{ today|date:'Y-m-d' }}">#}
+{#                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">#}
+{#                    <i class="fa-regular fa-calendar text-gray-400"></i>#}
+{#                </div>#}
+{#            </div>#}
+{#            <div class="text-xs text-info mt-1">Must be today or earlier</div>#}
+{#        </div>#}
+{##}
+{#        <!-- Expiration Date -->#}
+{#        <div class="form-control">#}
+{#            <label class="label" for="expiration_date_{{ index }}">#}
+{#                <span class="label-text font-medium">Expiration Date</span>#}
+{#                <span class="label-text-alt text-opacity-70">(Optional)</span>#}
+{#            </label>#}
+{#            <div class="relative">#}
+{#                <input type="date" id="expiration_date_{{ index }}" name="expiration_date_{{ index }}"#}
+{#                    class="input input-bordered w-full"#}
+{#                    value="{{ certification.expiration_date|date:'Y-m-d'|default:'' }}"#}
+{#                    min="{{ today|date:'Y-m-d' }}">#}
+{#                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">#}
+{#                    <i class="fa-regular fa-calendar text-gray-400"></i>#}
+{#                </div>#}
+{#            </div>#}
+{#            <div class="flex mt-1 items-center">#}
+{#                <input type="checkbox" id="no_expiration_{{ index }}" name="no_expiration_{{ index }}"#}
+{#                    class="checkbox checkbox-xs checkbox-primary mr-2"#}
+{#                    onchange="toggleExpirationDate({{ index }})">#}
+{#                <label for="no_expiration_{{ index }}" class="text-xs cursor-pointer">No expiration date</label>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">#}
+{#        <!-- Score/Grade -->#}
+{#        <div class="form-control">#}
+{#            <label class="label" for="score_{{ index }}">#}
+{#                <span class="label-text font-medium">Score/Grade</span>#}
+{#                <span class="label-text-alt text-opacity-70">(Optional)</span>#}
+{#            </label>#}
+{#            <input type="text" id="score_{{ index }}" name="score_{{ index }}"#}
+{#                class="input input-bordered w-full"#}
+{#                value="{{ certification.score|default:'' }}"#}
+{#                placeholder="e.g., 95%, A+, 750/900">#}
+{#        </div>#}
+{##}
+{#        <!-- Credential Link -->#}
+{#        <div class="form-control">#}
+{#            <label class="label" for="link_{{ index }}">#}
+{#                <span class="label-text font-medium">Credential URL</span>#}
+{#                <span class="label-text-alt text-opacity-70">(Optional)</span>#}
+{#            </label>#}
+{#            <div class="relative">#}
+{#                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">#}
+{#                    <i class="fa-solid fa-link text-gray-400"></i>#}
+{#                </div>#}
+{#                <input type="url" id="link_{{ index }}" name="link_{{ index }}"#}
+{#                    class="input input-bordered w-full pl-10"#}
+{#                    value="{{ certification.link|default:'' }}"#}
+{#                    placeholder="https://credential.example.com/verify/12345"#}
+{#                    pattern="https?://.+">#}
+{#            </div>#}
+{#            <div class="text-xs text-info mt-1">Must start with http:// or https://</div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Description -->#}
+{#    <div class="form-control mt-4">#}
+{#        <label class="label" for="description_{{ index }}">#}
+{#            <span class="label-text font-medium">Description</span>#}
+{#            <span class="label-text-alt text-opacity-70">(Optional)</span>#}
+{#        </label>#}
+{#        <textarea id="description_{{ index }}" name="description_{{ index }}"#}
+{#            class="textarea textarea-bordered w-full"#}
+{#            rows="3"#}
+{#            maxlength="500">{{ certification.description|default:'' }}</textarea>#}
+{#        <div class="flex justify-between mt-1">#}
+{#            <div class="text-xs text-info">Briefly describe what you learned and skills gained</div>#}
+{#            <div class="text-xs char-counter">#}
+{#                <span id="description_{{ index }}_count">0</span>/500#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- AI Suggestion -->#}
+{#    <div class="mt-4 p-3 bg-base-300 rounded-md relative overflow-hidden">#}
+{#        <div class="flex items-center mb-2">#}
+{#            <i class="fa-solid fa-robot mr-2 text-primary"></i>#}
+{#            <span class="font-medium text-sm">AI Suggestions</span>#}
+{#        </div>#}
+{#        <p class="text-sm">Need help writing a description? Let AI suggest content based on this certification.</p>#}
+{#        <button type="button" class="btn btn-sm btn-primary mt-2"#}
+{#            hx-get="{% url 'generate_certification_description' %}"#}
+{#            hx-include="closest div form"#}
+{#            hx-target="#description_{{ index }}"#}
+{#            hx-indicator="#ai_spinner_{{ index }}">#}
+{#            <i class="fa-solid fa-magic mr-1"></i> Generate Description#}
+{#        </button>#}
+{#        <div id="ai_spinner_{{ index }}" class="htmx-indicator absolute top-0 right-0 bottom-0 left-0 bg-base-100 bg-opacity-50 flex items-center justify-center">#}
+{#            <span class="loading loading-spinner loading-md text-primary"></span>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    <!-- Remove Certification Button -->#}
+{#    <div class="flex justify-end mt-4">#}
+{#        <button type="button" class="btn btn-error btn-outline"#}
+{#                onclick="removeCertification(this, {{ index }})">#}
+{#            <i class="fa-solid fa-trash-can mr-2"></i> Remove Certification#}
+{#        </button>#}
+{#    </div>#}
+{##}
+{#    <!-- Hidden fields for Django form handling -->#}
+{#    <input type="hidden" name="certification_ids" value="{{ certification.id|default:'new' }}">#}
+{#    {% csrf_token %}#}
+{#</div>#}
+{##}
+{#<script>#}
+{#    // Initialize character counter#}
+{#    document.addEventListener('DOMContentLoaded', function() {#}
+{#        const textarea = document.getElementById('description_{{ index }}');#}
+{#        const counter = document.getElementById('description_{{ index }}_count');#}
+{##}
+{#        function updateCounter() {#}
+{#            counter.textContent = textarea.value.length;#}
+{#        }#}
+{##}
+{#        textarea.addEventListener('input', updateCounter);#}
+{#        updateCounter(); // Initial count#}
+{##}
+{#        // Update validation status#}
+{#        updateCertificationStatus({{ index }});#}
+{#    });#}
+{##}
+{#    // Toggle expiration date field#}
+{#    function toggleExpirationDate(index) {#}
+{#        const checkbox = document.getElementById(`no_expiration_${index}`);#}
+{#        const dateField = document.getElementById(`expiration_date_${index}`);#}
+{##}
+{#        if (checkbox.checked) {#}
+{#            dateField.disabled = true;#}
+{#            dateField.value = '';#}
+{#        } else {#}
+{#            dateField.disabled = false;#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Remove certification with animation#}
+{#    function removeCertification(button, index) {#}
+{#        if (document.querySelectorAll('.certification-form').length <= 1) {#}
+{#            showToast('error', 'You must have at least one certification section.');#}
+{#            return;#}
+{#        }#}
+{##}
+{#        const row = button.closest('.certification-form');#}
+{#        row.style.transition = 'all 0.3s ease';#}
+{#        row.style.opacity = '0';#}
+{#        row.style.maxHeight = '0';#}
+{#        row.style.overflow = 'hidden';#}
+{##}
+{#        setTimeout(() => {#}
+{#            row.remove();#}
+{##}
+{#            // Update counter in hidden field#}
+{#            const countField = document.getElementById('certification_count');#}
+{#            countField.value = parseInt(countField.value) - 1;#}
+{##}
+{#            // Update form section numbers#}
+{#            updateCertificationNumbers();#}
+{##}
+{#            // Dispatch event for any listeners#}
+{#            document.dispatchEvent(new CustomEvent('certificationRemoved', {#}
+{#                detail: { index: index }#}
+{#            }));#}
+{#        }, 300);#}
+{#    }#}
+{##}
+{#    // Update certification status indicator#}
+{#    function updateCertificationStatus(index) {#}
+{#        const form = document.querySelector(`.certification-form[data-index="${index}"]`);#}
+{#        const nameField = document.getElementById(`name_${index}`);#}
+{#        const statusIndicator = form.querySelector('.certification-status');#}
+{##}
+{#        if (nameField.value.trim() === '') {#}
+{#            statusIndicator.classList.replace('bg-success', 'bg-error');#}
+{#        } else {#}
+{#            statusIndicator.classList.replace('bg-error', 'bg-success');#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Update section numbers after removal#}
+{#    function updateCertificationNumbers() {#}
+{#        document.querySelectorAll('.certification-form').forEach((form, idx) => {#}
+{#            const heading = form.querySelector('h3');#}
+{#            heading.textContent = `Certification #${idx + 1}`;#}
+{#        });#}
+{#    }#}
+{#</script>#}
