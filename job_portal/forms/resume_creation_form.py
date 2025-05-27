@@ -19,15 +19,26 @@ tailwind_select_classes = 'mt-1 block w-full pl-3 pr-10 py-2 text-base border-gr
 
 
 class ResumeMetaForm(forms.ModelForm):
-    """Form for Resume metadata like title and template."""
+    """Form for Resume metadata like title, publication status, and visibility."""
     class Meta:
         model = Resume
-        fields = ['title', 'template_name', 'publication_status', 'visibility']
+        # MODIFICATION: Removed 'template_name'
+        fields = ['title', 'publication_status', 'visibility']
         widgets = {
-            'title': forms.TextInput(attrs={'class': tailwind_input_classes, 'placeholder': 'e.g., Software Engineer Resume'}),
-            'template_name': forms.Select(attrs={'class': tailwind_select_classes}),
-            'publication_status': forms.Select(attrs={'class': tailwind_select_classes}),
-            'visibility': forms.Select(attrs={'class': tailwind_select_classes}),
+            'title': forms.TextInput(attrs={'class': tailwind_input_classes, 'placeholder': 'e.g., Software Engineer Resume'}), #
+            # MODIFICATION: Removed 'template_name' widget
+            'publication_status': forms.Select(attrs={'class': tailwind_select_classes}), #
+            'visibility': forms.Select(attrs={'class': tailwind_select_classes}), #
+        }
+        labels = { # Added labels for clarity
+            'title': 'Resume Title',
+            'publication_status': 'Status',
+            'visibility': 'Visibility Level',
+        }
+        help_texts = { # Added help_texts for clarity
+            'title': 'Give your resume a unique and descriptive title.',
+            'publication_status': "'Draft' is recommended until you're ready to share.",
+            'visibility': "'Private' means only you can see it.",
         }
 
 

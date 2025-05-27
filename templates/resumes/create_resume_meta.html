@@ -1,125 +1,201 @@
-{# templates/resumes/create_resume_meta.html #}
+{# File: templates/resumes/create_resume_meta.html #}
+{# Path: templates/resumes/create_resume_meta.html #}
 {% extends 'base_authenticated.html' %}
 {% load widget_tweaks static i18n %}
 {% load resume_extras %}
 
-
 {% block title %}{% trans "Start New Resume" %}{% endblock %}
 
-{% block extra_head %}
-{{ block.super }}
-<style>
-    .template-card {
-        @apply border-2 border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden cursor-pointer transition-all duration-200 ease-in-out bg-white dark:bg-slate-800;
-    }
-    .template-card:hover {
-        @apply shadow-xl border-primary-500 dark:border-primary-400 transform scale-105;
-    }
-    .template-card.selected {
-        @apply border-primary-600 dark:border-primary-400 ring-2 ring-offset-2 ring-primary-500 dark:ring-primary-400 shadow-xl scale-105;
-    }
-    .template-card img {
-        @apply w-full h-56 object-cover object-top transition-transform duration-300; /* Adjusted height */
-    }
-    .template-card.selected img {
-        /* Optional: further highlight selected image, e.g., a subtle overlay or border */
-    }
-    .template-card .template-info {
-        @apply p-3 text-center; /* Slightly reduced padding */
-    }
-    .template-card .template-name {
-        @apply text-sm font-semibold text-slate-800 dark:text-slate-100; /* Adjusted size */
-    }
-    .template-card .template-description { /* If you add descriptions to templates_info */
-        @apply text-xs text-slate-500 dark:text-slate-400 mt-1;
-    }
-</style>
-{% endblock %}
+{% block page_title_block %}
+    <div class="mb-8 text-center">
+        <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
+            {% trans "Create Your Resume" %}
+        </h1>
+        <p class="mt-3 text-md md:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
+            {% trans "Let's start by giving your new resume a title and setting its initial preferences. This will help you organize and manage it effectively." %}
+        </p>
+    </div>
+{% endblock page_title_block %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto">
-    <div class="bg-white dark:bg-slate-800 shadow-xl rounded-lg p-6 sm:p-8">
-        <div class="text-center mb-8">
-            <i class="fas fa-pencil-ruler text-4xl text-primary-500 dark:text-primary-400 mb-3"></i>
-            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">{% trans "Name Your Resume & Choose a Template" %}</h1>
-            <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                {% trans "Give your new resume a title and select a starting template. You can change the template later." %}
-            </p>
-        </div>
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white dark:bg-slate-800 shadow-2xl rounded-lg p-6 sm:p-8 md:p-10">
 
-        {# 'form' is the ResumeMetaForm instance passed from create_resume_meta_view #}
-        <form method="post" class="space-y-6" x-data="{ selectedTemplate: '{{ form.template_name.value|default_if_none:"template1" }}' }">
+        <form method="post" novalidate class="space-y-6">
             {% csrf_token %}
 
             {% if form.non_field_errors %}
-            <div class="mb-4 p-3 bg-red-100 dark:bg-red-800/30 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 rounded-md text-sm">
-                {% for error in form.non_field_errors %}
-                    <p>{{ error }}</p>
-                {% endfor %}
-            </div>
+                <div role="alert" class="rounded-md border-l-4 border-red-500 bg-red-50 dark:bg-red-900 p-4 shadow-md">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-500 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-10a1 1 0 10-2 0v4a1 1 0 102 0V8zm-1-3a1 1 0 00-1 1v1a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-semibold text-red-800 dark:text-red-200">{% trans "Please correct the errors below:" %}</h3>
+                            <div class="mt-1 text-sm text-red-700 dark:text-red-300">
+                                {{ form.non_field_errors }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             {% endif %}
 
             <div>
-                <label for="{{ form.title.id_for_label }}" class="form-label">{% trans "Resume Title" %} <span class="text-red-500">*</span></label>
-                {% render_field form.title class+="form-input" placeholder="e.g., Software Engineer Resume, Marketing Specialist CV" %}
-                {% for error in form.title.errors %}
-                    <p class="form-error-text">{{ error }}</p>
-                {% endfor %}
-                {% if form.title.help_text %}
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ form.title.help_text|safe }}</p>
-                {% endif %}
+                <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1.5">
+                    <i class="fas fa-heading fa-fw mr-1.5 text-slate-400 dark:text-slate-500"></i>{% trans "Resume Title" %}
+                </label>
+                {# MODIFIED: Removed explicit placeholder attribute #}
+                {% render_field form.title %}
+                {% if form.title.help_text %}<p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{{ form.title.help_text|safe }}</p>{% endif %}
+                {% for error in form.title.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ error }}</p>{% endfor %}
             </div>
 
-            <div>
-                <label class="form-label">{% trans "Choose a Template" %} <span class="text-red-500">*</span></label>
-                {# This hidden input will hold the actual value for the form submission #}
-                {% render_field form.template_name type="hidden" x-model="selectedTemplate" %}
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-2">
-                    {# The view create_resume_meta_view passes `templates_info` in context #}
-                    {% for template_id_value, template_display_name in form.fields.template_name.choices %}
-                        {% if template_id_value %} {# Skip empty choice if present #}
-                            {% with current_template_info=templates_info|get_item:template_id_value %}
-                                <div class="template-card" 
-                                     :class="{ 'selected': selectedTemplate === '{{ template_id_value }}' }"
-                                     @click="selectedTemplate = '{{ template_id_value }}'">
-                                    <img src="{% static current_template_info.thumbnail_path|default:'img/resume-thumbnails/default.png' %}" 
-                                         alt="{{ template_display_name }} Preview" 
-                                         onerror="this.onerror=null; this.src='{% static 'img/resume-thumbnails/default.png' %}';">
-                                    <div class="template-info">
-                                        <p class="template-name">{{ template_display_name }}</p>
-                                        {% if current_template_info.description %}
-                                        <p class="template-description">{{ current_template_info.description }}</p>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            {% endwith %}
-                        {% endif %}
-                    {% endfor %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6 pt-2">
+                <div>
+                    <label for="{{ form.publication_status.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1.5">
+                        <i class="fas fa-shield-alt fa-fw mr-1.5 text-slate-400 dark:text-slate-500"></i>{% trans "Publication Status" %}
+                    </label>
+                    {% render_field form.publication_status %}
+                    {% if form.publication_status.help_text %}<p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{{ form.publication_status.help_text|safe }}</p>{% endif %}
+                    {% for error in form.publication_status.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ error }}</p>{% endfor %}
                 </div>
-                 {% for error in form.template_name.errors %}
-                    <p class="form-error-text mt-2">{{ error }}</p>
-                {% endfor %}
+
+                <div>
+                    <label for="{{ form.visibility.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1.5">
+                        <i class="fas fa-eye fa-fw mr-1.5 text-slate-400 dark:text-slate-500"></i>{% trans "Visibility" %}
+                    </label>
+                    {% render_field form.visibility %}
+                    {% if form.visibility.help_text %}<p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{{ form.visibility.help_text|safe }}</p>{% endif %}
+                    {% for error in form.visibility.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ error }}</p>{% endfor %}
+                </div>
             </div>
 
-            <div class="pt-6 flex items-center justify-between">
-                <a href="{% url 'job_portal:resume_creation_choice' %}" class="btn-neutral">
-                    <i class="fas fa-chevron-left mr-1.5"></i> {% trans "Back to Choice" %}
-                </a>
-                <button type="submit" class="btn-primary">
-                    {% trans "Start Building Resume" %} <i class="fas fa-arrow-right ml-1.5"></i>
-                </button>
+            <div class="border-t border-slate-200 dark:border-slate-700 pt-8 mt-8">
+                <div class="flex items-center justify-between">
+                    <a href="{% url 'job_portal:resume_creation_choice' %}" class="btn btn-ghost dark:text-slate-300 dark:hover:bg-slate-700"> {# Using DaisyUI btn-ghost #}
+                        <i class="fas fa-chevron-left mr-2"></i> {% trans "Back to Choice" %}
+                    </a>
+                    <button type="submit" class="btn btn-primary"> {# Using DaisyUI btn-primary #}
+                        {% trans "Start Building Resume" %} <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
             </div>
         </form>
     </div>
+    <p class="mt-8 text-center text-xs text-slate-500 dark:text-slate-400">
+        {% blocktrans %}A default template will be assigned. You can change it and customize all sections in the next steps.{% endblocktrans %}
+    </p>
 </div>
 {% endblock content %}
 
 {% block extra_js %}
 {{ block.super }}
 <script>
-    // Alpine.js handles the template selection state (selectedTemplate)
-    // and applies the '.selected' class.
-    // No additional complex JS is strictly needed here for this functionality.
+    // Any specific JS for this page can go here if needed.
 </script>
 {% endblock %}
+
+{# File: templates/resumes/create_resume_meta.html #}
+{# Path: templates/resumes/create_resume_meta.html #}
+{#{% extends 'base_authenticated.html' %}#}
+{#{% load widget_tweaks static i18n %}#}
+{#{% load resume_extras %}#}
+{##}
+{#{% block title %}{% trans "Start New Resume" %}{% endblock %}#}
+{##}
+{#{% block page_title_block %}#}
+    {# Override to provide a more focused title for this page if desired, or remove to use base_authenticated.html's default #}
+{#    <div class="mb-8 text-center"> {# Centered title for this specific page #}
+{#        <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-50">#}
+{#            {% trans "Create Your Resume" %}#}
+{#        </h1>#}
+{#        <p class="mt-3 text-md md:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">#}
+{#            {% trans "Let's start by giving your new resume a title and setting its initial preferences. This will help you organize and manage it effectively." %}#}
+{#        </p>#}
+{#    </div>#}
+{#{% endblock page_title_block %}#}
+{##}
+{#{% block content %}#}
+{#<div class="max-w-2xl mx-auto">#}
+{#    <div class="bg-white dark:bg-slate-800 shadow-2xl rounded-lg p-6 sm:p-8 md:p-10">#}
+{##}
+{#        <form method="post" novalidate class="space-y-6">#}
+{#            {% csrf_token %}#}
+{##}
+{#            {% if form.non_field_errors %}#}
+{#                <div role="alert" class="rounded-md border-l-4 border-red-500 bg-red-50 dark:bg-red-900 p-4 shadow-md">#}
+{#                    <div class="flex">#}
+{#                        <div class="flex-shrink-0">#}
+{#                            <svg class="h-5 w-5 text-red-500 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">#}
+{#                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-10a1 1 0 10-2 0v4a1 1 0 102 0V8zm-1-3a1 1 0 00-1 1v1a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />#}
+{#                            </svg>#}
+{#                        </div>#}
+{#                        <div class="ml-3">#}
+{#                            <h3 class="text-sm font-semibold text-red-800 dark:text-red-200">{% trans "Please correct the errors below:" %}</h3>#}
+{#                            <div class="mt-1 text-sm text-red-700 dark:text-red-300">#}
+{#                                {{ form.non_field_errors }}#}
+{#                            </div>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            {% endif %}#}
+{##}
+{#            <div>#}
+{#                <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1.5">#}
+{#                    <i class="fas fa-heading fa-fw mr-1.5 text-slate-400 dark:text-slate-500"></i>{% trans "Resume Title" %}#}
+{#                </label>#}
+                {# Assuming form.title.field.widget.attrs.placeholder is set in forms.py #}
+                {# The classes like 'tailwind_input_classes' from forms.py will be applied by default by the widget #}
+                {# If you want to ADD more classes specifically here, use class+= #}
+{#                {% render_field form.title placeholder=form.title.field.widget.attrs.placeholder %}#}
+{#                {% if form.title.help_text %}<p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{{ form.title.help_text|safe }}</p>{% endif %}#}
+{#                {% for error in form.title.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ error }}</p>{% endfor %}#}
+{#            </div>#}
+{##}
+{#            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6 pt-2">#}
+{#                <div>#}
+{#                    <label for="{{ form.publication_status.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1.5">#}
+{#                        <i class="fas fa-shield-alt fa-fw mr-1.5 text-slate-400 dark:text-slate-500"></i>{% trans "Publication Status" %}#}
+{#                    </label>#}
+{#                    {% render_field form.publication_status %}#}
+{#                    {% if form.publication_status.help_text %}<p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{{ form.publication_status.help_text|safe }}</p>{% endif %}#}
+{#                    {% for error in form.publication_status.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ error }}</p>{% endfor %}#}
+{#                </div>#}
+{##}
+{#                <div>#}
+{#                    <label for="{{ form.visibility.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1.5">#}
+{#                        <i class="fas fa-eye fa-fw mr-1.5 text-slate-400 dark:text-slate-500"></i>{% trans "Visibility" %}#}
+{#                    </label>#}
+{#                    {% render_field form.visibility %}#}
+{#                    {% if form.visibility.help_text %}<p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400">{{ form.visibility.help_text|safe }}</p>{% endif %}#}
+{#                    {% for error in form.visibility.errors %}<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ error }}</p>{% endfor %}#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <div class="border-t border-slate-200 dark:border-slate-700 pt-8 mt-8">#}
+{#                <div class="flex items-center justify-between">#}
+{#                    <a href="{% url 'job_portal:resume_creation_choice' %}" class="btn btn-ghost dark:text-slate-300 dark:hover:bg-slate-700"> {# Using DaisyUI btn-ghost #}
+{#                        <i class="fas fa-chevron-left mr-2"></i> {% trans "Back to Choice" %}#}
+{#                    </a>#}
+{#                    <button type="submit" class="btn btn-primary"> {# Using DaisyUI btn-primary #}
+{#                        {% trans "Start Building Resume" %} <i class="fas fa-arrow-right ml-2"></i>#}
+{#                    </button>#}
+{#                </div>#}
+{#            </div>#}
+{#        </form>#}
+{#    </div>#}
+{#    <p class="mt-8 text-center text-xs text-slate-500 dark:text-slate-400">#}
+{#        {% blocktrans %}A default template will be assigned. You can change it and customize all sections in the next steps.{% endblocktrans %}#}
+{#    </p>#}
+{#</div>#}
+{#{% endblock content %}#}
+{##}
+{#{% block extra_js %}#}
+{#{{ block.super }}#}
+{#<script>#}
+{#    // Any specific JS for this page can go here if needed.#}
+{#    // For now, the form is standard.#}
+{#</script>#}
+{#{% endblock %}#}

@@ -106,7 +106,7 @@ class Resume(models.Model):
     # Existing 'status' field, now clearly for origin/type
     # Default 'created' for wizard. Views for upload/AI generation will set this accordingly.
     status = models.CharField(
-        max_length=10,
+        max_length=50,
         choices=STATUS_CHOICES,
         default='created',
         help_text="Origin or type of this resume content."
