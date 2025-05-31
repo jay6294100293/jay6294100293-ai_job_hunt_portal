@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from django import template
 import re
 from decimal import Decimal
@@ -9,6 +11,56 @@ from django import template
 # job_portal/templatetags/resume_extras.py
 from django import template
 from job_portal.models import Resume  # Import Resume model
+@register.filter(name='url_display')
+def url_display(value):
+    if not value:
+        return ""
+    try:
+        parsed_url = urlparse(value)
+        # Remove scheme (http, https) and 'www.' if present
+        netloc = parsed_url.netloc
+        if netloc.startswith('www.'):
+            netloc = netloc[4:]
+
+        # Combine netloc and path, removing trailing slash from path if it's the only thing
+        path = parsed_url.path
+        if path == '/':
+            path = ''
+
+        display_url = netloc + path
+        return display_url
+    except Exception:
+        return value # Fallback to original value if parsing fails
+
+@register.filter(name='strip')
+def strip_whitespace(value):
+    """
+    Removes leading and trailing whitespace from a string.
+    """
+    if value is None:
+        return ''  # Return an empty string if the value is None
+    return str(value).strip()
+
+@register.filter(name="linebreaksbrsplit")
+def linebreaksbrsplit(value):
+    """
+    Splits the value by lines, removes empty or whitespace-only lines,
+    escapes the remaining lines, and joins them with <br />.
+    """
+    if value is None:
+        return ""
+
+    s_value = str(value)
+
+    # Split into lines. str.splitlines() handles various newline chars ('\n', '\r', '\r\n')
+    lines = s_value.splitlines()
+
+    # Filter out lines that are empty or only contain whitespace,
+    # and escape the content of the remaining lines.
+    processed_lines = [escape(line) for line in lines if line.strip()]
+
+    # Join the processed lines with <br /> and mark as safe.
+    return mark_safe("<br />".join(processed_lines))
 
 @register.filter
 def get_item(dictionary, key):

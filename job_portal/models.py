@@ -89,7 +89,7 @@ class Resume(models.Model):
                              help_text="User-defined name for this resume version.")
     slug = models.SlugField(max_length=255, unique=True, blank=True,
                             help_text="URL-friendly identifier, auto-generated.")
-
+    is_primary = models.BooleanField(default=False)
     # Personal Information fields (populated by wizard or parsed from upload)
     first_name = models.CharField(max_length=100, blank=True)
     mid_name = models.CharField(max_length=100, blank=True)

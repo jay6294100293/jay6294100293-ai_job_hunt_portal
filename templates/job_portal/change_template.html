@@ -1,0 +1,32 @@
+{% extends "base_authenticated.html" %}
+
+{% block title %}Change Template{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">Change Template for "{{ resume.title }}"</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for template in templates %}
+            <div class="border rounded-lg p-4 hover:shadow-lg transition-shadow">
+                <label class="cursor-pointer">
+                    <input type="radio" name="template_id" value="{{ template.id }}" class="mb-2">
+                    <h3 class="font-semibold">{{ template.name }}</h3>
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-6">
+            <button type="submit" class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700">
+                Update Template
+            </button>
+            <a href="{% url 'job_portal:view_resume' resume_id=resume.id %}" class="ml-4 text-gray-600 hover:text-gray-800">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

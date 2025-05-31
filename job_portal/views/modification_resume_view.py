@@ -5,11 +5,13 @@ import logging
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.http import Http404, HttpResponseRedirect, HttpResponseForbidden, HttpResponse
+from django.http import Http404, HttpResponseRedirect, HttpResponseForbidden, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _  # For internationalization of messages
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_POST
 
 from job_portal.models import (  #
     Resume, Skill, Experience, Education, Certification, Project, Language, CustomData,  #
@@ -27,6 +29,60 @@ from job_portal.forms.resume_upload_form import ResumeUploadForm  #
 logger = logging.getLogger(__name__)  #
 
 
+@login_required
+@require_POST
+@csrf_protect
+def set_primary_resume_view(request, resume_id):
+    """Set a resume as the primary resume for the user."""
+    try:
+        # Get the resume and ensure it belongs to the current user
+        resume = get_object_or_404(Resume, id=resume_id, user=request.user)
+
+        with transaction.atomic():
+            # Unset all other resumes as primary for this user
+            Resume.objects.filter(user=request.user, is_primary=True).update(is_primary=False)
+
+            # Set this resume as primary
+            resume.is_primary = True
+            resume.save()
+
+        messages.success(request, f'"{resume.title}" has been set as your primary resume.')
+
+        # Return JSON response for AJAX requests
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': f'"{resume.title}" has been set as your primary resume.'
+            })
+
+        return redirect('job_portal:resume_list')
+
+    except Exception as e:
+        messages.error(request, 'An error occurred while setting the primary resume.')
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'message': 'An error occurred while setting the primary resume.'
+            })
+
+        return redirect('job_portal:resume_list')
+
+
+@login_required
+def resume_wizard_view(request, resume_id, step):
+    """Resume wizard view for step-by-step editing."""
+    resume = get_object_or_404(Resume, id=resume_id, user=request.user)
+
+    # Define valid steps
+    valid_steps = ['personal_info', 'experience', 'education', 'skills', 'projects', 'summary']
+
+    if step not in valid_steps:
+        messages.error(request, 'Invalid step specified.')
+        return redirect('job_portal:resume_list')
+
+    # For now, redirect to the edit section view with the section slug
+    return redirect('job_portal:edit_resume_section', resume_id=resume_id, section_slug=step)
 # --- Resume List and Deletion ---
 @login_required  #
 def resume_list_view(request):  #
