@@ -2,7 +2,6 @@
 {# Path: templates/resumes/template_select.html #}
 {% extends 'base_authenticated.html' %}
 {% load static i18n %}
-{# Not strictly using widget_tweaks here for form fields, but good to have if needed elsewhere #}
 {% load widget_tweaks %}
 
 {% block title %}
@@ -15,20 +14,35 @@
 
 {% block extra_head %}
 {{ block.super }}
-{# We will rely on global styles and Tailwind utility classes primarily.#}
-{#   If specific overrides are needed, they can be added here or in your main CSS. #}
 <style>
-    /* Base transition for all cards - kept from your version */
-    /* Applying transitions directly with Tailwind classes where possible,
-       but this ensures the background-color and border-color transition smoothly too. */
-    .template-card-container { /* New wrapper for click and Alpine state */
+    .template-card-container {
         transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
     }
-    .template-card-visual-effects { /* For elements inside that need individual transitions not covered by Alpine :class */
+    .template-card-visual-effects {
         transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, outline 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
     }
 
-    /* The 'selected' state will primarily be handled by Tailwind classes in the :class directive */
+    /* Modal styles */
+    .modal-backdrop {
+        background-color: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(4px);
+    }
+    .modal-content {
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .preview-iframe {
+        width: 100%;
+        height: 70vh;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: white;
+    }
+
+    /* Alpine.js cloak */
+    [x-cloak] {
+        display: none !important;
+    }
 </style>
 {% endblock %}
 
@@ -47,7 +61,7 @@
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
-     x-data="{ selectedTemplateValue: '{{ current_template|default:'' }}' }">
+     x-data="templateSelector()">
 
     <form method="POST" action="{% url 'job_portal:select_template' resume_id=resume.id %}">
         {% csrf_token %}
@@ -64,44 +78,69 @@
         {% else %}
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
                 {% for t_info in templates_info %}
-                <div @click="selectedTemplateValue = '{{ t_info.id }}'"
-                     class="template-card-container group" {# Wrapper for click & conditional classes #}
-                     {# ---- ALPINE.JS :class BINDING FOR SELECTED STATE ---- #}
+                <div class="template-card-container group"
                      :class="{
                         'scale-[1.03]': selectedTemplateValue === '{{ t_info.id }}'
                      }">
-                    <div class="template-card-visual-effects flex flex-col rounded-lg shadow-lg overflow-hidden border-2 h-full bg-white dark:bg-gray-800"
+                    <div class="template-card-visual-effects flex flex-col rounded-lg shadow-lg overflow-hidden border-2 h-full bg-white dark:bg-gray-800 cursor-pointer"
                          :class="{
                             'border-green-500 dark:border-green-400 shadow-2xl': selectedTemplateValue === '{{ t_info.id }}',
                             'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600': selectedTemplateValue !== '{{ t_info.id }}'
-                         }">
+                         }"
+                         @click="selectTemplate('{{ t_info.id }}')">
 
                         <div class="relative w-full aspect-[4/3] bg-gray-100 dark:bg-gray-700 overflow-hidden">
-                            <img src="{% static t_info.preview_image_path %}"
+                            <img src="{% static t_info.thumbnail_image_path %}"
                                  alt="{% blocktrans with template_name=t_info.name %}Preview of {{ template_name }} template{% endblocktrans %}"
                                  class="w-full h-full object-contain object-center p-2 group-hover:scale-105 transition-transform duration-300"
-                                 onerror="this.onerror=null; this.src='{% static 'images/resume-previews/default.webp' %}';">
+                                 onerror="this.onerror=null; this.src='{% static 'resume_thumbnails/default.jpg' %}';">
 
-                            {# ---- GREEN TICK MARK conditionally shown with Alpine ---- #}
+                            {# Preview button overlay #}
+                            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
+                                <button type="button"
+                                        @click.stop="openPreview('{{ t_info.id }}', '{{ t_info.name|escapejs }}')"
+                                        class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white text-gray-800 px-6 py-3 rounded-lg shadow-lg font-medium hover:bg-gray-50 transform hover:scale-105 transition-transform">
+                                    <i class="fas fa-eye mr-2"></i>{% trans "Preview" %}
+                                </button>
+                            </div>
+
+                            {# Selected indicator #}
                             <div x-show="selectedTemplateValue === '{{ t_info.id }}'"
-                                 class="absolute top-2 right-2 h-8 w-8 bg-green-500 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-gray-800"
+                                 x-cloak
+                                 class="absolute top-3 right-3 h-10 w-10 bg-green-500 text-white rounded-full flex items-center justify-center shadow-lg border-3 border-white dark:border-gray-800"
                                  x-transition:enter="transition ease-out duration-200"
-                                 x-transition:enter-start="opacity-0 transform scale-50"
-                                 x-transition:enter-end="opacity-100 transform scale-100"
+                                 x-transition:enter-start="opacity-0 transform scale-50 rotate-180"
+                                 x-transition:enter-end="opacity-100 transform scale-100 rotate-0"
                                  x-transition:leave="transition ease-in duration-150"
                                  x-transition:leave-start="opacity-100 transform scale-100"
-                                 x-transition:leave-end="opacity-0 transform scale-50"
-                                 style="display: none;" {# Initially hidden, Alpine controls display #}>
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                                 x-transition:leave-end="opacity-0 transform scale-50">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-6 h-6">
                                     <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
                                 </svg>
                             </div>
                         </div>
 
                         <div class="p-5 flex flex-col flex-grow">
-                            <h4 class="text-xl font-semibold text-gray-900 dark:text-white mb-1 truncate">
-                                {{ t_info.name }}
-                            </h4>
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="text-xl font-semibold text-gray-900 dark:text-white truncate flex-1">
+                                    {{ t_info.name }}
+                                </h4>
+                                <div class="flex gap-2 ml-2">
+                                    <button type="button"
+                                            @click.stop="openPreview('{{ t_info.id }}', '{{ t_info.name|escapejs }}')"
+                                            class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                                            title="{% trans 'Preview Template' %}">
+                                        <i class="fas fa-eye text-sm"></i>
+                                    </button>
+                                    <button type="button"
+                                            @click.stop="selectTemplate('{{ t_info.id }}')"
+                                            class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 transition-colors p-1 rounded hover:bg-green-50 dark:hover:bg-green-900/30"
+                                            title="{% trans 'Select Template' %}">
+                                        <i class="fas fa-check text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+
                             {% if t_info.category %}
                                 <p class="text-xs font-medium uppercase tracking-wider mb-2 text-indigo-600 dark:text-indigo-400">
                                     {{ t_info.category }}
@@ -136,33 +175,173 @@
         {% if templates_info %}
         <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4">
             <a href="{% if resume %}{% url 'job_portal:create_resume_meta' %}{% else %}{% url 'job_portal:resume_list' %}{% endif %}"
-               class="btn btn-ghost order-2 sm:order-1 w-full sm:w-auto"> {# Using DaisyUI btn class if available, or your custom one #}
+               class="btn btn-ghost order-2 sm:order-1 w-full sm:w-auto">
                 <i class="fas fa-chevron-left mr-2"></i> {% trans "Back" %}
             </a>
             <button type="submit"
-                    class="btn btn-primary btn-block sm:btn-wide order-1 sm:order-2 w-full sm:w-auto" {# Using DaisyUI btn class #}
-                    :disabled="!selectedTemplateValue">
-                {% trans "Save Template & Continue" %} <i class="fas fa-arrow-right ml-2"></i>
+                    class="btn btn-primary btn-block sm:btn-wide order-1 sm:order-2 w-full sm:w-auto"
+                    :disabled="!selectedTemplateValue"
+                    :class="{ 'opacity-50 cursor-not-allowed': !selectedTemplateValue }">
+                <span x-show="!selectedTemplateValue">{% trans "Select a Template to Continue" %}</span>
+                <span x-show="selectedTemplateValue">{% trans "Save Template & Continue" %} <i class="fas fa-arrow-right ml-2"></i></span>
             </button>
         </div>
         {% endif %}
     </form>
+
+    <!-- HTML Template Preview Modal -->
+    <div x-show="showPreviewModal"
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+
+        <!-- Backdrop -->
+        <div class="absolute inset-0 modal-backdrop"
+             @click="closePreview()"></div>
+
+        <!-- Modal Content -->
+        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-6xl modal-content"
+             @click.stop
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 transform scale-95"
+             x-transition:enter-end="opacity-100 transform scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 transform scale-100"
+             x-transition:leave-end="opacity-0 transform scale-95">
+
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    {% trans "Template Preview" %}: <span x-text="previewTemplateName" class="text-blue-600 dark:text-blue-400"></span>
+                </h3>
+                <button @click="closePreview()"
+                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6">
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 relative">
+                    <!-- Loading State -->
+                    <div x-show="isLoading"
+                         class="flex items-center justify-center py-8">
+                        <div class="text-center">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                            <p class="text-gray-500 dark:text-gray-400 text-sm">{% trans "Loading preview..." %}</p>
+                        </div>
+                    </div>
+
+                    <!-- HTML Preview Iframe -->
+                    <iframe x-show="!isLoading && previewUrl"
+                            :src="previewUrl"
+                            class="preview-iframe"
+                            frameborder="0"
+                            @load="isLoading = false"
+                            x-transition:enter="transition ease-out duration-300"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100">
+                    </iframe>
+
+                    <!-- Error State -->
+                    <div x-show="hasError" class="flex items-center justify-center py-8 text-center">
+                        <div>
+                            <svg class="mx-auto h-16 w-16 text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 15.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{% trans "Preview Unavailable" %}</h3>
+                            <p class="text-gray-500 dark:text-gray-400">{% trans "Sorry, we couldn't load the template preview at this time." %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700">
+                <button @click="closePreview()"
+                        class="btn btn-ghost">
+                    {% trans "Close" %}
+                </button>
+                <button @click="selectTemplateFromPreview()"
+                        class="btn btn-primary">
+                    <i class="fas fa-check mr-2"></i>{% trans "Select This Template" %}
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock content %}
 
 {% block extra_js %}
 {{ block.super }}
 <script>
-    // Alpine.js is handling the selectedTemplateValue and class binding.
-    // No additional custom JS needed for these visual changes.
+    function templateSelector() {
+        return {
+            selectedTemplateValue: '{{ current_template|default:"" }}',
+            showPreviewModal: false,
+            previewTemplateId: '',
+            previewTemplateName: '',
+            previewUrl: '',
+            isLoading: false,
+            hasError: false,
+
+            selectTemplate(templateId) {
+                this.selectedTemplateValue = templateId;
+            },
+
+            openPreview(templateId, templateName) {
+                this.previewTemplateId = templateId;
+                this.previewTemplateName = templateName;
+                this.previewUrl = `{% url 'job_portal:template_preview_iframe' template_id='TEMPLATE_ID' %}`.replace('TEMPLATE_ID', templateId);
+                this.showPreviewModal = true;
+                this.isLoading = true;
+                this.hasError = false;
+
+                // Set a timeout to show error if loading takes too long
+                setTimeout(() => {
+                    if (this.isLoading) {
+                        this.hasError = true;
+                        this.isLoading = false;
+                    }
+                }, 10000);
+            },
+
+            closePreview() {
+                this.showPreviewModal = false;
+                this.previewUrl = '';
+                this.isLoading = false;
+                this.hasError = false;
+            },
+
+            selectTemplateFromPreview() {
+                this.selectTemplate(this.previewTemplateId);
+                this.closePreview();
+            }
+        }
+    }
+
+    // Handle escape key to close modal
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const component = Alpine.$data(document.querySelector('[x-data]'));
+            if (component && component.showPreviewModal) {
+                component.closePreview();
+            }
+        }
+    });
 </script>
 {% endblock %}
 
 {# File: templates/resumes/template_select.html #}
-{# Path: templates/resumes/template_select.html #}
 {#{% extends 'base_authenticated.html' %}#}
 {#{% load static i18n %}#}
-{# Not strictly using widget_tweaks here for form fields, but good to have if needed elsewhere #}
 {#{% load widget_tweaks %}#}
 {##}
 {#{% block title %}#}
@@ -175,20 +354,35 @@
 {##}
 {#{% block extra_head %}#}
 {#{{ block.super }}#}
-{# We will rely on global styles and Tailwind utility classes primarily.#}
-{#   If specific overrides are needed, they can be added here or in your main CSS. #}
 {#<style>#}
-{#    /* Base transition for all cards - kept from your version */#}
-{#    /* Applying transitions directly with Tailwind classes where possible,#}
-{#       but this ensures the background-color and border-color transition smoothly too. */#}
-{#    .template-card-container { /* New wrapper for click and Alpine state */#}
+{#    .template-card-container {#}
 {#        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;#}
 {#    }#}
-{#    .template-card-visual-effects { /* For elements inside that need individual transitions not covered by Alpine :class */#}
+{#    .template-card-visual-effects {#}
 {#        transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, outline 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;#}
 {#    }#}
 {##}
-{#    /* The 'selected' state will primarily be handled by Tailwind classes in the :class directive */#}
+{#    /* Modal styles */#}
+{#    .modal-backdrop {#}
+{#        background-color: rgba(0, 0, 0, 0.75);#}
+{#        backdrop-filter: blur(4px);#}
+{#    }#}
+{#    .modal-content {#}
+{#        max-height: 90vh;#}
+{#        overflow-y: auto;#}
+{#    }#}
+{#    .preview-iframe {#}
+{#        width: 100%;#}
+{#        height: 70vh;#}
+{#        border: 1px solid #e5e7eb;#}
+{#        border-radius: 8px;#}
+{#        background: white;#}
+{#    }#}
+{##}
+{#    /* Alpine.js cloak */#}
+{#    [x-cloak] {#}
+{#        display: none !important;#}
+{#    }#}
 {#</style>#}
 {#{% endblock %}#}
 {##}
@@ -207,7 +401,7 @@
 {##}
 {#{% block content %}#}
 {#<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"#}
-{#     x-data="{ selectedTemplateValue: '{{ current_template|default:'' }}' }">#}
+{#     x-data="templateSelector()">#}
 {##}
 {#    <form method="POST" action="{% url 'job_portal:select_template' resume_id=resume.id %}">#}
 {#        {% csrf_token %}#}
@@ -224,85 +418,90 @@
 {#        {% else %}#}
 {#            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">#}
 {#                {% for t_info in templates_info %}#}
-{#                <div @click="selectedTemplateValue = '{{ t_info.id }}'"#}
-{#                     class="template-card-container group" {# Wrapper for click & conditional classes #}
-                     {# ---- ALPINE.JS :class BINDING FOR SELECTED STATE ---- #}
+{#                <div class="template-card-container group"#}
 {#                     :class="{#}
 {#                        'scale-[1.03]': selectedTemplateValue === '{{ t_info.id }}'#}
 {#                     }">#}
-{#                    <div class="template-card-visual-effects flex flex-col rounded-lg shadow-lg overflow-hidden border-2 h-full"#}
+{#                    <div class="template-card-visual-effects flex flex-col rounded-lg shadow-lg overflow-hidden border-2 h-full bg-white dark:bg-gray-800 cursor-pointer"#}
 {#                         :class="{#}
-{#                            'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/30 shadow-2xl': selectedTemplateValue === '{{ t_info.id }}',#}
-{#                            'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600': selectedTemplateValue !== '{{ t_info.id }}'#}
-{#                         }">#}
+{#                            'border-green-500 dark:border-green-400 shadow-2xl': selectedTemplateValue === '{{ t_info.id }}',#}
+{#                            'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600': selectedTemplateValue !== '{{ t_info.id }}'#}
+{#                         }"#}
+{#                         @click="selectTemplate('{{ t_info.id }}')">#}
 {##}
 {#                        <div class="relative w-full aspect-[4/3] bg-gray-100 dark:bg-gray-700 overflow-hidden">#}
-{#                            <img src="{% static t_info.preview_image_path %}"#}
+                            {# Use your generated thumbnail images #}
+{#                            <img src="{% static t_info.thumbnail_image_path %}"#}
 {#                                 alt="{% blocktrans with template_name=t_info.name %}Preview of {{ template_name }} template{% endblocktrans %}"#}
 {#                                 class="w-full h-full object-contain object-center p-2 group-hover:scale-105 transition-transform duration-300"#}
-{#                                 onerror="this.onerror=null; this.src='{% static 'images/resume-previews/default.webp' %}';">#}
+{#                                 onerror="this.onerror=null; this.src='{% static 'resume_thumbnails/default.jpg' %}';">#}
 {##}
-                            {# ---- GREEN TICK MARK conditionally shown with Alpine ---- #}
+                            {# Preview button overlay #}
+{#                            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">#}
+{#                                <button type="button"#}
+{#                                        @click.stop="openPreview('{{ t_info.id }}', '{{ t_info.name|escapejs }}')"#}
+{#                                        class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white text-gray-800 px-6 py-3 rounded-lg shadow-lg font-medium hover:bg-gray-50 transform hover:scale-105 transition-transform">#}
+{#                                    <i class="fas fa-eye mr-2"></i>{% trans "Preview" %}#}
+{#                                </button>#}
+{#                            </div>#}
+{##}
+                            {# Selected indicator #}
 {#                            <div x-show="selectedTemplateValue === '{{ t_info.id }}'"#}
-{#                                 class="absolute top-2 right-2 h-8 w-8 bg-green-500 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-gray-800"#}
+{#                                 x-cloak#}
+{#                                 class="absolute top-3 right-3 h-10 w-10 bg-green-500 text-white rounded-full flex items-center justify-center shadow-lg border-3 border-white dark:border-gray-800"#}
 {#                                 x-transition:enter="transition ease-out duration-200"#}
-{#                                 x-transition:enter-start="opacity-0 transform scale-50"#}
-{#                                 x-transition:enter-end="opacity-100 transform scale-100"#}
+{#                                 x-transition:enter-start="opacity-0 transform scale-50 rotate-180"#}
+{#                                 x-transition:enter-end="opacity-100 transform scale-100 rotate-0"#}
 {#                                 x-transition:leave="transition ease-in duration-150"#}
 {#                                 x-transition:leave-start="opacity-100 transform scale-100"#}
-{#                                 x-transition:leave-end="opacity-0 transform scale-50"#}
-{#                                 style="display: none;" {# Initially hidden, Alpine controls display #}>#}
-{#                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">#}
+{#                                 x-transition:leave-end="opacity-0 transform scale-50">#}
+{#                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-6 h-6">#}
 {#                                    <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />#}
 {#                                </svg>#}
 {#                            </div>#}
 {#                        </div>#}
 {##}
 {#                        <div class="p-5 flex flex-col flex-grow">#}
-{#                            <h4 class="text-xl font-semibold text-gray-900 dark:text-white mb-1 truncate"#}
-{#                                :class="{'text-green-700 dark:text-green-300': selectedTemplateValue === '{{ t_info.id }}'}">#}
-{#                                {{ t_info.name }}#}
-{#                            </h4>#}
+{#                            <div class="flex justify-between items-start mb-2">#}
+{#                                <h4 class="text-xl font-semibold text-gray-900 dark:text-white truncate flex-1">#}
+{#                                    {{ t_info.name }}#}
+{#                                </h4>#}
+{#                                <div class="flex gap-2 ml-2">#}
+{#                                    <button type="button"#}
+{#                                            @click.stop="openPreview('{{ t_info.id }}', '{{ t_info.name|escapejs }}')"#}
+{#                                            class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30"#}
+{#                                            title="{% trans 'Preview Template' %}">#}
+{#                                        <i class="fas fa-eye text-sm"></i>#}
+{#                                    </button>#}
+{#                                    <button type="button"#}
+{#                                            @click.stop="selectTemplate('{{ t_info.id }}')"#}
+{#                                            class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 transition-colors p-1 rounded hover:bg-green-50 dark:hover:bg-green-900/30"#}
+{#                                            title="{% trans 'Select Template' %}">#}
+{#                                        <i class="fas fa-check text-sm"></i>#}
+{#                                    </button>#}
+{#                                </div>#}
+{#                            </div>#}
+{##}
 {#                            {% if t_info.category %}#}
-{#                                <p class="text-xs font-medium uppercase tracking-wider mb-2"#}
-{#                                   :class="{#}
-{#                                        'text-green-600 dark:text-green-400': selectedTemplateValue === '{{ t_info.id }}',#}
-{#                                        'text-indigo-600 dark:text-indigo-400': selectedTemplateValue !== '{{ t_info.id }}'#}
-{#                                   }">#}
+{#                                <p class="text-xs font-medium uppercase tracking-wider mb-2 text-indigo-600 dark:text-indigo-400">#}
 {#                                    {{ t_info.category }}#}
 {#                                </p>#}
 {#                            {% endif %}#}
 {##}
 {#                            {% if t_info.description %}#}
-{#                                <p class="text-sm leading-relaxed mb-3 flex-grow min-h-[3em] line-clamp-3"#}
-{#                                   :class="{#}
-{#                                        'text-gray-700 dark:text-gray-200': selectedTemplateValue === '{{ t_info.id }}',#}
-{#                                        'text-gray-600 dark:text-gray-300': selectedTemplateValue !== '{{ t_info.id }}'#}
-{#                                   }">#}
+{#                                <p class="text-sm leading-relaxed mb-3 flex-grow min-h-[3em] line-clamp-3 text-gray-600 dark:text-gray-300">#}
 {#                                    {{ t_info.description }}#}
 {#                                </p>#}
 {#                            {% endif %}#}
 {##}
 {#                            {% if t_info.tags %}#}
-{#                                <div class="mt-auto pt-3 border-t"#}
-{#                                     :class="{#}
-{#                                        'border-green-200 dark:border-green-700': selectedTemplateValue === '{{ t_info.id }}',#}
-{#                                        'border-gray-200 dark:border-gray-700': selectedTemplateValue !== '{{ t_info.id }}'#}
-{#                                     }">#}
+{#                                <div class="mt-auto pt-3 border-t border-gray-200 dark:border-gray-700">#}
 {#                                    <div class="flex flex-wrap gap-1.5">#}
 {#                                    {% for tag in t_info.tags|slice:":3" %}#}
-{#                                        <span class="text-xs px-2.5 py-1 rounded-full font-medium"#}
-{#                                              :class="{#}
-{#                                                'bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-200': selectedTemplateValue === '{{ t_info.id }}',#}
-{#                                                'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200': selectedTemplateValue !== '{{ t_info.id }}'#}
-{#                                              }">{{ tag }}</span>#}
+{#                                        <span class="text-xs px-2.5 py-1 rounded-full font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">{{ tag }}</span>#}
 {#                                    {% endfor %}#}
 {#                                    {% if t_info.tags|length > 3 %}#}
-{#                                        <span class="text-xs py-1 italic"#}
-{#                                              :class="{#}
-{#                                                'text-green-500 dark:text-green-400': selectedTemplateValue === '{{ t_info.id }}',#}
-{#                                                'text-gray-400 dark:text-gray-500': selectedTemplateValue !== '{{ t_info.id }}'#}
-{#                                              }"> +{{ t_info.tags|length|add:"-3" }}&nbsp;more</span>#}
+{#                                        <span class="text-xs py-1 italic text-gray-400 dark:text-gray-500"> +{{ t_info.tags|length|add:"-3" }}&nbsp;more</span>#}
 {#                                    {% endif %}#}
 {#                                    </div>#}
 {#                                </div>#}
@@ -317,24 +516,175 @@
 {#        {% if templates_info %}#}
 {#        <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-4">#}
 {#            <a href="{% if resume %}{% url 'job_portal:create_resume_meta' %}{% else %}{% url 'job_portal:resume_list' %}{% endif %}"#}
-{#               class="btn btn-ghost order-2 sm:order-1 w-full sm:w-auto"> {# Using DaisyUI btn class if available, or your custom one #}
+{#               class="btn btn-ghost order-2 sm:order-1 w-full sm:w-auto">#}
 {#                <i class="fas fa-chevron-left mr-2"></i> {% trans "Back" %}#}
 {#            </a>#}
 {#            <button type="submit"#}
-{#                    class="btn btn-primary btn-block sm:btn-wide order-1 sm:order-2 w-full sm:w-auto" {# Using DaisyUI btn class #}
-{#                    :disabled="!selectedTemplateValue">#}
-{#                {% trans "Save Template & Continue" %} <i class="fas fa-arrow-right ml-2"></i>#}
+{#                    class="btn btn-primary btn-block sm:btn-wide order-1 sm:order-2 w-full sm:w-auto"#}
+{#                    :disabled="!selectedTemplateValue"#}
+{#                    :class="{ 'opacity-50 cursor-not-allowed': !selectedTemplateValue }">#}
+{#                <span x-show="!selectedTemplateValue">{% trans "Select a Template to Continue" %}</span>#}
+{#                <span x-show="selectedTemplateValue">{% trans "Save Template & Continue" %} <i class="fas fa-arrow-right ml-2"></i></span>#}
 {#            </button>#}
 {#        </div>#}
 {#        {% endif %}#}
 {#    </form>#}
+{##}
+{#    <!-- HTML Template Preview Modal -->#}
+{#    <div x-show="showPreviewModal"#}
+{#         x-cloak#}
+{#         class="fixed inset-0 z-50 flex items-center justify-center p-4"#}
+{#         x-transition:enter="transition ease-out duration-300"#}
+{#         x-transition:enter-start="opacity-0"#}
+{#         x-transition:enter-end="opacity-100"#}
+{#         x-transition:leave="transition ease-in duration-200"#}
+{#         x-transition:leave-start="opacity-100"#}
+{#         x-transition:leave-end="opacity-0">#}
+{##}
+{#        <!-- Backdrop -->#}
+{#        <div class="absolute inset-0 modal-backdrop"#}
+{#             @click="closePreview()"></div>#}
+{##}
+{#        <!-- Modal Content -->#}
+{#        <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-6xl modal-content"#}
+{#             @click.stop#}
+{#             x-transition:enter="transition ease-out duration-300"#}
+{#             x-transition:enter-start="opacity-0 transform scale-95"#}
+{#             x-transition:enter-end="opacity-100 transform scale-100"#}
+{#             x-transition:leave="transition ease-in duration-200"#}
+{#             x-transition:leave-start="opacity-100 transform scale-100"#}
+{#             x-transition:leave-end="opacity-0 transform scale-95">#}
+{##}
+{#            <!-- Modal Header -->#}
+{#            <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">#}
+{#                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">#}
+{#                    {% trans "Template Preview" %}: <span x-text="previewTemplateName" class="text-blue-600 dark:text-blue-400"></span>#}
+{#                </h3>#}
+{#                <button @click="closePreview()"#}
+{#                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">#}
+{#                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">#}
+{#                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>#}
+{#                    </svg>#}
+{#                </button>#}
+{#            </div>#}
+{##}
+{#            <!-- Modal Body -->#}
+{#            <div class="p-6">#}
+{#                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 relative">#}
+{#                    <!-- Loading State -->#}
+{#                    <div x-show="isLoading"#}
+{#                         class="flex items-center justify-center py-8"#}
+{#                         x-transition:enter="transition ease-out duration-200"#}
+{#                         x-transition:enter-start="opacity-0"#}
+{#                         x-transition:enter-end="opacity-100">#}
+{#                        <div class="text-center">#}
+{#                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>#}
+{#                            <p class="text-gray-500 dark:text-gray-400 text-sm">{% trans "Loading preview..." %}</p>#}
+{#                        </div>#}
+{#                    </div>#}
+{##}
+{#                    <!-- HTML Preview Iframe - Using the iframe-friendly URL -->#}
+{#                    <iframe x-show="!isLoading && previewUrl"#}
+{#                            :src="previewUrl"#}
+{#                            class="preview-iframe"#}
+{#                            frameborder="0"#}
+{#                            @load="isLoading = false"#}
+{#                            x-transition:enter="transition ease-out duration-300"#}
+{#                            x-transition:enter-start="opacity-0"#}
+{#                            x-transition:enter-end="opacity-100">#}
+{#                    </iframe>#}
+{##}
+{#                    <!-- Error State -->#}
+{#                    <div x-show="hasError" class="flex items-center justify-center py-8 text-center">#}
+{#                        <div>#}
+{#                            <svg class="mx-auto h-16 w-16 text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">#}
+{#                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 15.5c-.77.833.192 2.5 1.732 2.5z" />#}
+{#                            </svg>#}
+{#                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{% trans "Preview Unavailable" %}</h3>#}
+{#                            <p class="text-gray-500 dark:text-gray-400">{% trans "Sorry, we couldn't load the template preview at this time." %}</p>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <!-- Modal Footer -->#}
+{#            <div class="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700">#}
+{#                <button @click="closePreview()"#}
+{#                        class="btn btn-ghost">#}
+{#                    {% trans "Close" %}#}
+{#                </button>#}
+{#                <button @click="selectTemplateFromPreview()"#}
+{#                        class="btn btn-primary">#}
+{#                    <i class="fas fa-check mr-2"></i>{% trans "Select This Template" %}#}
+{#                </button>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
 {#</div>#}
 {#{% endblock content %}#}
 {##}
 {#{% block extra_js %}#}
 {#{{ block.super }}#}
 {#<script>#}
-{#    // Alpine.js is handling the selectedTemplateValue and class binding.#}
-{#    // No additional custom JS needed for these visual changes.#}
+{#    function templateSelector() {#}
+{#        return {#}
+{#            selectedTemplateValue: '{{ current_template|default:"" }}',#}
+{#            showPreviewModal: false,#}
+{#            previewTemplateId: '',#}
+{#            previewTemplateName: '',#}
+{#            previewUrl: '',#}
+{#            isLoading: false,#}
+{#            hasError: false,#}
+{##}
+{#            selectTemplate(templateId) {#}
+{#                this.selectedTemplateValue = templateId;#}
+{#                console.log('Template selected:', templateId);#}
+{#            },#}
+{##}
+{#            openPreview(templateId, templateName) {#}
+{#                this.previewTemplateId = templateId;#}
+{#                this.previewTemplateName = templateName;#}
+{#                // Use the iframe-friendly URL that won't be blocked#}
+{#                this.previewUrl = `{% url 'job_portal:template_preview_iframe' template_id='TEMPLATE_ID' %}`.replace('TEMPLATE_ID', templateId);#}
+{#                this.showPreviewModal = true;#}
+{#                this.isLoading = true;#}
+{#                this.hasError = false;#}
+{##}
+{#                console.log('Opening preview with URL:', this.previewUrl);#}
+{##}
+{#                // Set a timeout to show error if loading takes too long#}
+{#                setTimeout(() => {#}
+{#                    if (this.isLoading) {#}
+{#                        this.hasError = true;#}
+{#                        this.isLoading = false;#}
+{#                    }#}
+{#                }, 10000);#}
+{#            },#}
+{##}
+{#            closePreview() {#}
+{#                this.showPreviewModal = false;#}
+{#                this.previewUrl = '';#}
+{#                this.isLoading = false;#}
+{#                this.hasError = false;#}
+{#            },#}
+{##}
+{#            selectTemplateFromPreview() {#}
+{#                this.selectTemplate(this.previewTemplateId);#}
+{#                this.closePreview();#}
+{#            }#}
+{#        }#}
+{#    }#}
+{##}
+{#    // Handle escape key to close modal#}
+{#    document.addEventListener('keydown', function(e) {#}
+{#        if (e.key === 'Escape') {#}
+{#            const component = Alpine.$data(document.querySelector('[x-data]'));#}
+{#            if (component && component.showPreviewModal) {#}
+{#                component.closePreview();#}
+{#            }#}
+{#        }#}
+{#    });#}
+{##}
+{#    console.log('Template selector initialized');#}
 {#</script>#}
 {#{% endblock %}#}

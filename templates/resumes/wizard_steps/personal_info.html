@@ -3,9 +3,8 @@
 {% load widget_tweaks static %}
 
 {% block wizard_content %}
-<form method="post" novalidate>
+<form method="post" enctype="multipart/form-data" novalidate>
     {% csrf_token %}
-    {{ form.management_form }} {# Though not a formset, good practice if structure might change #}
 
     <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-1">{{ current_step_display }}</h2>
     <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
@@ -23,57 +22,111 @@
     <div class="space-y-5">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div>
-                <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name <span class="text-red-500">*</span></label>
+                <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                    First Name <span class="text-red-500">*</span>
+                </label>
                 {% render_field form.first_name class+="form-input" placeholder="e.g., John" %}
-                {% for error in form.first_name.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+                {% if form.first_name.errors %}
+                    {% for error in form.first_name.errors %}
+                        <p class="form-error-text">{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
             </div>
             <div>
-                <label for="{{ form.mid_name.id_for_label }}" class="form-label">Middle Name (Optional)</label>
+                <label for="{{ form.mid_name.id_for_label }}" class="form-label">
+                    Middle Name (Optional)
+                </label>
                 {% render_field form.mid_name class+="form-input" placeholder="e.g., Robert" %}
-                {% for error in form.mid_name.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+                {% if form.mid_name.errors %}
+                    {% for error in form.mid_name.errors %}
+                        <p class="form-error-text">{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
             </div>
             <div>
-                <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name <span class="text-red-500">*</span></label>
+                <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                    Last Name <span class="text-red-500">*</span>
+                </label>
                 {% render_field form.last_name class+="form-input" placeholder="e.g., Doe" %}
-                {% for error in form.last_name.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+                {% if form.last_name.errors %}
+                    {% for error in form.last_name.errors %}
+                        <p class="form-error-text">{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
             </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-                <label for="{{ form.email.id_for_label }}" class="form-label">Email Address <span class="text-red-500">*</span></label>
+                <label for="{{ form.email.id_for_label }}" class="form-label">
+                    Email Address <span class="text-red-500">*</span>
+                </label>
                 {% render_field form.email type="email" class+="form-input" placeholder="e.g., john.doe@example.com" %}
-                {% for error in form.email.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+                {% if form.email.errors %}
+                    {% for error in form.email.errors %}
+                        <p class="form-error-text">{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
             </div>
             <div>
-                <label for="{{ form.phone.id_for_label }}" class="form-label">Phone Number <span class="text-red-500">*</span></label>
+                <label for="{{ form.phone.id_for_label }}" class="form-label">
+                    Phone Number <span class="text-red-500">*</span>
+                </label>
                 {% render_field form.phone type="tel" class+="form-input" placeholder="e.g., (123) 456-7890" %}
-                {% for error in form.phone.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+                {% if form.phone.errors %}
+                    {% for error in form.phone.errors %}
+                        <p class="form-error-text">{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
             </div>
         </div>
 
         <div>
-            <label for="{{ form.address.id_for_label }}" class="form-label">Full Address (Optional)</label>
-            {% render_field form.address class+="form-input" placeholder="e.g., 123 Main St, Anytown, USA 12345" rows="3" %}
+            <label for="{{ form.address.id_for_label }}" class="form-label">
+                Full Address (Optional)
+            </label>
+            {% render_field form.address class+="form-textarea" placeholder="e.g., 123 Main St, Anytown, USA 12345" rows="3" %}
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Include street, city, state, and zip code if desired. This is optional.</p>
-            {% for error in form.address.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+            {% if form.address.errors %}
+                {% for error in form.address.errors %}
+                    <p class="form-error-text">{{ error }}</p>
+                {% endfor %}
+            {% endif %}
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div>
-                <label for="{{ form.linkedin.id_for_label }}" class="form-label">LinkedIn Profile URL (Optional)</label>
+                <label for="{{ form.linkedin.id_for_label }}" class="form-label">
+                    LinkedIn Profile URL (Optional)
+                </label>
                 {% render_field form.linkedin type="url" class+="form-input" placeholder="e.g., linkedin.com/in/johndoe" %}
-                {% for error in form.linkedin.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+                {% if form.linkedin.errors %}
+                    {% for error in form.linkedin.errors %}
+                        <p class="form-error-text">{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
             </div>
             <div>
-                <label for="{{ form.github.id_for_label }}" class="form-label">GitHub Profile URL (Optional)</label>
+                <label for="{{ form.github.id_for_label }}" class="form-label">
+                    GitHub Profile URL (Optional)
+                </label>
                 {% render_field form.github type="url" class+="form-input" placeholder="e.g., github.com/johndoe" %}
-                {% for error in form.github.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+                {% if form.github.errors %}
+                    {% for error in form.github.errors %}
+                        <p class="form-error-text">{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
             </div>
             <div>
-                <label for="{{ form.portfolio.id_for_label }}" class="form-label">Portfolio/Website URL (Optional)</label>
+                <label for="{{ form.portfolio.id_for_label }}" class="form-label">
+                    Portfolio/Website URL (Optional)
+                </label>
                 {% render_field form.portfolio type="url" class+="form-input" placeholder="e.g., johndoe.com" %}
-                {% for error in form.portfolio.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}
+                {% if form.portfolio.errors %}
+                    {% for error in form.portfolio.errors %}
+                        <p class="form-error-text">{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
             </div>
         </div>
     </div>
@@ -86,7 +139,6 @@
                     <i class="fas fa-arrow-left mr-2"></i> Previous Step
                 </a>
             {% else %}
-                {# Optionally, show a disabled-like button or hide if no previous step #}
                 <span class="btn-disabled w-full sm:w-auto text-center">
                     <i class="fas fa-arrow-left mr-2"></i> Previous Step
                 </span>
@@ -104,6 +156,113 @@
 </form>
 {% endblock wizard_content %}
 
+
+{# templates/resumes/wizard_steps/personal_info.html #}
+{#{% extends "resumes/wizard_base.html" %}#}
+{#{% load widget_tweaks static %}#}
+{##}
+{#{% block wizard_content %}#}
+{#<form method="post" novalidate>#}
+{#    {% csrf_token %}#}
+{#    {{ form.management_form }} {# Though not a formset, good practice if structure might change #}
+{##}
+{#    <h2 class="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-1">{{ current_step_display }}</h2>#}
+{#    <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">#}
+{#        Enter your basic contact and identification details. This information will appear at the top of your resume.#}
+{#    </p>#}
+{##}
+{#    {% if form.non_field_errors %}#}
+{#        <div class="mb-4 p-3 bg-red-100 dark:bg-red-800/30 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-300 rounded-md text-sm">#}
+{#            {% for error in form.non_field_errors %}#}
+{#                <p>{{ error }}</p>#}
+{#            {% endfor %}#}
+{#        </div>#}
+{#    {% endif %}#}
+{##}
+{#    <div class="space-y-5">#}
+{#        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">#}
+{#            <div>#}
+{#                <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name <span class="text-red-500">*</span></label>#}
+{#                {% render_field form.first_name class+="form-input" placeholder="e.g., John" %}#}
+{#                {% for error in form.first_name.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}#}
+{#            </div>#}
+{#            <div>#}
+{#                <label for="{{ form.mid_name.id_for_label }}" class="form-label">Middle Name (Optional)</label>#}
+{#                {% render_field form.mid_name class+="form-input" placeholder="e.g., Robert" %}#}
+{#                {% for error in form.mid_name.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}#}
+{#            </div>#}
+{#            <div>#}
+{#                <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name <span class="text-red-500">*</span></label>#}
+{#                {% render_field form.last_name class+="form-input" placeholder="e.g., Doe" %}#}
+{#                {% for error in form.last_name.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">#}
+{#            <div>#}
+{#                <label for="{{ form.email.id_for_label }}" class="form-label">Email Address <span class="text-red-500">*</span></label>#}
+{#                {% render_field form.email type="email" class+="form-input" placeholder="e.g., john.doe@example.com" %}#}
+{#                {% for error in form.email.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}#}
+{#            </div>#}
+{#            <div>#}
+{#                <label for="{{ form.phone.id_for_label }}" class="form-label">Phone Number <span class="text-red-500">*</span></label>#}
+{#                {% render_field form.phone type="tel" class+="form-input" placeholder="e.g., (123) 456-7890" %}#}
+{#                {% for error in form.phone.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}#}
+{#            </div>#}
+{#        </div>#}
+{##}
+{#        <div>#}
+{#            <label for="{{ form.address.id_for_label }}" class="form-label">Full Address (Optional)</label>#}
+{#            {% render_field form.address class+="form-input" placeholder="e.g., 123 Main St, Anytown, USA 12345" rows="3" %}#}
+{#            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Include street, city, state, and zip code if desired. This is optional.</p>#}
+{#            {% for error in form.address.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}#}
+{#        </div>#}
+{##}
+{#        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">#}
+{#            <div>#}
+{#                <label for="{{ form.linkedin.id_for_label }}" class="form-label">LinkedIn Profile URL (Optional)</label>#}
+{#                {% render_field form.linkedin type="url" class+="form-input" placeholder="e.g., linkedin.com/in/johndoe" %}#}
+{#                {% for error in form.linkedin.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}#}
+{#            </div>#}
+{#            <div>#}
+{#                <label for="{{ form.github.id_for_label }}" class="form-label">GitHub Profile URL (Optional)</label>#}
+{#                {% render_field form.github type="url" class+="form-input" placeholder="e.g., github.com/johndoe" %}#}
+{#                {% for error in form.github.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}#}
+{#            </div>#}
+{#            <div>#}
+{#                <label for="{{ form.portfolio.id_for_label }}" class="form-label">Portfolio/Website URL (Optional)</label>#}
+{#                {% render_field form.portfolio type="url" class+="form-input" placeholder="e.g., johndoe.com" %}#}
+{#                {% for error in form.portfolio.errors %} <p class="form-error-text">{{ error }}</p> {% endfor %}#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+    {# Navigation Buttons #}
+{#    <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">#}
+{#        <div>#}
+{#            {% if prev_step_url %}#}
+{#                <a href="{{ prev_step_url }}" class="btn-neutral w-full sm:w-auto">#}
+{#                    <i class="fas fa-arrow-left mr-2"></i> Previous Step#}
+{#                </a>#}
+{#            {% else %}#}
+                {# Optionally, show a disabled-like button or hide if no previous step #}
+{#                <span class="btn-disabled w-full sm:w-auto text-center">#}
+{#                    <i class="fas fa-arrow-left mr-2"></i> Previous Step#}
+{#                </span>#}
+{#            {% endif %}#}
+{#        </div>#}
+{#        <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">#}
+{#            <button type="submit" name="action" value="save_and_exit" class="btn-secondary w-full sm:w-auto">#}
+{#                <i class="fas fa-save mr-1.5"></i> Save & Exit Wizard#}
+{#            </button>#}
+{#            <button type="submit" name="action" value="save_and_continue" class="btn-primary w-full sm:w-auto">#}
+{#                Save & Continue <i class="fas fa-arrow-right ml-1.5"></i>#}
+{#            </button>#}
+{#        </div>#}
+{#    </div>#}
+{#</form>#}
+{#{% endblock wizard_content %}#}
+{##}
 {#{% extends 'resumes/wizard_base.html' %}#}
 {#{% load resume_extras %}#}
 {#{% load static %}#}

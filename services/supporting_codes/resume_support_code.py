@@ -1,18 +1,62 @@
+
+
+from datetime import date, datetime
 from django.shortcuts import render
-
-# File: job_portal/services/supporting_codes/resume_support_code.py
-# Path: job_portal/services/supporting_codes/resume_support_code.py
-
 from django.utils.translation import gettext_lazy as _
 
-# No longer need to import Resume here for TEMPLATE_CHOICES,
-# but might be needed if other functions in this file use the Resume model directly.
-# from job_portal.models import Resume
+# This dictionary maps the internal template IDs to their display metadata.
+TEMPLATE_METADATA = {
+    'template1': {
+        'name': _('Classic Professional'),
+        'description': _('A timeless and clean format, widely accepted and ATS-friendly.'),
+        'thumbnail_image_path': 'img/resume_thumbnails/1.jpg',  # Small thumbnail for cards
+                  # Large image for modal preview
+        'tags': [_('Classic'), _('ATS-Friendly'), _('Formal'), _('Traditional')],
+        'category': _('Traditional'),
+    },
+    'template2': {
+        'name': _('Modern Minimalist'),
+        'description': _('Sleek, contemporary design focusing on clarity and key achievements.'),
+        'thumbnail_image_path': 'img/resume_thumbnails/2.jpg',
 
-# --- DEFINE TEMPLATE_CHOICES and METADATA HERE ---
-# This list defines the valid template identifiers and their display names.
-# The first element is the value stored in Resume.template_name,
-# the second is for display (though 'name' in TEMPLATE_METADATA will usually override for display).
+        'tags': [_('Modern'), _('Minimalist'), _('Clean Design'), _('Contemporary')],
+        'category': _('Modern'),
+    },
+    'template3': {
+        'name': _('Creative Compact'),
+        'description': _('A stylish and compact layout, great for creative fields or concise resumes.'),
+        'thumbnail_image_path': 'img/resume_thumbnails/3.jpg',
+
+        'tags': [_('Creative'), _('Compact'), _('Visual'), _('Design-Focused')],
+        'category': _('Creative'),
+    },
+    'template4': {
+        'name': _('Technical Focus'),
+        'description': _('Highlights technical skills, projects, and certifications prominently.'),
+        'thumbnail_image_path': 'img/resume_thumbnails/4.jpg',
+
+        'tags': [_('Technical'), _('Skills-Focused'), _('IT'), _('Developer')],
+        'category': _('Specialized')
+    },
+    'template5': {
+        'name': _('Elegant Executive'),
+        'description': _('A sophisticated and formal design, suitable for senior-level positions.'),
+        'thumbnail_image_path': 'img/resume_thumbnails/5.jpg',
+
+        'tags': [_('Executive'), _('Formal'), _('Senior Level'), _('Professional')],
+        'category': _('Professional')
+    },
+    'template6': {
+        'name': _('Academic & Research'),
+        'description': _('Emphasizes education, publications, research, and academic achievements.'),
+        'thumbnail_image_path': 'img/resume_thumbnails/6.jpg',
+
+        'tags': [_('Academic'), _('Research'), _('CV'), _('Education-Focused')],
+        'category': _('Academic')
+    },
+}
+
+# TEMPLATE_CHOICES for Django model choices
 TEMPLATE_CHOICES = [
     ('template1', _('Classic Professional')),
     ('template2', _('Modern Minimalist')),
@@ -20,75 +64,24 @@ TEMPLATE_CHOICES = [
     ('template4', _('Technical Focus')),
     ('template5', _('Elegant Executive')),
     ('template6', _('Academic & Research')),
-    # Add more templates here if needed.
-    # The 'id' in TEMPLATE_METADATA below must match the first element of these tuples.
 ]
-
-# This dictionary maps the internal template IDs (from TEMPLATE_CHOICES above)
-# to their display metadata.
-TEMPLATE_METADATA = {
-    'template1': {
-        'name': _('Classic Professional'),
-        'description': _('A timeless and clean format, widely accepted and ATS-friendly.'),
-        'preview_image_path': 'img/templates/1.jpg',
-        'tags': [_('Classic'), _('ATS-Friendly'), _('Formal'), _('Traditional')],
-        'category': _('Traditional'),
-    },
-    'template2': {
-        'name': _('Modern Minimalist'),
-        'description': _('Sleek, contemporary design focusing on clarity and key achievements.'),
-        'preview_image_path': 'img/templates/2.jpg',
-        'tags': [_('Modern'), _('Minimalist'), _('Clean Design'), _('Contemporary')],
-        'category': _('Modern'),
-    },
-    'template3': {
-        'name': _('Creative Compact'),
-        'description': _('A stylish and compact layout, great for creative fields or concise resumes.'),
-        'preview_image_path': 'img/templates/3.jpg',
-        'tags': [_('Creative'), _('Compact'), _('Visual'), _('Design-Focused')],
-        'category': _('Creative'),
-    },
-    'template4': {
-        'name': _('Technical Focus'),
-        'description': _('Highlights technical skills, projects, and certifications prominently.'),
-        'preview_image_path': 'img/templates/4.jpg',
-        'tags': [_('Technical'), _('Skills-Focused'), _('IT'), _('Developer')],
-        'category': _('Specialized')
-    },
-    'template5': {
-        'name': _('Elegant Executive'),
-        'description': _('A sophisticated and formal design, suitable for senior-level positions.'),
-        'preview_image_path': 'img/templates/5.jpg',
-        'tags': [_('Executive'), _('Formal'), _('Senior Level'), _('Professional')],
-        'category': _('Professional')
-    },
-    'template6': {
-        'name': _('Academic & Research'),
-        'description': _('Emphasizes education, publications, research, and academic achievements.'),
-        'preview_image_path': 'img/templates/6.jpg',
-        'tags': [_('Academic'), _('Research'), _('CV'), _('Education-Focused')],
-        'category': _('Academic')
-    },
-    # Add metadata for any other templates defined in TEMPLATE_CHOICES
-}
 
 
 def get_all_template_info():
     """
     Returns a list of dictionaries, each containing details for a resume template.
     The 'id' in each dictionary corresponds to the value to be stored in Resume.template_name.
-    It iterates through the locally defined TEMPLATE_CHOICES.
     """
     all_info = []
-    # MODIFIED: Iterate over TEMPLATE_CHOICES defined in this file
     for template_value, template_display_name_from_choice in TEMPLATE_CHOICES:
         metadata = TEMPLATE_METADATA.get(template_value, {})
 
         template_details = {
             'id': template_value,
-            'name': metadata.get('name', template_display_name_from_choice),  # Use metadata name or fallback
+            'name': metadata.get('name', template_display_name_from_choice),
             'description': metadata.get('description', _('A versatile template for your professional resume.')),
-            'preview_image_path': metadata.get('preview_image_path', 'images/resume-previews/default.webp'),
+            'thumbnail_image_path': metadata.get('thumbnail_image_path', 'resume_thumbnails/default.jpg'),  # Small thumbnail
+            'preview_image_path': metadata.get('preview_image_path', 'templates/default.jpg'),              # Large preview
             'tags': metadata.get('tags', []),
             'category': metadata.get('category', _('General')),
         }
@@ -101,7 +94,7 @@ def get_template_static_info(template_id):
     Returns metadata for a single template by its ID using locally defined data.
     """
     display_name_from_choices = template_id
-    for value, display_name in TEMPLATE_CHOICES:  # Use local TEMPLATE_CHOICES
+    for value, display_name in TEMPLATE_CHOICES:
         if value == template_id:
             display_name_from_choices = display_name
             break
@@ -112,7 +105,8 @@ def get_template_static_info(template_id):
             'id': template_id,
             'name': metadata.get('name', display_name_from_choices),
             'description': metadata.get('description', ''),
-            'preview_image_path': metadata.get('preview_image_path', 'images/resume-previews/default.webp'),
+            'thumbnail_image_path': metadata.get('thumbnail_image_path', 'resume_thumbnails/default.jpg'),
+            'preview_image_path': metadata.get('preview_image_path', 'templates/default.jpg'),
             'tags': metadata.get('tags', []),
             'category': metadata.get('category', _('General')),
         }
@@ -122,50 +116,16 @@ def get_template_static_info(template_id):
             'id': template_id,
             'name': display_name_from_choices,
             'description': _('Standard resume template.'),
-            'preview_image_path': 'images/resume-previews/default.webp',
+            'thumbnail_image_path': 'resume_thumbnails/default.jpg',
+            'preview_image_path': 'templates/default.jpg',
             'tags': [],
             'category': _('General'),
         }
     return None
 
-def preview_template(request, template_id):
-    """
-    Preview a resume template with comprehensive sample data that includes all model fields.
-    Enhanced to support the fresh graduate template with appropriate sample data.
-    """
-    from django.shortcuts import render
-    from django.http import HttpResponse
 
-    # Check if we should use fresher resume data
-    if template_id == 6:
-        sample_resume = create_fresher_resume()
-    else:
-        sample_resume = create_experienced_resume()
 
-    # For consistent template rendering, make sure the template exists
-    try:
-        # Render the template
-        return render(request, f'resumes/templates/template{template_id}.html', {'resume': sample_resume})
-    except Exception as e:
-        # Return a basic error page with useful information
-        error_html = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 30px;">
-            <h1 style="color: #d32f2f;">Template Preview Error</h1>
-            <p>There was a problem rendering the template:</p>
-            <div style="background-color: #f8f8f8; padding: 15px; border-left: 5px solid #d32f2f; margin: 20px 0;">
-                <code>{str(e)}</code>
-            </div>
-            <p>Please check that the template file exists at: <code>resumes/templates/template{template_id}.html</code></p>
-            <p>Template ID: {template_id}</p>
-        </div>
-        """
-        return HttpResponse(error_html)
 
-from datetime import date, datetime
-
-# It's good practice to define these choice dictionaries once if they are shared
-# or ensure they are consistent with your models.py choices.
-# For this example, they are embedded in the Dummy classes.
 
 def create_experienced_resume():
     """Create a sample resume for an experienced professional, matching models.py."""
